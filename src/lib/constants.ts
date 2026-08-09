@@ -5,6 +5,12 @@ export const BRAND = {
     'Find verified local dumpster rental operators with transparent pricing, permit notes, and driveway-safe options near you.',
 } as const;
 
+export const UTM = {
+  source: 'findadumpster',
+  medium: 'referral',
+  campaign: 'operator_listing',
+} as const;
+
 export const DUMPSTER_SIZES = [10, 15, 20, 30, 40] as const;
 
 export const MATERIALS = [

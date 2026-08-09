@@ -1,4 +1,5 @@
 import { BRAND } from './constants';
+import { withUtm } from './utm';
 
 export function pageTitle(parts: string | string[]): string {
   const list = Array.isArray(parts) ? parts : [parts];
@@ -21,7 +22,7 @@ export function operatorJsonLd(op: {
     name: op.name,
     description: op.description ?? undefined,
     telephone: op.phone ?? undefined,
-    url: op.website ?? `${op.siteUrl}/operator/${op.slug}`,
+    url: withUtm(op.website) ?? `${op.siteUrl}/operator/${op.slug}`,
     address:
       op.hqCity && op.hqState
         ? {
