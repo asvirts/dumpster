@@ -19,6 +19,10 @@ export const prerender = true;
 
 const siteUrl = Astro.site?.toString().replace(/\/$/, '') ?? Astro.url.origin;
 const guideUrl = `${siteUrl}/guides/${guide.id}`;
+const heroImage = guide.data.image;
+const ogImage = heroImage
+  ? new URL(heroImage, siteUrl).toString()
+  : undefined;
 
 const jsonLd = [
   articleJsonLd({
@@ -26,6 +30,7 @@ const jsonLd = [
     description: guide.data.description,
     url: guideUrl,
     siteUrl,
+    image: ogImage,
   }),
   breadcrumbJsonLd([
     { name: 'Home', url: siteUrl },
@@ -39,6 +44,7 @@ const jsonLd = [
   title={pageTitle(guide.data.title)}
   description={guide.data.description}
   jsonLd={jsonLd}
+  ogImage={ogImage}
 >
   <article class="container-page py-12">
     <nav aria-label="Breadcrumb" class="font-mono text-xs uppercase tracking-widest text-muted">
@@ -53,6 +59,39 @@ const jsonLd = [
       {guide.data.title}
     </h1>
     <p class="mt-4 max-w-2xl text-lg text-muted">{guide.data.description}</p>
+    {
+      heroImage && (
+        <figure class="mt-8 max-w-3xl overflow-hidden border-2 border-charcoal-900 bg-charcoal-900">
+          <img
+            src={heroImage}
+            alt={guide.data.imageAlt ?? guide.data.title}
+            width="1064"
+            height="1600"
+            class="h-auto max-h-[22rem] w-full object-cover object-center sm:max-h-[28rem]"
+            loading="eager"
+            decoding="async"
+          />
+          {
+            guide.data.imageCredit && (
+              <figcaption class="border-t-2 border-charcoal-700 px-3 py-2 font-mono text-[10px] uppercase tracking-widest text-charcoal-300">
+                {guide.data.imageCreditUrl ? (
+                  <a
+                    href={guide.data.imageCreditUrl}
+                    class="text-charcoal-200 no-underline hover:text-brand-400"
+                    rel="noopener noreferrer"
+                    target="_blank"
+                  >
+                    {guide.data.imageCredit}
+                  </a>
+                ) : (
+                  guide.data.imageCredit
+                )}
+              </figcaption>
+            )
+          }
+        </figure>
+      )
+    }
     <div class="hazard-bar mt-8 max-w-3xl" aria-hidden="true"></div>
     <div class="prose-guide mt-10">
       <Content />

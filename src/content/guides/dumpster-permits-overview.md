@@ -4,7 +4,7 @@ description: When you need a permit for street placement, who pulls it, and how 
 category: local
 ---
 
-Permit rules are local. City pages on Find A Dumpster summarize common patterns — always verify with your municipality.
+Permit rules are local. City pages on Find A Dumpster summarize common patterns — always verify with your municipality. Street-placement permit fees often show up as a line item on the final bill—see [dumpster rental costs](/guides/how-much-do-dumpster-rentals-cost) for typical ranges.
 
 ## When you usually need a permit
 

@@ -4,7 +4,7 @@ description: What drives dumpster rental prices — size, weight, rental days, h
 category: basics
 ---
 
-“Starting at” prices rarely match the final invoice. Use ranges as a guide and insist on **all-in quotes**.
+“Starting at” prices rarely match the final invoice. Use ranges as a guide and insist on **all-in quotes**. For 2026 national price ranges by container size, see [how much dumpster rentals cost](/guides/how-much-do-dumpster-rentals-cost).
 
 ## Major cost drivers
 

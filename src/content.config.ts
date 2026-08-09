@@ -8,6 +8,10 @@ const guides = defineCollection({
     description: z.string(),
     category: z.string().default('general'),
     draft: z.boolean().default(false),
+    image: z.string().optional(),
+    imageAlt: z.string().optional(),
+    imageCredit: z.string().optional(),
+    imageCreditUrl: z.string().url().optional(),
   }),
 });
 

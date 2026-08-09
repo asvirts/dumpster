@@ -4,7 +4,7 @@ description: Choose the right roll-off size (10–40 yard) for cleanouts, remode
 category: basics
 ---
 
-Picking the right dumpster size avoids paying for unused space — or worse, running out of room mid-project.
+Picking the right dumpster size avoids paying for unused space — or worse, running out of room mid-project. For typical 2026 rental prices by size, see [how much dumpster rentals cost](/guides/how-much-do-dumpster-rentals-cost).
 
 ## Quick reference
 

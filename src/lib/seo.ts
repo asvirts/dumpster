@@ -112,6 +112,7 @@ export function articleJsonLd(article: {
   description: string;
   url: string;
   siteUrl: string;
+  image?: string;
 }) {
   return {
     '@context': 'https://schema.org',
@@ -119,6 +120,7 @@ export function articleJsonLd(article: {
     headline: article.title,
     description: article.description,
     mainEntityOfPage: article.url,
+    image: article.image ? [article.image] : undefined,
     author: {
       '@type': 'Organization',
       name: BRAND.name,

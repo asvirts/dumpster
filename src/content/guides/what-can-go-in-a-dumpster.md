@@ -24,7 +24,7 @@ Rules vary by landfill, transfer station, and operator. Always confirm with the 
 
 ## Material-specific boxes
 
-Many operators offer **concrete/dirt only** or **yard waste only** containers at different rates. Using the right box can lower cost and avoid rejected loads.
+Many operators offer **concrete/dirt only** or **yard waste only** containers at different rates. Using the right box can lower cost and avoid rejected loads. Heavy materials also drive [rental pricing and overages](/guides/how-much-do-dumpster-rentals-cost).
 
 ## Before you load
 
