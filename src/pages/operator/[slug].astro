@@ -28,7 +28,8 @@ const cities = op.serviceAreas
   .map((a) => (a.city ? `${a.city.name}, ${a.city.state}` : null))
   .filter(Boolean) as string[];
 
-const title = pageTitle([op.name, 'Dumpster Rental']);
+const locationLabel = op.hqCity && op.hqState ? ` in ${op.hqCity}, ${op.hqState}` : '';
+const title = pageTitle([op.name, `Dumpster Rental${locationLabel}`]);
 const description =
   op.description?.slice(0, 155) ||
   `${op.name} — verified dumpster rental${op.hqCity ? ` in ${op.hqCity}, ${op.hqState}` : ''}.`;
