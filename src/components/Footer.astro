@@ -1,35 +1,102 @@
 ---
-import { BRAND } from '../lib/constants';
+import { BRAND, DUMPSTER_SIZES } from '../lib/constants';
+
+// Static links: the footer renders inside prerendered pages where D1 isn't available.
+const popularCities = [
+  { name: 'Houston, TX', href: '/dumpster-rental/tx/houston' },
+  { name: 'Dallas, TX', href: '/dumpster-rental/tx/dallas' },
+  { name: 'Austin, TX', href: '/dumpster-rental/tx/austin' },
+  { name: 'Miami, FL', href: '/dumpster-rental/fl/miami' },
+  { name: 'Orlando, FL', href: '/dumpster-rental/fl/orlando' },
+  { name: 'Tampa, FL', href: '/dumpster-rental/fl/tampa' },
+  { name: 'Los Angeles, CA', href: '/dumpster-rental/ca/los-angeles' },
+  { name: 'Phoenix, AZ', href: '/dumpster-rental/az/phoenix' },
+  { name: 'Atlanta, GA', href: '/dumpster-rental/ga/atlanta' },
+  { name: 'Denver, CO', href: '/dumpster-rental/co/denver' },
+];
+
+const guides = [
+  { name: 'Dumpster size guide', href: '/guides/dumpster-size-guide' },
+  { name: 'Dumpster rental cost factors', href: '/guides/dumpster-rental-cost-factors' },
+  { name: 'What can go in a dumpster', href: '/guides/what-can-go-in-a-dumpster' },
+  { name: 'Residential vs. commercial', href: '/guides/residential-vs-commercial' },
+  { name: 'Permit overview', href: '/guides/dumpster-permits-overview' },
+];
 ---
 
-<footer class="mt-16 border-t border-border bg-surface">
-  <div class="container-page grid gap-8 py-12 sm:grid-cols-3">
+<footer class="mt-16 bg-charcoal-900 text-charcoal-200">
+  <div class="hazard-bar" aria-hidden="true"></div>
+  <div class="container-page grid gap-10 py-14 sm:grid-cols-2 lg:grid-cols-4">
     <div>
-      <p class="text-lg font-bold text-ink">{BRAND.name}</p>
-      <p class="mt-2 text-sm text-muted">{BRAND.tagline}</p>
-    </div>
-    <div>
-      <p class="text-sm font-semibold text-ink">Explore</p>
-      <ul class="mt-3 space-y-2 text-sm">
-        <li><a href="/search" class="text-muted no-underline hover:text-brand-700">Search operators</a></li>
-        <li><a href="/guides" class="text-muted no-underline hover:text-brand-700">Guides</a></li>
-        <li>
-          <a href="/guides/dumpster-size-guide" class="text-muted no-underline hover:text-brand-700"
-            >Size guide</a
-          >
-        </li>
-      </ul>
-    </div>
-    <div>
-      <p class="text-sm font-semibold text-ink">Quality promise</p>
-      <p class="mt-3 text-sm text-muted">
-        We prioritize verified local operators, last-verified dates, and transparent pricing over raw listing
-        volume.
+      <a href="/" class="flex items-center gap-2.5 text-white no-underline hover:text-white">
+        <span
+          class="flex h-9 w-9 items-center justify-center bg-brand-500 font-display text-sm text-white shadow-[2px_2px_0_0_#ffc800]"
+          aria-hidden="true"
+        >
+          DL
+        </span>
+        <span class="font-display text-lg uppercase tracking-tight">{BRAND.name}</span>
+      </a>
+      <p class="mt-4 text-sm leading-relaxed text-charcoal-300">{BRAND.tagline}.</p>
+      <p class="mt-4 font-mono text-xs uppercase tracking-widest text-charcoal-400">
+        Verified operators · No broker noise
       </p>
     </div>
+    <nav aria-label="Popular cities">
+      <p class="eyebrow text-brand-400">Popular cities</p>
+      <ul class="mt-4 grid grid-cols-1 gap-2 text-sm">
+        {
+          popularCities.map((c) => (
+            <li>
+              <a href={c.href} class="text-charcoal-300 no-underline hover:text-brand-400">
+                Dumpster rental {c.name}
+              </a>
+            </li>
+          ))
+        }
+      </ul>
+    </nav>
+    <nav aria-label="Dumpster sizes">
+      <p class="eyebrow text-brand-400">Sizes</p>
+      <ul class="mt-4 space-y-2 text-sm">
+        {
+          DUMPSTER_SIZES.map((s) => (
+            <li>
+              <a
+                href={`/search?size=${s}`}
+                class="text-charcoal-300 no-underline hover:text-brand-400"
+              >
+                {s} yard dumpster rental
+              </a>
+            </li>
+          ))
+        }
+      </ul>
+    </nav>
+    <nav aria-label="Guides">
+      <p class="eyebrow text-brand-400">Guides</p>
+      <ul class="mt-4 space-y-2 text-sm">
+        {
+          guides.map((g) => (
+            <li>
+              <a href={g.href} class="text-charcoal-300 no-underline hover:text-brand-400">
+                {g.name}
+              </a>
+            </li>
+          ))
+        }
+        <li>
+          <a href="/guides" class="font-semibold text-white no-underline hover:text-brand-400">
+            All guides →
+          </a>
+        </li>
+      </ul>
+    </nav>
   </div>
-  <div class="border-t border-border py-4 text-center text-xs text-muted">
-    © {new Date().getFullYear()} {BRAND.name}. Demo data is for illustration until listings are replaced with
-    real verified operators.
+  <div class="border-t border-charcoal-700 py-5">
+    <p class="container-page text-center font-mono text-xs text-charcoal-400">
+      © {new Date().getFullYear()} {BRAND.name} · Demo data is for illustration until listings are replaced
+      with real verified operators.
+    </p>
   </div>
 </footer>

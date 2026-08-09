@@ -63,3 +63,75 @@ export function breadcrumbJsonLd(crumbs: { name: string; url: string }[]) {
     })),
   };
 }
+
+export function organizationJsonLd(siteUrl: string) {
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'Organization',
+    name: BRAND.name,
+    url: siteUrl,
+    logo: `${siteUrl}/favicon.svg`,
+    description: BRAND.description,
+  };
+}
+
+export function webSiteJsonLd(siteUrl: string) {
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'WebSite',
+    name: BRAND.name,
+    url: siteUrl,
+    potentialAction: {
+      '@type': 'SearchAction',
+      target: {
+        '@type': 'EntryPoint',
+        urlTemplate: `${siteUrl}/search?q={search_term_string}`,
+      },
+      'query-input': 'required name=search_term_string',
+    },
+  };
+}
+
+export function faqJsonLd(faqs: { question: string; answer: string }[]) {
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'FAQPage',
+    mainEntity: faqs.map((f) => ({
+      '@type': 'Question',
+      name: f.question,
+      acceptedAnswer: {
+        '@type': 'Answer',
+        text: f.answer,
+      },
+    })),
+  };
+}
+
+export function articleJsonLd(article: {
+  title: string;
+  description: string;
+  url: string;
+  siteUrl: string;
+}) {
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'Article',
+    headline: article.title,
+    description: article.description,
+    mainEntityOfPage: article.url,
+    author: {
+      '@type': 'Organization',
+      name: BRAND.name,
+      url: article.siteUrl,
+    },
+    publisher: {
+      '@type': 'Organization',
+      name: BRAND.name,
+      url: article.siteUrl,
+      logo: {
+        '@type': 'ImageObject',
+        url: `${article.siteUrl}/favicon.svg`,
+      },
+    },
+  };
+}

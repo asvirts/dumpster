@@ -12,21 +12,29 @@ const guides = (await getCollection('guides'))
   title={pageTitle('Dumpster Rental Guides')}
   description="Size guides, materials, permits, and cost factors for smarter dumpster rentals."
 >
+  <div class="border-b-2 border-charcoal-900 bg-charcoal-900 py-12 text-white">
+    <div class="container-page">
+      <p class="eyebrow text-brand-400">Field manuals</p>
+      <h1 class="mt-2 font-display text-3xl uppercase tracking-tight sm:text-5xl">
+        Dumpster rental guides
+      </h1>
+      <p class="mt-4 max-w-2xl text-lg text-charcoal-200">
+        Practical education to avoid overages, permit surprises, and wrong-size containers.
+      </p>
+    </div>
+  </div>
   <div class="container-page py-12">
-    <h1 class="text-3xl font-bold text-ink">Guides</h1>
-    <p class="mt-2 max-w-2xl text-muted">
-      Practical education to avoid overages, permit surprises, and wrong-size containers.
-    </p>
-    <ul class="mt-10 grid gap-4 sm:grid-cols-2">
+    <ul class="grid gap-5 sm:grid-cols-2">
       {
         guides.map((g) => (
           <li>
-            <a
-              href={`/guides/${g.id}`}
-              class="card block p-6 text-ink no-underline transition hover:border-brand-300 hover:shadow-md"
-            >
-              <h2 class="text-lg font-bold">{g.data.title}</h2>
+            <a href={`/guides/${g.id}`} class="card block p-6 text-ink no-underline">
+              <p class="eyebrow text-muted">{g.data.category}</p>
+              <h2 class="mt-2 text-lg font-bold">{g.data.title}</h2>
               <p class="mt-2 text-sm text-muted">{g.data.description}</p>
+              <p class="mt-4 font-mono text-xs font-semibold uppercase tracking-widest text-brand-600">
+                Read the guide →
+              </p>
             </a>
           </li>
         ))

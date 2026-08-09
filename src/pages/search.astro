@@ -64,22 +64,23 @@ const title = pageTitle(city ? `${city.name} Dumpster Rental` : 'Search');
 ---
 
 <BaseLayout title={title} description={`Compare verified dumpster rental operators${city ? ` in ${city.name}, ${city.state}` : ''}.`}>
-  <div class="border-b border-border bg-surface py-8">
+  <div class="border-b-2 border-charcoal-900 bg-charcoal-900 py-10 text-white">
     <div class="container-page">
-      <h1 class="text-3xl font-bold text-ink">{heading}</h1>
-      <p class="mt-2 text-muted">
-        {results.length} operator{results.length === 1 ? '' : 's'}
+      <p class="eyebrow text-brand-400">Operator search</p>
+      <h1 class="mt-2 font-display text-3xl uppercase tracking-tight sm:text-4xl">{heading}</h1>
+      <p class="mt-3 font-mono text-xs uppercase tracking-widest text-charcoal-300">
+        <span class="font-bold text-brand-400">{results.length}</span> operator{results.length === 1 ? '' : 's'} found
         {city && (
           <>
             {' '}
             ·{' '}
-            <a href={`/dumpster-rental/${city.stateSlug}/${city.slug}`} class="font-medium">
+            <a href={`/dumpster-rental/${city.stateSlug}/${city.slug}`} class="font-semibold text-brand-400 underline decoration-2 underline-offset-4 hover:text-brand-300">
               City guide for {city.name}
             </a>
           </>
         )}
       </p>
-      <div class="mt-6 max-w-2xl">
+      <div class="mt-6 max-w-2xl border-2 border-charcoal-600 bg-charcoal-800 p-3">
         <SearchForm initialQ={q || (city ? `${city.name}, ${city.state}` : '')} />
       </div>
     </div>
@@ -104,7 +105,7 @@ const title = pageTitle(city ? `${city.name} Dumpster Rental` : 'Search');
         {
           results.length === 0 ? (
             <div class="card p-8 text-center">
-              <p class="font-semibold text-ink">No operators match these filters</p>
+              <p class="font-display text-xl uppercase tracking-tight text-ink">No operators match</p>
               <p class="mt-2 text-sm text-muted">
                 Try a priority city like Houston, TX or clear filters. Brokers are hidden by default.
               </p>
@@ -116,11 +117,11 @@ const title = pageTitle(city ? `${city.name} Dumpster Rental` : 'Search');
 
         <div
           id="compare-bar"
-          class="fixed inset-x-0 bottom-0 z-30 hidden border-t border-border bg-white p-4 shadow-lg"
+          class="fixed inset-x-0 bottom-0 z-30 hidden border-t-4 border-brand-500 bg-charcoal-900 p-4 text-white shadow-[0_-4px_20px_rgba(0,0,0,0.4)]"
         >
           <div class="container-page flex flex-wrap items-center justify-between gap-3">
-            <p class="text-sm font-medium text-ink">
-              <span id="compare-count">0</span> selected for comparison (max 4)
+            <p class="font-mono text-xs font-semibold uppercase tracking-widest">
+              <span id="compare-count" class="text-brand-400">0</span> selected for comparison (max 4)
             </p>
             <a id="compare-link" href="/compare" class="btn-primary pointer-events-none opacity-50"
               >Compare</a

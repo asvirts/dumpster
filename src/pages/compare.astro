@@ -105,25 +105,35 @@ const fields: { label: string; value: (id: string, op: (typeof rows)[0]) => stri
 
 <BaseLayout title={pageTitle('Compare operators')} noIndex>
   <div class="container-page py-10">
-    <h1 class="text-3xl font-bold text-ink">Compare dumpster operators</h1>
-    <p class="mt-2 text-muted">Side-by-side comparison of up to 4 operators.</p>
+    <p class="eyebrow text-brand-600">Head to head</p>
+    <h1 class="mt-2 font-display text-3xl uppercase tracking-tight text-ink sm:text-4xl">
+      Compare dumpster operators
+    </h1>
+    <p class="mt-2 text-muted">Side-by-side spec sheet for up to 4 operators.</p>
 
     {
       rows.length < 2 ? (
         <div class="card mt-8 p-8 text-center">
-          <p class="font-semibold text-ink">Select at least 2 operators to compare</p>
+          <p class="font-display text-xl uppercase tracking-tight text-ink">
+            Select at least 2 operators
+          </p>
           <p class="mt-2 text-sm text-muted">Use the Compare checkboxes on search results.</p>
-          <a href="/search" class="btn-primary mt-4 inline-flex">Back to search</a>
+          <a href="/search" class="btn-primary mt-5 inline-flex">Back to search</a>
         </div>
       ) : (
-        <div class="mt-8 overflow-x-auto">
+        <div class="mt-8 overflow-x-auto border-2 border-charcoal-900 bg-white shadow-[4px_4px_0_0_#121417]">
           <table class="w-full min-w-[640px] border-collapse text-left text-sm">
             <thead>
-              <tr class="border-b border-border">
-                <th class="p-3 font-medium text-muted">Feature</th>
+              <tr class="bg-charcoal-900 text-white">
+                <th class="p-3 font-mono text-xs font-semibold uppercase tracking-widest text-charcoal-300">
+                  Feature
+                </th>
                 {rows.map((op) => (
-                  <th class="p-3 align-bottom">
-                    <a href={`/operator/${op.slug}`} class="font-bold text-ink no-underline hover:text-brand-700">
+                  <th class="border-l-2 border-charcoal-700 p-3 align-bottom">
+                    <a
+                      href={`/operator/${op.slug}`}
+                      class="font-bold text-white no-underline hover:text-brand-400"
+                    >
                       {op.name}
                     </a>
                     <div class="mt-2">
@@ -138,18 +148,22 @@ const fields: { label: string; value: (id: string, op: (typeof rows)[0]) => stri
               </tr>
             </thead>
             <tbody>
-              {fields.map((f) => (
-                <tr class="border-b border-border">
-                  <th class="p-3 font-medium text-muted">{f.label}</th>
+              {fields.map((f, i) => (
+                <tr class:list={['border-t-2 border-charcoal-100', i % 2 === 1 && 'bg-charcoal-50']}>
+                  <th class="p-3 font-mono text-xs font-semibold uppercase tracking-wider text-muted">
+                    {f.label}
+                  </th>
                   {rows.map((op) => (
-                    <td class="p-3 text-ink">{f.value(op.id, op)}</td>
+                    <td class="border-l-2 border-charcoal-100 p-3 font-mono text-xs font-medium text-charcoal-800">
+                      {f.value(op.id, op)}
+                    </td>
                   ))}
                 </tr>
               ))}
-              <tr>
+              <tr class="border-t-2 border-charcoal-900">
                 <th class="p-3" />
                 {rows.map((op) => (
-                  <td class="p-3">
+                  <td class="border-l-2 border-charcoal-100 p-3">
                     <a href={`/operator/${op.slug}#quote`} class="btn-primary">
                       Request quote
                     </a>

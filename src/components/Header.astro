@@ -8,16 +8,17 @@ const links = [
 ];
 ---
 
-<header class="sticky top-0 z-40 border-b border-border/80 bg-white/90 backdrop-blur">
+<header class="sticky top-0 z-40 bg-charcoal-900 text-white">
+  <div class="hazard-bar" aria-hidden="true"></div>
   <div class="container-page flex h-16 items-center justify-between gap-4">
-    <a href="/" class="flex items-center gap-2 text-ink no-underline hover:text-ink">
+    <a href="/" class="flex items-center gap-2.5 text-white no-underline hover:text-white">
       <span
-        class="flex h-9 w-9 items-center justify-center rounded-lg bg-brand-600 text-sm font-bold text-white"
+        class="flex h-9 w-9 items-center justify-center bg-brand-500 font-display text-sm text-white shadow-[2px_2px_0_0_#ffc800]"
         aria-hidden="true"
       >
         DL
       </span>
-      <span class="text-lg font-bold tracking-tight">{BRAND.name}</span>
+      <span class="font-display text-lg uppercase tracking-tight">{BRAND.name}</span>
     </a>
     <nav class="hidden items-center gap-1 sm:flex" aria-label="Main">
       {
@@ -25,17 +26,66 @@ const links = [
           <a
             href={l.href}
             class:list={[
-              'rounded-lg px-3 py-2 text-sm font-medium no-underline',
+              'px-3 py-2 font-mono text-xs font-semibold uppercase tracking-widest no-underline',
               path.startsWith(l.href)
-                ? 'bg-brand-50 text-brand-800'
-                : 'text-slate-600 hover:bg-surface hover:text-ink',
+                ? 'text-brand-400 underline decoration-2 underline-offset-8'
+                : 'text-charcoal-200 hover:text-brand-400',
             ]}
           >
             {l.label}
           </a>
         ))
       }
+      <a href="/search" class="btn-primary ml-3 px-4 py-2 text-xs">Find dumpsters</a>
     </nav>
-    <a href="/search" class="btn-primary text-sm sm:hidden">Search</a>
+    <button
+      type="button"
+      id="nav-toggle"
+      class="flex h-10 w-10 items-center justify-center border-2 border-charcoal-600 text-white sm:hidden"
+      aria-expanded="false"
+      aria-controls="mobile-nav"
+      aria-label="Toggle menu"
+    >
+      <svg class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+        <path
+          fill-rule="evenodd"
+          d="M2 4.75A.75.75 0 012.75 4h14.5a.75.75 0 010 1.5H2.75A.75.75 0 012 4.75zm0 5.25a.75.75 0 01.75-.75h14.5a.75.75 0 010 1.5H2.75a.75.75 0 01-.75-.75zm0 5.25a.75.75 0 01.75-.75h14.5a.75.75 0 010 1.5H2.75a.75.75 0 01-.75-.75z"
+          clip-rule="evenodd"
+        />
+      </svg>
+    </button>
+  </div>
+  <div id="mobile-nav" class="hidden border-t-2 border-charcoal-700 sm:hidden">
+    <nav class="container-page flex flex-col gap-1 py-4" aria-label="Mobile">
+      {
+        links.map((l) => (
+          <a
+            href={l.href}
+            class:list={[
+              'px-2 py-2.5 font-mono text-sm font-semibold uppercase tracking-widest no-underline',
+              path.startsWith(l.href) ? 'text-brand-400' : 'text-charcoal-200 hover:text-brand-400',
+            ]}
+          >
+            {l.label}
+          </a>
+        ))
+      }
+      <a href="/search" class="btn-primary mt-2">Find dumpsters</a>
+    </nav>
   </div>
 </header>
+
+<script>
+  function initNav() {
+    const toggle = document.getElementById('nav-toggle');
+    const panel = document.getElementById('mobile-nav');
+    if (!toggle || !panel || toggle.dataset.bound) return;
+    toggle.dataset.bound = '1';
+    toggle.addEventListener('click', () => {
+      const open = panel.classList.toggle('hidden') === false;
+      toggle.setAttribute('aria-expanded', String(open));
+    });
+  }
+  initNav();
+  document.addEventListener('astro:page-load', initNav);
+</script>

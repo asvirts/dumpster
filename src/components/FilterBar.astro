@@ -24,8 +24,9 @@ const {
 } = Astro.props;
 ---
 
-<form method="get" action="/search" class="card space-y-4 p-4">
+<form method="get" action="/search" class="card space-y-5 p-5">
   <input type="hidden" name="q" value={q} />
+  <p class="eyebrow border-b-2 border-charcoal-900 pb-3 text-ink">Filters</p>
   <div>
     <label class="label" for="filter-size">Dumpster size</label>
     <select id="filter-size" name="size" class="input">
@@ -52,22 +53,22 @@ const {
       <option value="distance" selected={sort === 'distance'}>Distance</option>
     </select>
   </div>
-  <fieldset class="space-y-2">
-    <legend class="label">Options</legend>
-    <label class="flex items-center gap-2 text-sm">
-      <input type="checkbox" name="driveway" value="1" checked={driveway === '1'} class="rounded border-border" />
+  <fieldset class="space-y-2.5 border-t-2 border-charcoal-100 pt-4">
+    <legend class="label sr-only">Options</legend>
+    <label class="flex items-center gap-2 text-sm font-medium text-charcoal-700">
+      <input type="checkbox" name="driveway" value="1" checked={driveway === '1'} class="h-4 w-4" />
       Residential driveway-safe
     </label>
-    <label class="flex items-center gap-2 text-sm">
-      <input type="checkbox" name="sameDay" value="1" checked={sameDay === '1'} class="rounded border-border" />
+    <label class="flex items-center gap-2 text-sm font-medium text-charcoal-700">
+      <input type="checkbox" name="sameDay" value="1" checked={sameDay === '1'} class="h-4 w-4" />
       Same-day capable
     </label>
-    <label class="flex items-center gap-2 text-sm">
-      <input type="checkbox" name="verified" value="1" checked={verified !== '0'} class="rounded border-border" />
+    <label class="flex items-center gap-2 text-sm font-medium text-charcoal-700">
+      <input type="checkbox" name="verified" value="1" checked={verified !== '0'} class="h-4 w-4" />
       Verified only
     </label>
-    <label class="flex items-center gap-2 text-sm">
-      <input type="checkbox" name="brokers" value="1" checked={brokers === '1'} class="rounded border-border" />
+    <label class="flex items-center gap-2 text-sm font-medium text-charcoal-700">
+      <input type="checkbox" name="brokers" value="1" checked={brokers === '1'} class="h-4 w-4" />
       Include brokers
     </label>
   </fieldset>

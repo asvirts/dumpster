@@ -37,7 +37,7 @@ const center = {
   data-center-lng={center.lng}
   data-zoom={zoom}
 >
-  <div class="flex h-full items-center justify-center bg-slate-100 text-sm text-muted" data-map-fallback>
+  <div class="flex h-full items-center justify-center bg-charcoal-100 font-mono text-xs uppercase tracking-widest text-muted" data-map-fallback>
     Loading map…
   </div>
 </div>
@@ -71,7 +71,7 @@ const center = {
         const popup = new Popup({ offset: 16 }).setHTML(
           `<strong>${m.name}</strong><br/><a href="/operator/${m.slug}">View profile</a>`,
         );
-        new Marker({ color: '#15803d' })
+        new Marker({ color: '#ff4d00' })
           .setLngLat([m.lng, m.lat])
           .setPopup(popup)
           .addTo(map);

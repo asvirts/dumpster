@@ -23,18 +23,18 @@ const priceLabel =
 
 <article
   class:list={[
-    'card p-5 transition hover:border-brand-300 hover:shadow-md',
-    selected && 'ring-2 ring-brand-500',
+    'card p-5',
+    selected && 'outline-2 outline-offset-2 outline-brand-500',
   ]}
 >
   <div class="flex flex-wrap items-start justify-between gap-3">
     <div>
       <h2 class="text-lg font-bold text-ink">
-        <a href={`/operator/${op.slug}`} class="text-ink no-underline hover:text-brand-700">
+        <a href={`/operator/${op.slug}`} class="text-ink no-underline hover:text-brand-600">
           {op.name}
         </a>
       </h2>
-      <p class="mt-1 text-sm text-muted">
+      <p class="mt-1 font-mono text-xs uppercase tracking-wider text-muted">
         {[op.hqCity, op.hqState].filter(Boolean).join(', ') || 'Local operator'}
         {
           op.distanceMiles != null && (
@@ -43,7 +43,10 @@ const priceLabel =
         }
       </p>
     </div>
-    <p class="text-right text-base font-semibold text-brand-700">{priceLabel}</p>
+    <div class="text-right">
+      <p class="font-mono text-lg font-bold text-brand-600">{priceLabel}</p>
+      <p class="font-mono text-[10px] uppercase tracking-widest text-muted">Typical range</p>
+    </div>
   </div>
 
   <div class="mt-3">
@@ -56,50 +59,50 @@ const priceLabel =
 
   {
     op.description && (
-      <p class="mt-3 line-clamp-2 text-sm text-slate-600">{op.description}</p>
+      <p class="mt-3 line-clamp-2 text-sm text-charcoal-600">{op.description}</p>
     )
   }
 
-  <div class="mt-4 flex flex-wrap gap-2 text-xs">
+  <div class="mt-4 flex flex-wrap gap-1.5">
     {
       op.sizes.map((s) => (
-        <span class="rounded-md bg-surface px-2 py-1 font-medium text-slate-700">{s} yd</span>
+        <span class="chip bg-charcoal-900 text-brand-400">{s} yd</span>
       ))
     }
     {
       materialLabels.map((m) => (
-        <span class="rounded-md bg-brand-50 px-2 py-1 font-medium text-brand-800">{m}</span>
+        <span class="chip border-2 border-charcoal-200 text-charcoal-600">{m}</span>
       ))
     }
     {
       op.drivewaySuitable && (
-        <span class="rounded-md bg-sky-50 px-2 py-1 font-medium text-sky-800">Driveway-safe</span>
+        <span class="chip border-2 border-brand-500 text-brand-700">Driveway-safe</span>
       )
     }
     {
       op.sameDayCapable && (
-        <span class="rounded-md bg-violet-50 px-2 py-1 font-medium text-violet-800">Same-day</span>
+        <span class="chip border-2 border-brand-500 text-brand-700">Same-day</span>
       )
     }
   </div>
 
-  <div class="mt-5 flex flex-wrap items-center gap-2">
+  <div class="mt-5 flex flex-wrap items-center gap-2 border-t-2 border-charcoal-100 pt-4">
     <a href={`/operator/${op.slug}`} class="btn-primary">View profile</a>
     {
       op.phone && (
-        <a href={`tel:${op.phone}`} class="btn-secondary">
+        <a href={`tel:${op.phone}`} class="btn-secondary font-mono normal-case tracking-normal">
           {formatPhone(op.phone)}
         </a>
       )
     }
-    <label class="ml-auto flex cursor-pointer items-center gap-2 text-xs text-muted">
+    <label class="ml-auto flex cursor-pointer items-center gap-2 font-mono text-xs font-semibold uppercase tracking-wider text-muted">
       <input
         type="checkbox"
         name="compare"
         value={op.id}
         data-compare-id={op.id}
         data-compare-name={op.name}
-        class="compare-check rounded border-border"
+        class="compare-check h-4 w-4"
       />
       Compare
     </label>
