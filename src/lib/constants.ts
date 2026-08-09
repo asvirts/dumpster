@@ -1,5 +1,5 @@
 export const BRAND = {
-  name: 'DumpsterLocal',
+  name: 'Find A Dumpster',
   tagline: 'Verified local dumpster rentals — transparent pricing, real operators',
   description:
     'Find verified local dumpster rental operators with transparent pricing, permit notes, and driveway-safe options near you.',

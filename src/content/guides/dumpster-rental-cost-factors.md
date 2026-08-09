@@ -23,6 +23,6 @@ category: basics
 - Broker quotes that cannot name the local hauler
 - Pressure to book without confirming prohibited items
 
-## How DumpsterLocal helps
+## How Find A Dumpster helps
 
 We show **typical min–max ranges**, overage notes when available, driveway suitability, and verification dates so you can compare real operators — then request a formal quote with your ZIP, size, and material.

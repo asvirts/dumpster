@@ -1,9 +1,10 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
+import { pageTitle } from '../lib/seo';
 export const prerender = true;
 ---
 
-<BaseLayout title="Page not found | DumpsterLocal" noIndex>
+<BaseLayout title={pageTitle('Page not found')} noIndex>
   <div class="container-page py-24 text-center">
     <p class="font-display text-7xl text-brand-500 sm:text-8xl">404</p>
     <div class="hazard-bar mx-auto mt-6 max-w-xs" aria-hidden="true"></div>

@@ -32,4 +32,4 @@ Many operators offer **concrete/dirt only** or **yard waste only** containers at
 2. Ask what is banned at their dump facility.
 3. Keep hazardous items out of the mix — rejected loads are expensive.
 
-Browse operators by material filter on DumpsterLocal to find haulers that accept your debris type.
+Browse operators by material filter on Find A Dumpster to find haulers that accept your debris type.

@@ -1,6 +1,6 @@
 {
   "$schema": "node_modules/wrangler/config-schema.json",
-  "name": "dumpsterlocal",
+  "name": "findadumpster",
   "main": "@astrojs/cloudflare/entrypoints/server",
   "compatibility_date": "2025-10-01",
   // global_fetch_strictly_public: required so env.ASSETS.fetch() works on workers.dev
@@ -20,7 +20,7 @@
     }
   ],
   "vars": {
-    "PUBLIC_SITE_NAME": "DumpsterLocal",
-    "PUBLIC_SITE_URL": "https://dumpsterlocal.com"
+    "PUBLIC_SITE_NAME": "Find A Dumpster",
+    "PUBLIC_SITE_URL": "https://findadumpster.net"
   }
 }

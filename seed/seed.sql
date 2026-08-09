@@ -1,4 +1,4 @@
--- DumpsterLocal seed data
+-- Find A Dumpster seed data
 -- Cities are real priority metros.
 -- Operators below are SEEDED PLACEHOLDERS for development and demo purposes.
 -- They use placeholder contact info. Before any production marketing or paid traffic:

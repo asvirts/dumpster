@@ -28,4 +28,4 @@ Dense materials (concrete, dirt, roofing shingles, plaster) fill weight limits l
 
 ## Not sure?
 
-Start with a 15–20 yard for most home projects, and request quotes for two sizes. Local operators on DumpsterLocal list sizes they actually offer so you can compare apples-to-apples.
+Start with a 15–20 yard for most home projects, and request quotes for two sizes. Local operators on Find A Dumpster list sizes they actually offer so you can compare apples-to-apples.

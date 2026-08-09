@@ -5,7 +5,7 @@ import tailwindcss from '@tailwindcss/vite';
 
 // https://astro.build/config
 export default defineConfig({
-  site: 'https://dumpsterlocal.com',
+  site: 'https://findadumpster.net',
   output: 'server',
   adapter: cloudflare({
     imageService: 'passthrough',

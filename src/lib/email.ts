@@ -1,4 +1,5 @@
 import { env } from 'cloudflare:workers';
+import { BRAND } from './constants';
 
 type LeadEmailPayload = {
   operatorName: string;
@@ -43,7 +44,7 @@ export async function sendLeadNotification(payload: LeadEmailPayload): Promise<b
     `Timeline: ${payload.timeline ?? '—'}`,
     `Notes: ${payload.notes ?? '—'}`,
     '',
-    '— DumpsterLocal',
+    `— ${BRAND.name}`,
   ].join('\n');
 
   try {
@@ -54,7 +55,7 @@ export async function sendLeadNotification(payload: LeadEmailPayload): Promise<b
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        from: 'DumpsterLocal <onboarding@resend.dev>',
+        from: `${BRAND.name} <onboarding@resend.dev>`,
         to,
         subject,
         text,

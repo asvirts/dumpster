@@ -1,6 +1,8 @@
-# DumpsterLocal
+# Find A Dumpster
 
 Verified, hyper-local dumpster rental directory (MVP). Quality and verification over listing volume.
+
+**Site:** [https://findadumpster.net](https://findadumpster.net)
 
 **Stack:** Astro 7 · Cloudflare Workers · D1 · Drizzle · Tailwind · MapLibre
 

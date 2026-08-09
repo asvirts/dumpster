@@ -1,9 +1,9 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 520 96" fill="none" role="img" aria-label="DumpsterLocal">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 620 96" fill="none" role="img" aria-label="Find A Dumpster">
   <defs>
     <style>
       .wordmark {
         font-family: "Archivo Black", "Arial Black", Impact, Haettenschweiler, sans-serif;
-        font-size: 44px;
+        font-size: 40px;
         font-weight: 900;
         letter-spacing: -0.03em;
         fill: #121417;
@@ -25,5 +25,5 @@
     <circle cx="58" cy="41.2" r="4.5" fill="#ffc800"/>
     <circle cx="58" cy="41.2" r="2" fill="#121417"/>
   </g>
-  <text class="wordmark" x="100" y="64">DUMPSTERLOCAL</text>
+  <text class="wordmark" x="100" y="64">FIND A DUMPSTER</text>
 </svg>

@@ -5,7 +5,7 @@ import { cities, operators } from '../lib/schema';
 import { eq } from 'drizzle-orm';
 
 export const GET: APIRoute = async ({ site }) => {
-  const base = site?.toString().replace(/\/$/, '') ?? 'https://dumpsterlocal.com';
+  const base = site?.toString().replace(/\/$/, '') ?? 'https://findadumpster.net';
   const urls: string[] = [
     `${base}/`,
     `${base}/search`,
