@@ -70,7 +70,7 @@ export function organizationJsonLd(siteUrl: string) {
     '@type': 'Organization',
     name: BRAND.name,
     url: siteUrl,
-    logo: `${siteUrl}/favicon.svg`,
+    logo: `${siteUrl}/logo-mark.png`,
     description: BRAND.description,
   };
 }
@@ -130,7 +130,7 @@ export function articleJsonLd(article: {
       url: article.siteUrl,
       logo: {
         '@type': 'ImageObject',
-        url: `${article.siteUrl}/favicon.svg`,
+        url: `${article.siteUrl}/logo-mark.png`,
       },
     },
   };

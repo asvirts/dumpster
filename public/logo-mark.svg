@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none" role="img" aria-label="DumpsterLocal">
+  <rect width="64" height="64" fill="#ff4d00"/>
+
+  <!-- Roll-off dumpster -->
+  <path d="M7 23h32l4.5 24H11.5L7 23z" fill="#121417"/>
+  <path d="M9.5 25h27l3.5 20H13L9.5 25z" fill="#ff4d00"/>
+  <!-- Open top rim -->
+  <path d="M6 21h34l1.2 3.5H7.2L6 21z" fill="#121417"/>
+  <path d="M8 22h30l0.5 1.5H8.5L8 22z" fill="#ff7342"/>
+  <!-- Interior depth -->
+  <path d="M12 25h22l1 5H13l-1-5z" fill="#121417" opacity="0.35"/>
+  <!-- Vertical ribs -->
+  <path d="M16 30v12M22 30v12M28 30v12" stroke="#121417" stroke-width="1.6" opacity="0.5"/>
+  <!-- Hazard band -->
+  <path d="M13 37h23l0.5 4H13.5L13 37z" fill="#ffc800"/>
+  <path d="M15 38.2h3.2v1.6H15zm6 0h3.2v1.6H21zm6 0h3.2v1.6H27z" fill="#121417"/>
+  <!-- Latch -->
+  <rect x="21" y="30" width="7" height="5" fill="#121417"/>
+  <rect x="22.2" y="31" width="4.6" height="3" fill="#ffc800"/>
+
+  <!-- Location pin -->
+  <path d="M47 25c-5.8 0-10.5 4.4-10.5 9.8 0 7.2 10.5 17.2 10.5 17.2s10.5-10 10.5-17.2C57.5 29.4 52.8 25 47 25z" fill="#121417"/>
+  <circle cx="47" cy="34.6" r="3.8" fill="#ffc800"/>
+  <circle cx="47" cy="34.6" r="1.7" fill="#121417"/>
+</svg>

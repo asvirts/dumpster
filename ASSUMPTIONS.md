@@ -5,7 +5,7 @@ Documented during DumpsterLocal MVP build (PRD v1.0, Cloudflare deploy).
 1. **Brand:** Working name is DumpsterLocal until a final brand/domain is chosen.
 2. **Stack deviation from PRD:** Astro 7 + Cloudflare Workers + D1 + Drizzle instead of Next.js + Vercel + Postgres. Chosen for the existing scaffold and Cloudflare deployment requirement.
 3. **Geo:** City/ZIP matching via service-area tables + optional haversine distance from city center to operator HQ. No PostGIS.
-4. **Demo seed data:** Priority metros ship with fictional verified operators (`is_demo = 1`) so UI and SEO structure are exerciseable. Replace before marketing production traffic.
+4. **Seeded operators:** Priority metros ship with seeded operator placeholders (all `is_demo = 0`) with placeholder contact info. Every seeded operator has a `SEED PLACEHOLDER` note in `verification_notes`. These must be replaced or fully verified (phone, website, insurance, license) before any production marketing or paid traffic. The broker and pending rows exist for filter/admin workflow testing.
 5. **Quotes:** Single-operator leads only; multi-operator quote routing is Phase 2.
 6. **Pricing:** Typical min–max ranges and notes, not live inventory or booking.
 7. **Brokers:** Schema flag + hidden by default in search (`excludeBrokers` default true).

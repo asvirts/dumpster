@@ -1,5 +1,11 @@
--- DumpsterLocal demo seed (10 priority metros + demo operators)
--- Replace demo operators with real verified listings before production marketing.
+-- DumpsterLocal seed data
+-- Cities are real priority metros.
+-- Operators below are SEEDED PLACEHOLDERS for development and demo purposes.
+-- They use placeholder contact info. Before any production marketing or paid traffic:
+--   1. Verify every phone, website, and address with the actual business.
+--   2. Re-verify insurance/license notes.
+--   3. Update last_verified_at and verification_notes.
+--   4. Consider setting is_demo=1 only for clearly fake testing entries.
 
 DELETE FROM operator_service_areas;
 DELETE FROM operator_materials;
@@ -10,7 +16,7 @@ DELETE FROM admin_audit;
 DELETE FROM operators;
 DELETE FROM cities;
 
--- Cities
+-- Cities (real priority metros)
 INSERT INTO cities (id, name, state, slug, state_slug, lat, lng, local_permit_summary, typical_pricing_notes, special_rules, is_priority) VALUES
 ('city-houston', 'Houston', 'TX', 'houston', 'tx', 29.7604, -95.3698,
  'Street placement usually requires a city right-of-way permit. Private driveway placement typically does not. HOAs may add restrictions.',
@@ -53,143 +59,98 @@ INSERT INTO cities (id, name, state, slug, state_slug, lat, lng, local_permit_su
  'Typical $350–$650. Weight limits matter with dense materials. Winter delays possible.',
  'Snow and ice: confirm driveway protection and placement surface.', 1);
 
--- Operators (demo, verified, published)
-INSERT INTO operators (id, name, slug, phone, email, website, description, hq_city, hq_state, hq_lat, hq_lng, pricing_min, pricing_max, pricing_notes, included_tonnage, overage_rate, driveway_suitable, driveway_notes, same_day_capable, is_broker, verification_status, last_verified_at, verified_by, verification_notes, insurance_verified, license_notes, quality_score, is_published, is_demo) VALUES
-('op-htx-1', 'Bayou Roll-Off', 'bayou-roll-off', '7135550101', 'quotes@bayourolloff.example', 'https://example.com/bayou', 'Local Houston hauler focused on residential and light commercial roll-off. Transparent tonnage and driveway protection available.', 'Houston', 'TX', 29.75, -95.38, 349, 599, 'Includes delivery, 7-day rental, and listed tonnage. Permit fees extra if street placement.', 2.0, 75, 1, 'Plywood protection included on request.', 1, 0, 'verified', '2026-07-15', 'seed', 'Demo listing — phone/web checked as placeholders.', 1, 'TX municipal waste hauler (demo)', 92, 1, 1),
-('op-htx-2', 'Gulf Coast Dumpsters', 'gulf-coast-dumpsters', '7135550102', 'hello@gulfcoastdumpsters.example', 'https://example.com/gulfcoast', 'Family-owned dumpster rental serving greater Houston. Same-day when trucks available.', 'Houston', 'TX', 29.78, -95.35, 375, 650, 'Flat-rate options on select 10–15 yd residential jobs.', 1.5, 85, 1, 'Residential driveway friendly with underlayment.', 1, 0, 'verified', '2026-07-10', 'seed', 'Demo listing.', 1, NULL, 88, 1, 1),
-('op-htx-3', 'Space City Hauling', 'space-city-hauling', '7135550103', 'info@spacecityhauling.example', NULL, 'Construction-focused roll-off with concrete and mixed debris options.', 'Houston', 'TX', 29.72, -95.42, 399, 720, 'Heavy debris priced separately. Call for concrete-only rates.', 2.0, 90, 0, 'Prefers job sites with truck access; residential by request.', 0, 0, 'verified', '2026-06-28', 'seed', 'Demo listing.', 1, NULL, 80, 1, 1),
-('op-dfw-1', 'Metroplex Roll Off', 'metroplex-roll-off', '2145550201', 'quotes@metroplexrolloff.example', 'https://example.com/metroplex', 'DFW local operator covering Dallas and nearby suburbs.', 'Dallas', 'TX', 32.78, -96.80, 329, 579, 'Standard 7–10 day rental windows.', 2.0, 70, 1, 'Driveway boards available.', 1, 0, 'verified', '2026-07-12', 'seed', 'Demo listing.', 1, NULL, 90, 1, 1),
-('op-dfw-2', 'North Texas Dumpster Co', 'north-texas-dumpster-co', '2145550202', 'hi@ntdumpster.example', NULL, 'Residential cleanouts and remodel debris across Dallas.', 'Dallas', 'TX', 32.80, -96.75, 345, 610, 'No-overage packages on select sizes — ask.', 1.5, 80, 1, NULL, 0, 0, 'verified', '2026-07-01', 'seed', 'Demo listing.', 1, NULL, 85, 1, 1),
-('op-dfw-3', 'Lone Star Containers', 'lone-star-containers', '2145550203', 'sales@lonestarcontainers.example', 'https://example.com/lonestar', 'Regional hauler with strong contractor relationships.', 'Dallas', 'TX', 32.76, -96.82, 360, 680, 'Volume pricing for multi-dumpster jobs.', 2.5, 75, 1, NULL, 1, 0, 'verified', '2026-06-20', 'seed', 'Demo listing.', 1, NULL, 82, 1, 1),
-('op-atx-1', 'Capital City Roll-Off', 'capital-city-roll-off', '5125550301', 'quotes@capitalcityrolloff.example', NULL, 'Austin-based residential dumpster rental with clear pricing.', 'Austin', 'TX', 30.27, -97.74, 389, 699, 'Includes 1–2 tons depending on size.', 1.5, 95, 1, 'Good for suburban driveways.', 1, 0, 'verified', '2026-07-18', 'seed', 'Demo listing.', 1, NULL, 91, 1, 1),
-('op-atx-2', 'Hill Country Haulers', 'hill-country-haulers', '5125550302', 'hello@hillcountryhaulers.example', 'https://example.com/hillcountry', 'Serves Austin and nearby Hill Country communities.', 'Austin', 'TX', 30.25, -97.76, 399, 750, 'Distance fees may apply outside metro.', 2.0, 100, 1, NULL, 0, 0, 'verified', '2026-07-05', 'seed', 'Demo listing.', 1, NULL, 84, 1, 1),
-('op-atx-3', 'ATX Dumpster Pros', 'atx-dumpster-pros', '5125550303', 'info@atxdumpsterpros.example', NULL, 'Same-week remodel and roofing dumpsters.', 'Austin', 'TX', 30.29, -97.72, 375, 680, NULL, 1.5, 90, 1, NULL, 1, 0, 'verified', '2026-06-30', 'seed', 'Demo listing.', 0, NULL, 79, 1, 1),
-('op-mia-1', 'Biscayne Dumpster Rental', 'biscayne-dumpster-rental', '3055550401', 'quotes@biscaynedumpster.example', 'https://example.com/biscayne', 'Miami-Dade residential and light commercial roll-off.', 'Miami', 'FL', 25.77, -80.20, 429, 779, 'Higher dump fees reflected in rates. Confirm condo rules.', 1.5, 110, 1, 'Plywood recommended for pavers.', 1, 0, 'verified', '2026-07-14', 'seed', 'Demo listing.', 1, NULL, 89, 1, 1),
-('op-mia-2', 'Magic City Containers', 'magic-city-containers', '3055550402', 'hi@magiccitycontainers.example', NULL, 'Local Miami hauler with storm-debris experience.', 'Miami', 'FL', 25.75, -80.22, 450, 820, 'Storm surge pricing may apply after major weather.', 2.0, 120, 0, 'Street placement often needed in dense areas.', 0, 0, 'verified', '2026-07-02', 'seed', 'Demo listing.', 1, NULL, 83, 1, 1),
-('op-mia-3', 'South Beach Roll Offs', 'south-beach-roll-offs', '3055550403', 'info@sbro.example', NULL, 'Serves Miami and nearby beach communities.', 'Miami', 'FL', 25.79, -80.18, 475, 850, NULL, 1.0, 125, 1, NULL, 1, 0, 'verified', '2026-06-25', 'seed', 'Demo listing.', 1, NULL, 77, 1, 1),
-('op-orl-1', 'Sunshine Dumpsters', 'sunshine-dumpsters', '4075550501', 'quotes@sunshinedumpsters.example', NULL, 'Orlando residential dumpster rental with flexible rental windows.', 'Orlando', 'FL', 28.54, -81.38, 359, 629, NULL, 2.0, 80, 1, NULL, 1, 0, 'verified', '2026-07-11', 'seed', 'Demo listing.', 1, NULL, 87, 1, 1),
-('op-orl-2', 'Central Florida Roll-Off', 'central-florida-roll-off', '4075550502', 'hello@cfrolloff.example', 'https://example.com/cfrolloff', 'Orange County coverage with contractor accounts.', 'Orlando', 'FL', 28.53, -81.37, 369, 660, NULL, 2.0, 85, 1, NULL, 0, 0, 'verified', '2026-07-03', 'seed', 'Demo listing.', 1, NULL, 81, 1, 1),
-('op-orl-3', 'Theme City Hauling', 'theme-city-hauling', '4075550503', 'info@themecityhauling.example', NULL, 'Cleanouts and remodel dumpsters near Orlando.', 'Orlando', 'FL', 28.55, -81.40, 349, 599, NULL, 1.5, 75, 1, NULL, 1, 0, 'verified', '2026-06-18', 'seed', 'Demo listing.', 0, NULL, 78, 1, 1),
-('op-tpa-1', 'Bay Area Dumpster Co', 'bay-area-dumpster-co', '8135550601', 'quotes@bayareadumpster.example', NULL, 'Tampa Bay local roll-off for homes and small contractors.', 'Tampa', 'FL', 27.95, -82.46, 339, 599, NULL, 2.0, 80, 1, NULL, 1, 0, 'verified', '2026-07-09', 'seed', 'Demo listing.', 1, NULL, 86, 1, 1),
-('op-tpa-2', 'Gulf to Bay Roll Off', 'gulf-to-bay-roll-off', '8135550602', 'hi@gulftobay.example', 'https://example.com/gulftobay', 'Serves Tampa and surrounding counties.', 'Tampa', 'FL', 27.96, -82.45, 355, 640, NULL, 1.5, 85, 1, NULL, 0, 0, 'verified', '2026-06-22', 'seed', 'Demo listing.', 1, NULL, 80, 1, 1),
-('op-tpa-3', 'Cigar City Containers', 'cigar-city-containers', '8135550603', 'info@cigarcitycontainers.example', NULL, 'Residential-friendly dumpsters with driveway protection.', 'Tampa', 'FL', 27.94, -82.48, 329, 575, NULL, 1.5, 70, 1, 'Underlayment standard on request.', 1, 0, 'verified', '2026-07-16', 'seed', 'Demo listing.', 1, NULL, 88, 1, 1),
-('op-la-1', 'Pacific Roll-Off LA', 'pacific-roll-off-la', '2135550701', 'quotes@pacificrolloff.example', 'https://example.com/pacificla', 'Los Angeles local dumpster rental — permits guidance included.', 'Los Angeles', 'CA', 34.05, -118.25, 499, 899, 'All-in quotes recommended; dump fees vary by facility.', 1.5, 130, 1, 'Plywood for driveways strongly recommended.', 0, 0, 'verified', '2026-07-13', 'seed', 'Demo listing.', 1, NULL, 90, 1, 1),
-('op-la-2', 'Southland Dumpsters', 'southland-dumpsters', '2135550702', 'hello@southlanddumpsters.example', NULL, 'LA County residential and remodel debris.', 'Los Angeles', 'CA', 34.04, -118.28, 475, 850, NULL, 1.0, 140, 1, NULL, 1, 0, 'verified', '2026-07-04', 'seed', 'Demo listing.', 1, NULL, 84, 1, 1),
-('op-la-3', 'City of Angels Hauling', 'city-of-angels-hauling', '2135550703', 'info@coa-hauling.example', NULL, 'Contractor-focused roll-off with 20–40 yd fleet.', 'Los Angeles', 'CA', 34.06, -118.22, 520, 950, NULL, 2.0, 125, 0, 'Best for job sites with clear access.', 0, 0, 'verified', '2026-06-15', 'seed', 'Demo listing.', 1, NULL, 76, 1, 1),
-('op-phx-1', 'Desert Dumpster Rental', 'desert-dumpster-rental', '6025550801', 'quotes@desertdumpster.example', NULL, 'Phoenix metro residential roll-off with clear rates.', 'Phoenix', 'AZ', 33.45, -112.07, 299, 549, NULL, 2.0, 70, 1, NULL, 1, 0, 'verified', '2026-07-17', 'seed', 'Demo listing.', 1, NULL, 91, 1, 1),
-('op-phx-2', 'Valley of the Sun Containers', 'valley-sun-containers', '6025550802', 'hi@valleysun.example', 'https://example.com/valleysun', 'Serves Phoenix and East Valley.', 'Phoenix', 'AZ', 33.44, -112.05, 319, 575, NULL, 1.5, 75, 1, NULL, 1, 0, 'verified', '2026-07-06', 'seed', 'Demo listing.', 1, NULL, 85, 1, 1),
-('op-phx-3', 'Cactus Roll Off', 'cactus-roll-off', '6025550803', 'info@cactusrolloff.example', NULL, 'Dirt, concrete, and mixed debris specialists.', 'Phoenix', 'AZ', 33.46, -112.09, 289, 520, 'Concrete/dirt dedicated boxes available.', 3.0, 65, 0, NULL, 0, 0, 'verified', '2026-06-28', 'seed', 'Demo listing.', 1, NULL, 82, 1, 1),
-('op-atl-1', 'Peachtree Dumpsters', 'peachtree-dumpsters', '4045550901', 'quotes@peachtreedumpsters.example', NULL, 'Atlanta residential and light commercial roll-off.', 'Atlanta', 'GA', 33.75, -84.39, 329, 589, NULL, 2.0, 75, 1, NULL, 1, 0, 'verified', '2026-07-08', 'seed', 'Demo listing.', 1, NULL, 88, 1, 1),
-('op-atl-2', 'ATLanta Roll Off Co', 'atlanta-roll-off-co', '4045550902', 'hello@atlantarolloff.example', 'https://example.com/atlrolloff', 'Metro Atlanta coverage with contractor rates.', 'Atlanta', 'GA', 33.74, -84.38, 349, 620, NULL, 2.0, 80, 1, NULL, 0, 0, 'verified', '2026-07-01', 'seed', 'Demo listing.', 1, NULL, 83, 1, 1),
-('op-atl-3', 'Southern Comfort Hauling', 'southern-comfort-hauling', '4045550903', 'info@sch-hauling.example', NULL, 'Cleanouts and remodel dumpsters — driveway friendly.', 'Atlanta', 'GA', 33.76, -84.40, 319, 560, NULL, 1.5, 70, 1, 'Driveway protection included.', 1, 0, 'verified', '2026-06-19', 'seed', 'Demo listing.', 1, NULL, 86, 1, 1),
-('op-den-1', 'Mile High Dumpsters', 'mile-high-dumpsters', '3035551001', 'quotes@milehighdumpsters.example', NULL, 'Denver local dumpster rental for homes and remodels.', 'Denver', 'CO', 39.74, -104.99, 369, 649, NULL, 2.0, 90, 1, NULL, 1, 0, 'verified', '2026-07-15', 'seed', 'Demo listing.', 1, NULL, 90, 1, 1),
-('op-den-2', 'Front Range Roll-Off', 'front-range-roll-off', '3035551002', 'hello@frontrangerolloff.example', 'https://example.com/frontrange', 'Denver metro and Front Range communities.', 'Denver', 'CO', 39.73, -104.98, 389, 699, 'Weather delays possible in winter.', 1.5, 95, 1, NULL, 0, 0, 'verified', '2026-07-07', 'seed', 'Demo listing.', 1, NULL, 84, 1, 1),
-('op-den-3', 'Rocky Mountain Containers', 'rocky-mountain-containers', '3035551003', 'info@rmcontainers.example', NULL, 'Construction and residential roll-off across Denver.', 'Denver', 'CO', 39.75, -105.00, 355, 620, NULL, 2.0, 85, 1, NULL, 1, 0, 'verified', '2026-06-21', 'seed', 'Demo listing.', 0, NULL, 81, 1, 1),
--- Pending (not published) example
-('op-pending-1', 'Pending Example Hauler', 'pending-example-hauler', '5555559999', 'pending@example.com', NULL, 'Example pending operator for admin queue.', 'Houston', 'TX', 29.76, -95.37, 300, 500, NULL, 1.0, 50, 1, NULL, 0, 0, 'pending', NULL, NULL, 'Awaiting phone verification.', 0, NULL, 50, 0, 1),
--- Broker example (published but filterable)
-('op-broker-1', 'National Dumpster Brokers', 'national-dumpster-brokers', '8005550000', 'leads@nationalbrokers.example', 'https://example.com/brokers', 'National middleman — routes leads to local partners. Labeled as broker for transparency.', 'Dallas', 'TX', 32.78, -96.80, 400, 900, 'Pricing estimated; local partner fulfills.', 1.0, 100, 1, NULL, 1, 1, 'verified', '2026-05-01', 'seed', 'Demo broker for filter testing.', 0, NULL, 40, 1, 1);
+-- ============================================
+-- SEEDED OPERATORS (placeholders, not live data)
+-- All is_demo = 0 so they appear in production-like views.
+-- Replace with actually verified real operators before marketing.
+-- ============================================
 
--- Sizes
+INSERT INTO operators (id, name, slug, phone, email, website, description, hq_city, hq_state, hq_lat, hq_lng, pricing_min, pricing_max, pricing_notes, included_tonnage, overage_rate, driveway_suitable, driveway_notes, same_day_capable, is_broker, verification_status, last_verified_at, verified_by, verification_notes, insurance_verified, license_notes, quality_score, is_published, is_demo) VALUES
+-- Houston
+('op-htx-1', 'Lone Star Container Services', 'lone-star-container-services', '713-555-0140', 'dispatch@lonestarcontainers.example', NULL, 'Houston-area roll-off focused on residential cleanouts and light construction. Offers plywood protection on request.', 'Houston', 'TX', 29.74, -95.36, 365, 625, 'Includes up to 7 days and 2 tons. Overage billed per ton. Street permits extra.', 2.0, 78, 1, 'Plywood included for driveway jobs when requested.', 1, 0, 'verified', '2025-08-01', 'seed', 'SEED PLACEHOLDER — verify phone, website, and insurance before production use.', 1, 'Texas waste hauler permit (verify current)', 88, 1, 0),
+('op-htx-2', 'Gulf Coast Roll Off', 'gulf-coast-roll-off', '713-555-0192', NULL, 'https://example.com/gulfcoastrolloff', 'Family-run hauler serving Houston and surrounding counties. Good for remodel and roofing debris.', 'Houston', 'TX', 29.79, -95.41, 340, 590, '10- and 15-yard flat-rate packages sometimes available for cleanouts.', 1.5, 82, 1, 'Boards provided for most residential driveways.', 1, 0, 'verified', '2025-07-28', 'seed', 'SEED PLACEHOLDER — verify all details.', 1, NULL, 85, 1, 0),
+
+-- Dallas / DFW
+('op-dfw-1', 'Metroplex Roll-Off Co', 'metroplex-roll-off-co', '214-555-0233', 'quotes@metroplexrolloff.example', NULL, 'DFW local operator covering Dallas, Fort Worth, and many suburbs. Strong on residential driveway jobs.', 'Dallas', 'TX', 32.79, -96.81, 335, 595, 'Standard 7–10 day rentals. Volume pricing on multi-container jobs.', 2.0, 72, 1, 'Driveway boards available on request.', 1, 0, 'verified', '2025-08-02', 'seed', 'SEED PLACEHOLDER — verify phone and coverage area.', 1, NULL, 87, 1, 0),
+('op-dfw-2', 'North Texas Hauling', 'north-texas-hauling', '214-555-0278', NULL, NULL, 'Serves Dallas proper and nearby cities. Handles mixed debris and roofing well.', 'Dallas', 'TX', 32.82, -96.77, 355, 610, 'Ask about no-overage packages on smaller loads.', 1.5, 85, 1, NULL, 0, 0, 'verified', '2025-07-20', 'seed', 'SEED PLACEHOLDER — verify all contact and service details.', 0, NULL, 79, 1, 0),
+
+-- Austin
+('op-atx-1', 'Capital City Containers', 'capital-city-containers', '512-555-0311', 'hello@capitalcitycontainers.example', NULL, 'Austin residential and remodel specialist. Clear pricing and driveway-friendly options.', 'Austin', 'TX', 30.28, -97.75, 375, 680, '1.5–2 tons typical. Green waste pricing may differ.', 1.5, 92, 1, 'Good track record on suburban driveways and limited-access lots.', 1, 0, 'verified', '2025-08-03', 'seed', 'SEED PLACEHOLDER — verify before marketing.', 1, NULL, 84, 1, 0),
+
+-- Miami
+('op-mia-1', 'Biscayne Bay Roll Off', 'biscayne-bay-roll-off', '305-555-0422', 'info@biscaynebayrolloff.example', NULL, 'Miami-Dade focused residential and light commercial. Experience with condo and storm-related debris.', 'Miami', 'FL', 25.78, -80.21, 425, 765, 'Higher dump fees reflected. Confirm all-in quote including permits.', 1.5, 115, 1, 'Plywood recommended on pavers and tile.', 0, 0, 'verified', '2025-07-25', 'seed', 'SEED PLACEHOLDER — verify phone and current rates.', 1, NULL, 82, 1, 0),
+
+-- Orlando
+('op-orl-1', 'Central Florida Dumpsters', 'central-florida-dumpsters', '407-555-0515', NULL, NULL, 'Orange and Seminole County coverage. Flexible rental periods for homeowners and contractors.', 'Orlando', 'FL', 28.55, -81.39, 349, 615, NULL, 2.0, 78, 1, NULL, 1, 0, 'verified', '2025-07-30', 'seed', 'SEED PLACEHOLDER — verify service area and contact.', 1, NULL, 80, 1, 0),
+
+-- Tampa
+('op-tpa-1', 'Tampa Bay Container Co', 'tampa-bay-container-co', '813-555-0618', 'dispatch@tampabaycontainer.example', NULL, 'Local Tampa Bay roll-off for homes and small commercial. Driveway protection emphasized.', 'Tampa', 'FL', 27.96, -82.46, 329, 585, NULL, 1.5, 75, 1, 'Underlayment standard on most residential drops.', 1, 0, 'verified', '2025-08-01', 'seed', 'SEED PLACEHOLDER — verify before use.', 1, NULL, 86, 1, 0),
+
+-- Los Angeles
+('op-la-1', 'SoCal Roll Off Services', 'socal-roll-off-services', '213-555-0725', NULL, 'https://example.com/socalrolloff', 'Los Angeles County residential and remodel hauler. Helps with permit guidance on request.', 'Los Angeles', 'CA', 34.04, -118.26, 485, 875, 'All-in quotes strongly recommended due to variable dump fees.', 1.5, 135, 1, 'Plywood and street mats often required in dense areas.', 0, 0, 'verified', '2025-07-22', 'seed', 'SEED PLACEHOLDER — verify licensing and current pricing.', 1, 'CA waste hauler (verify current status)', 78, 1, 0),
+
+-- Phoenix
+('op-phx-1', 'Valley Roll Off', 'valley-roll-off', '602-555-0833', 'quotes@valleyrolloff.example', NULL, 'Phoenix metro residential specialist. Offers dedicated concrete/dirt boxes.', 'Phoenix', 'AZ', 33.46, -112.06, 305, 535, 'Concrete and dirt often priced separately with higher included tonnage.', 2.5, 68, 1, NULL, 1, 0, 'verified', '2025-08-04', 'seed', 'SEED PLACEHOLDER — verify phone and heat-season policies.', 1, NULL, 83, 1, 0),
+
+-- Atlanta
+('op-atl-1', 'Peachtree Roll Off', 'peachtree-roll-off', '404-555-0944', NULL, NULL, 'Atlanta and surrounding counties. Driveway-friendly residential focus.', 'Atlanta', 'GA', 33.76, -84.40, 335, 595, NULL, 2.0, 72, 1, 'Boards and protection available.', 1, 0, 'verified', '2025-07-18', 'seed', 'SEED PLACEHOLDER — verify all details.', 1, NULL, 81, 1, 0),
+
+-- Denver
+('op-den-1', 'Front Range Containers', 'front-range-containers', '303-555-1027', 'hello@frontrangecontainers.example', NULL, 'Denver metro and Front Range. Handles winter weather logistics and driveway protection.', 'Denver', 'CO', 39.74, -104.99, 365, 645, 'Weather delays common in winter — confirm timing.', 1.5, 88, 1, NULL, 0, 0, 'verified', '2025-07-27', 'seed', 'SEED PLACEHOLDER — verify before marketing.', 1, NULL, 79, 1, 0),
+
+-- Broker example (useful for testing the broker filter)
+('op-broker-1', 'National Dumpster Network', 'national-dumpster-network', '800-555-0001', 'leads@nationaldumpsternetwork.example', 'https://example.com/ndn', 'National lead broker that routes to local haulers. Clearly labeled as broker.', 'Dallas', 'TX', 32.78, -96.80, 420, 950, 'Final price depends on local partner selected. Not a direct hauler.', 1.0, 110, 1, NULL, 1, 1, 'verified', '2025-05-15', 'seed', 'Demo broker for filter testing. Keep for QA.', 0, NULL, 35, 1, 0),
+
+-- Pending example (for admin queue testing)
+('op-pending-1', 'Example Pending Hauler', 'example-pending-hauler', '555-555-0199', 'pending@example.com', NULL, 'Placeholder pending operator to test the verification workflow.', 'Houston', 'TX', 29.76, -95.37, 300, 500, NULL, 1.0, 55, 1, NULL, 0, 0, 'pending', NULL, NULL, 'Awaiting phone + website verification. For admin testing only.', 0, NULL, 45, 0, 0);
+
+-- Sizes for seeded operators
 INSERT INTO operator_sizes (id, operator_id, yards) VALUES
 ('sz-htx1-10', 'op-htx-1', 10), ('sz-htx1-15', 'op-htx-1', 15), ('sz-htx1-20', 'op-htx-1', 20), ('sz-htx1-30', 'op-htx-1', 30),
-('sz-htx2-10', 'op-htx-2', 10), ('sz-htx2-15', 'op-htx-2', 15), ('sz-htx2-20', 'op-htx-2', 20),
-('sz-htx3-20', 'op-htx-3', 20), ('sz-htx3-30', 'op-htx-3', 30), ('sz-htx3-40', 'op-htx-3', 40),
+('sz-htx2-10', 'op-htx-2', 10), ('sz-htx2-15', 'op-htx-2', 15), ('sz-htx2-20', 'op-htx-2', 20), ('sz-htx2-30', 'op-htx-2', 30),
 ('sz-dfw1-10', 'op-dfw-1', 10), ('sz-dfw1-15', 'op-dfw-1', 15), ('sz-dfw1-20', 'op-dfw-1', 20), ('sz-dfw1-30', 'op-dfw-1', 30),
 ('sz-dfw2-10', 'op-dfw-2', 10), ('sz-dfw2-15', 'op-dfw-2', 15), ('sz-dfw2-20', 'op-dfw-2', 20),
-('sz-dfw3-15', 'op-dfw-3', 15), ('sz-dfw3-20', 'op-dfw-3', 20), ('sz-dfw3-30', 'op-dfw-3', 30), ('sz-dfw3-40', 'op-dfw-3', 40),
-('sz-atx1-10', 'op-atx-1', 10), ('sz-atx1-15', 'op-atx-1', 15), ('sz-atx1-20', 'op-atx-1', 20),
-('sz-atx2-15', 'op-atx-2', 15), ('sz-atx2-20', 'op-atx-2', 20), ('sz-atx2-30', 'op-atx-2', 30),
-('sz-atx3-10', 'op-atx-3', 10), ('sz-atx3-20', 'op-atx-3', 20), ('sz-atx3-30', 'op-atx-3', 30),
-('sz-mia1-10', 'op-mia-1', 10), ('sz-mia1-15', 'op-mia-1', 15), ('sz-mia1-20', 'op-mia-1', 20),
-('sz-mia2-20', 'op-mia-2', 20), ('sz-mia2-30', 'op-mia-2', 30), ('sz-mia2-40', 'op-mia-2', 40),
-('sz-mia3-10', 'op-mia-3', 10), ('sz-mia3-15', 'op-mia-3', 15),
+('sz-atx1-10', 'op-atx-1', 10), ('sz-atx1-15', 'op-atx-1', 15), ('sz-atx1-20', 'op-atx-1', 20), ('sz-atx1-30', 'op-atx-1', 30),
+('sz-mia1-10', 'op-mia-1', 10), ('sz-mia1-15', 'op-mia-1', 15), ('sz-mia1-20', 'op-mia-1', 20), ('sz-mia1-30', 'op-mia-1', 30),
 ('sz-orl1-10', 'op-orl-1', 10), ('sz-orl1-15', 'op-orl-1', 15), ('sz-orl1-20', 'op-orl-1', 20), ('sz-orl1-30', 'op-orl-1', 30),
-('sz-orl2-15', 'op-orl-2', 15), ('sz-orl2-20', 'op-orl-2', 20), ('sz-orl2-30', 'op-orl-2', 30),
-('sz-orl3-10', 'op-orl-3', 10), ('sz-orl3-15', 'op-orl-3', 15), ('sz-orl3-20', 'op-orl-3', 20),
-('sz-tpa1-10', 'op-tpa-1', 10), ('sz-tpa1-15', 'op-tpa-1', 15), ('sz-tpa1-20', 'op-tpa-1', 20),
-('sz-tpa2-15', 'op-tpa-2', 15), ('sz-tpa2-20', 'op-tpa-2', 20), ('sz-tpa2-30', 'op-tpa-2', 30),
-('sz-tpa3-10', 'op-tpa-3', 10), ('sz-tpa3-15', 'op-tpa-3', 15), ('sz-tpa3-20', 'op-tpa-3', 20),
-('sz-la1-10', 'op-la-1', 10), ('sz-la1-15', 'op-la-1', 15), ('sz-la1-20', 'op-la-1', 20), ('sz-la1-30', 'op-la-1', 30),
-('sz-la2-10', 'op-la-2', 10), ('sz-la2-20', 'op-la-2', 20),
-('sz-la3-20', 'op-la-3', 20), ('sz-la3-30', 'op-la-3', 30), ('sz-la3-40', 'op-la-3', 40),
-('sz-phx1-10', 'op-phx-1', 10), ('sz-phx1-15', 'op-phx-1', 15), ('sz-phx1-20', 'op-phx-1', 20),
-('sz-phx2-10', 'op-phx-2', 10), ('sz-phx2-15', 'op-phx-2', 15), ('sz-phx2-20', 'op-phx-2', 20), ('sz-phx2-30', 'op-phx-2', 30),
-('sz-phx3-15', 'op-phx-3', 15), ('sz-phx3-20', 'op-phx-3', 20), ('sz-phx3-30', 'op-phx-3', 30),
-('sz-atl1-10', 'op-atl-1', 10), ('sz-atl1-15', 'op-atl-1', 15), ('sz-atl1-20', 'op-atl-1', 20),
-('sz-atl2-15', 'op-atl-2', 15), ('sz-atl2-20', 'op-atl-2', 20), ('sz-atl2-30', 'op-atl-2', 30), ('sz-atl2-40', 'op-atl-2', 40),
-('sz-atl3-10', 'op-atl-3', 10), ('sz-atl3-15', 'op-atl-3', 15), ('sz-atl3-20', 'op-atl-3', 20),
+('sz-tpa1-10', 'op-tpa-1', 10), ('sz-tpa1-15', 'op-tpa-1', 15), ('sz-tpa1-20', 'op-tpa-1', 20), ('sz-tpa1-30', 'op-tpa-1', 30),
+('sz-la1-10', 'op-la-1', 10), ('sz-la1-15', 'op-la-1', 15), ('sz-la1-20', 'op-la-1', 20), ('sz-la1-30', 'op-la-1', 30), ('sz-la1-40', 'op-la-1', 40),
+('sz-phx1-10', 'op-phx-1', 10), ('sz-phx1-15', 'op-phx-1', 15), ('sz-phx1-20', 'op-phx-1', 20), ('sz-phx1-30', 'op-phx-1', 30),
+('sz-atl1-10', 'op-atl-1', 10), ('sz-atl1-15', 'op-atl-1', 15), ('sz-atl1-20', 'op-atl-1', 20), ('sz-atl1-30', 'op-atl-1', 30),
 ('sz-den1-10', 'op-den-1', 10), ('sz-den1-15', 'op-den-1', 15), ('sz-den1-20', 'op-den-1', 20), ('sz-den1-30', 'op-den-1', 30),
-('sz-den2-15', 'op-den-2', 15), ('sz-den2-20', 'op-den-2', 20), ('sz-den2-30', 'op-den-2', 30),
-('sz-den3-10', 'op-den-3', 10), ('sz-den3-20', 'op-den-3', 20), ('sz-den3-40', 'op-den-3', 40),
-('sz-brk-10', 'op-broker-1', 10), ('sz-brk-20', 'op-broker-1', 20), ('sz-brk-30', 'op-broker-1', 30), ('sz-brk-40', 'op-broker-1', 40);
+('sz-brk-10', 'op-broker-1', 10), ('sz-brk-20', 'op-broker-1', 20), ('sz-brk-30', 'op-broker-1', 30), ('sz-brk-40', 'op-broker-1', 40),
+('sz-pend-10', 'op-pending-1', 10), ('sz-pend-15', 'op-pending-1', 15), ('sz-pend-20', 'op-pending-1', 20);
 
 -- Materials
 INSERT INTO operator_materials (id, operator_id, material) VALUES
 ('mt-htx1-c', 'op-htx-1', 'construction'), ('mt-htx1-m', 'op-htx-1', 'mixed'), ('mt-htx1-h', 'op-htx-1', 'household'), ('mt-htx1-r', 'op-htx-1', 'roofing'),
-('mt-htx2-c', 'op-htx-2', 'construction'), ('mt-htx2-y', 'op-htx-2', 'yard'), ('mt-htx2-h', 'op-htx-2', 'household'),
-('mt-htx3-c', 'op-htx-3', 'construction'), ('mt-htx3-con', 'op-htx-3', 'concrete'), ('mt-htx3-m', 'op-htx-3', 'mixed'),
-('mt-dfw1-c', 'op-dfw-1', 'construction'), ('mt-dfw1-m', 'op-dfw-1', 'mixed'), ('mt-dfw1-h', 'op-dfw-1', 'household'),
-('mt-dfw2-c', 'op-dfw-2', 'construction'), ('mt-dfw2-y', 'op-dfw-2', 'yard'), ('mt-dfw2-r', 'op-dfw-2', 'roofing'),
-('mt-dfw3-c', 'op-dfw-3', 'construction'), ('mt-dfw3-con', 'op-dfw-3', 'concrete'), ('mt-dfw3-m', 'op-dfw-3', 'mixed'),
-('mt-atx1-c', 'op-atx-1', 'construction'), ('mt-atx1-m', 'op-atx-1', 'mixed'), ('mt-atx1-h', 'op-atx-1', 'household'),
-('mt-atx2-c', 'op-atx-2', 'construction'), ('mt-atx2-y', 'op-atx-2', 'yard'), ('mt-atx2-con', 'op-atx-2', 'concrete'),
-('mt-atx3-c', 'op-atx-3', 'construction'), ('mt-atx3-r', 'op-atx-3', 'roofing'), ('mt-atx3-m', 'op-atx-3', 'mixed'),
+('mt-htx2-c', 'op-htx-2', 'construction'), ('mt-htx2-m', 'op-htx-2', 'mixed'), ('mt-htx2-h', 'op-htx-2', 'household'), ('mt-htx2-y', 'op-htx-2', 'yard'),
+('mt-dfw1-c', 'op-dfw-1', 'construction'), ('mt-dfw1-m', 'op-dfw-1', 'mixed'), ('mt-dfw1-h', 'op-dfw-1', 'household'), ('mt-dfw1-r', 'op-dfw-1', 'roofing'),
+('mt-dfw2-c', 'op-dfw-2', 'construction'), ('mt-dfw2-m', 'op-dfw-2', 'mixed'), ('mt-dfw2-h', 'op-dfw-2', 'household'),
+('mt-atx1-c', 'op-atx-1', 'construction'), ('mt-atx1-m', 'op-atx-1', 'mixed'), ('mt-atx1-h', 'op-atx-1', 'household'), ('mt-atx1-y', 'op-atx-1', 'yard'),
 ('mt-mia1-c', 'op-mia-1', 'construction'), ('mt-mia1-m', 'op-mia-1', 'mixed'), ('mt-mia1-h', 'op-mia-1', 'household'),
-('mt-mia2-c', 'op-mia-2', 'construction'), ('mt-mia2-y', 'op-mia-2', 'yard'), ('mt-mia2-m', 'op-mia-2', 'mixed'),
-('mt-mia3-c', 'op-mia-3', 'construction'), ('mt-mia3-h', 'op-mia-3', 'household'),
-('mt-orl1-c', 'op-orl-1', 'construction'), ('mt-orl1-y', 'op-orl-1', 'yard'), ('mt-orl1-m', 'op-orl-1', 'mixed'), ('mt-orl1-h', 'op-orl-1', 'household'),
-('mt-orl2-c', 'op-orl-2', 'construction'), ('mt-orl2-con', 'op-orl-2', 'concrete'), ('mt-orl2-m', 'op-orl-2', 'mixed'),
-('mt-orl3-c', 'op-orl-3', 'construction'), ('mt-orl3-h', 'op-orl-3', 'household'), ('mt-orl3-r', 'op-orl-3', 'roofing'),
+('mt-orl1-c', 'op-orl-1', 'construction'), ('mt-orl1-m', 'op-orl-1', 'mixed'), ('mt-orl1-h', 'op-orl-1', 'household'), ('mt-orl1-y', 'op-orl-1', 'yard'),
 ('mt-tpa1-c', 'op-tpa-1', 'construction'), ('mt-tpa1-m', 'op-tpa-1', 'mixed'), ('mt-tpa1-h', 'op-tpa-1', 'household'),
-('mt-tpa2-c', 'op-tpa-2', 'construction'), ('mt-tpa2-y', 'op-tpa-2', 'yard'), ('mt-tpa2-con', 'op-tpa-2', 'concrete'),
-('mt-tpa3-c', 'op-tpa-3', 'construction'), ('mt-tpa3-m', 'op-tpa-3', 'mixed'), ('mt-tpa3-h', 'op-tpa-3', 'household'),
 ('mt-la1-c', 'op-la-1', 'construction'), ('mt-la1-m', 'op-la-1', 'mixed'), ('mt-la1-h', 'op-la-1', 'household'), ('mt-la1-r', 'op-la-1', 'roofing'),
-('mt-la2-c', 'op-la-2', 'construction'), ('mt-la2-y', 'op-la-2', 'yard'), ('mt-la2-m', 'op-la-2', 'mixed'),
-('mt-la3-c', 'op-la-3', 'construction'), ('mt-la3-con', 'op-la-3', 'concrete'), ('mt-la3-m', 'op-la-3', 'mixed'),
-('mt-phx1-c', 'op-phx-1', 'construction'), ('mt-phx1-m', 'op-phx-1', 'mixed'), ('mt-phx1-h', 'op-phx-1', 'household'),
-('mt-phx2-c', 'op-phx-2', 'construction'), ('mt-phx2-y', 'op-phx-2', 'yard'), ('mt-phx2-m', 'op-phx-2', 'mixed'),
-('mt-phx3-c', 'op-phx-3', 'construction'), ('mt-phx3-con', 'op-phx-3', 'concrete'),
+('mt-phx1-c', 'op-phx-1', 'construction'), ('mt-phx1-con', 'op-phx-1', 'concrete'), ('mt-phx1-m', 'op-phx-1', 'mixed'),
 ('mt-atl1-c', 'op-atl-1', 'construction'), ('mt-atl1-m', 'op-atl-1', 'mixed'), ('mt-atl1-h', 'op-atl-1', 'household'),
-('mt-atl2-c', 'op-atl-2', 'construction'), ('mt-atl2-con', 'op-atl-2', 'concrete'), ('mt-atl2-m', 'op-atl-2', 'mixed'),
-('mt-atl3-c', 'op-atl-3', 'construction'), ('mt-atl3-y', 'op-atl-3', 'yard'), ('mt-atl3-h', 'op-atl-3', 'household'),
 ('mt-den1-c', 'op-den-1', 'construction'), ('mt-den1-m', 'op-den-1', 'mixed'), ('mt-den1-h', 'op-den-1', 'household'), ('mt-den1-r', 'op-den-1', 'roofing'),
-('mt-den2-c', 'op-den-2', 'construction'), ('mt-den2-y', 'op-den-2', 'yard'), ('mt-den2-m', 'op-den-2', 'mixed'),
-('mt-den3-c', 'op-den-3', 'construction'), ('mt-den3-con', 'op-den-3', 'concrete'), ('mt-den3-m', 'op-den-3', 'mixed'),
-('mt-brk-c', 'op-broker-1', 'construction'), ('mt-brk-m', 'op-broker-1', 'mixed'), ('mt-brk-h', 'op-broker-1', 'household');
+('mt-brk-c', 'op-broker-1', 'construction'), ('mt-brk-m', 'op-broker-1', 'mixed'), ('mt-brk-h', 'op-broker-1', 'household'),
+('mt-pend-c', 'op-pending-1', 'construction'), ('mt-pend-m', 'op-pending-1', 'mixed'), ('mt-pend-h', 'op-pending-1', 'household');
 
--- Service areas (city links + sample ZIPs)
+-- Service areas (tie operators to cities + sample ZIPs)
 INSERT INTO operator_service_areas (id, operator_id, city_id, zip) VALUES
-('sa-htx1', 'op-htx-1', 'city-houston', '77002'),
-('sa-htx1b', 'op-htx-1', 'city-houston', '77019'),
-('sa-htx2', 'op-htx-2', 'city-houston', '77006'),
-('sa-htx3', 'op-htx-3', 'city-houston', '77008'),
-('sa-dfw1', 'op-dfw-1', 'city-dallas', '75201'),
-('sa-dfw2', 'op-dfw-2', 'city-dallas', '75204'),
-('sa-dfw3', 'op-dfw-3', 'city-dallas', '75207'),
-('sa-atx1', 'op-atx-1', 'city-austin', '78701'),
-('sa-atx2', 'op-atx-2', 'city-austin', '78704'),
-('sa-atx3', 'op-atx-3', 'city-austin', '78745'),
-('sa-mia1', 'op-mia-1', 'city-miami', '33130'),
-('sa-mia2', 'op-mia-2', 'city-miami', '33132'),
-('sa-mia3', 'op-mia-3', 'city-miami', '33139'),
-('sa-orl1', 'op-orl-1', 'city-orlando', '32801'),
-('sa-orl2', 'op-orl-2', 'city-orlando', '32803'),
-('sa-orl3', 'op-orl-3', 'city-orlando', '32819'),
-('sa-tpa1', 'op-tpa-1', 'city-tampa', '33602'),
-('sa-tpa2', 'op-tpa-2', 'city-tampa', '33606'),
-('sa-tpa3', 'op-tpa-3', 'city-tampa', '33609'),
-('sa-la1', 'op-la-1', 'city-los-angeles', '90012'),
-('sa-la2', 'op-la-2', 'city-los-angeles', '90015'),
-('sa-la3', 'op-la-3', 'city-los-angeles', '90017'),
-('sa-phx1', 'op-phx-1', 'city-phoenix', '85003'),
-('sa-phx2', 'op-phx-2', 'city-phoenix', '85004'),
-('sa-phx3', 'op-phx-3', 'city-phoenix', '85008'),
-('sa-atl1', 'op-atl-1', 'city-atlanta', '30303'),
-('sa-atl2', 'op-atl-2', 'city-atlanta', '30308'),
-('sa-atl3', 'op-atl-3', 'city-atlanta', '30309'),
-('sa-den1', 'op-den-1', 'city-denver', '80202'),
-('sa-den2', 'op-den-2', 'city-denver', '80203'),
-('sa-den3', 'op-den-3', 'city-denver', '80205'),
-('sa-brk1', 'op-broker-1', 'city-dallas', '75201'),
-('sa-brk2', 'op-broker-1', 'city-houston', '77002');
+('sa-htx1a', 'op-htx-1', 'city-houston', '77002'), ('sa-htx1b', 'op-htx-1', 'city-houston', '77019'),
+('sa-htx2a', 'op-htx-2', 'city-houston', '77006'), ('sa-htx2b', 'op-htx-2', 'city-houston', '77008'),
+('sa-dfw1a', 'op-dfw-1', 'city-dallas', '75201'), ('sa-dfw1b', 'op-dfw-1', 'city-dallas', '75204'),
+('sa-dfw2a', 'op-dfw-2', 'city-dallas', '75207'),
+('sa-atx1a', 'op-atx-1', 'city-austin', '78701'), ('sa-atx1b', 'op-atx-1', 'city-austin', '78704'),
+('sa-mia1a', 'op-mia-1', 'city-miami', '33130'), ('sa-mia1b', 'op-mia-1', 'city-miami', '33132'),
+('sa-orl1a', 'op-orl-1', 'city-orlando', '32801'), ('sa-orl1b', 'op-orl-1', 'city-orlando', '32803'),
+('sa-tpa1a', 'op-tpa-1', 'city-tampa', '33602'), ('sa-tpa1b', 'op-tpa-1', 'city-tampa', '33606'),
+('sa-la1a', 'op-la-1', 'city-los-angeles', '90012'), ('sa-la1b', 'op-la-1', 'city-los-angeles', '90015'),
+('sa-phx1a', 'op-phx-1', 'city-phoenix', '85003'), ('sa-phx1b', 'op-phx-1', 'city-phoenix', '85004'),
+('sa-atl1a', 'op-atl-1', 'city-atlanta', '30303'), ('sa-atl1b', 'op-atl-1', 'city-atlanta', '30308'),
+('sa-den1a', 'op-den-1', 'city-denver', '80202'), ('sa-den1b', 'op-den-1', 'city-denver', '80203'),
+('sa-brk1', 'op-broker-1', 'city-dallas', '75201'), ('sa-brk2', 'op-broker-1', 'city-houston', '77002'),
+('sa-pend1', 'op-pending-1', 'city-houston', '77002');

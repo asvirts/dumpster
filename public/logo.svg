@@ -1,0 +1,29 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 520 96" fill="none" role="img" aria-label="DumpsterLocal">
+  <defs>
+    <style>
+      .wordmark {
+        font-family: "Archivo Black", "Arial Black", Impact, Haettenschweiler, sans-serif;
+        font-size: 44px;
+        font-weight: 900;
+        letter-spacing: -0.03em;
+        fill: #121417;
+      }
+    </style>
+  </defs>
+  <!-- Mark -->
+  <g transform="translate(0 8)">
+    <rect width="80" height="80" fill="#ff4d00"/>
+    <path d="M9 29h40l5.5 30H14.5L9 29z" fill="#121417"/>
+    <path d="M12 31.5h34l4.2 25H16.2L12 31.5z" fill="#ff4d00"/>
+    <path d="M8 26.5h42l1.5 4H9.5L8 26.5z" fill="#121417"/>
+    <path d="M10.5 27.5h37l0.6 2H11.1l-0.6-2z" fill="#ff7342"/>
+    <path d="M16 46h28l0.6 5H16.6L16 46z" fill="#ffc800"/>
+    <path d="M18.5 47.5h4v2h-4zm7 0h4v2h-4zm7 0h4v2h-4z" fill="#121417"/>
+    <rect x="26" y="37" width="9" height="6.5" fill="#121417"/>
+    <rect x="27.5" y="38.2" width="6" height="4" fill="#ffc800"/>
+    <path d="M58 30c-7 0-12.5 5.2-12.5 11.5 0 8.5 12.5 20.5 12.5 20.5s12.5-12 12.5-20.5C70.5 35.2 65 30 58 30z" fill="#121417"/>
+    <circle cx="58" cy="41.2" r="4.5" fill="#ffc800"/>
+    <circle cx="58" cy="41.2" r="2" fill="#121417"/>
+  </g>
+  <text class="wordmark" x="100" y="64">DUMPSTERLOCAL</text>
+</svg>

@@ -25,6 +25,7 @@ const nav = [
     <meta name="robots" content="noindex, nofollow" />
     <title>{title} · Admin · {BRAND.name}</title>
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
     <link
       href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;600&display=swap"
       rel="stylesheet"
@@ -33,7 +34,10 @@ const nav = [
   <body class="min-h-screen bg-slate-100 text-ink antialiased">
     <div class="flex min-h-screen">
       <aside class="hidden w-56 shrink-0 border-r border-border bg-white p-4 md:block">
-        <a href="/admin" class="block text-lg font-bold text-ink no-underline">{BRAND.name}</a>
+        <a href="/admin" class="flex items-center gap-2 text-lg font-bold text-ink no-underline">
+          <img src="/logo-mark.svg" alt="" width="28" height="28" class="h-7 w-7" aria-hidden="true" />
+          {BRAND.name}
+        </a>
         <p class="mt-0.5 text-xs text-muted">Admin · verification first</p>
         <nav class="mt-8 space-y-1" aria-label="Admin">
           {
