@@ -7,7 +7,7 @@
   },
   "scripts": {
     "dev": "astro dev",
-    "build": "astro build",
+    "build": "node scripts/patch-astro-workerd.mjs && astro build",
     "preview": "astro preview",
     "astro": "astro",
     "check": "astro check",
@@ -17,7 +17,8 @@
     "db:seed:remote": "wrangler d1 execute dumpsterlocal --remote --file=./seed/seed.sql",
     "db:setup:local": "bun run db:migrate:local && bun run db:seed:local",
     "types": "wrangler types",
-    "deploy": "astro build && wrangler deploy"
+    "deploy": "bun run build && wrangler deploy",
+    "postinstall": "node scripts/patch-astro-workerd.mjs"
   },
   "dependencies": {
     "@astrojs/cloudflare": "^14.2.0",

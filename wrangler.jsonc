@@ -3,21 +3,24 @@
   "name": "dumpsterlocal",
   "main": "@astrojs/cloudflare/entrypoints/server",
   "compatibility_date": "2025-10-01",
-  "compatibility_flags": ["nodejs_compat"],
+  // global_fetch_strictly_public: required so env.ASSETS.fetch() works on workers.dev
+  // (error 1042 without it — Worker-to-assets same-zone fetch)
+  "compatibility_flags": ["nodejs_compat", "global_fetch_strictly_public"],
   "assets": {
     "directory": "./dist",
-    "binding": "ASSETS"
+    "binding": "ASSETS",
+    "not_found_handling": "none"
   },
   "d1_databases": [
     {
       "binding": "DB",
       "database_name": "dumpsterlocal",
-      "database_id": "local-dev-placeholder",
+      "database_id": "1c8dbaa7-18c4-4120-ae94-a47c97ac3717",
       "migrations_dir": "migrations"
     }
   ],
   "vars": {
     "PUBLIC_SITE_NAME": "DumpsterLocal",
-    "PUBLIC_SITE_URL": "http://localhost:4321"
+    "PUBLIC_SITE_URL": "https://dumpsterlocal.com"
   }
 }

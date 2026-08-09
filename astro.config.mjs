@@ -9,8 +9,6 @@ export default defineConfig({
   output: 'server',
   adapter: cloudflare({
     imageService: 'passthrough',
-    // Disable session KV provisioning until needed
-    // session storage not required for MVP
   }),
   session: false,
   vite: {
