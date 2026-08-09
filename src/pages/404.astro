@@ -1,0 +1,13 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+export const prerender = true;
+---
+
+<BaseLayout title="Page not found | DumpsterLocal" noIndex>
+  <div class="container-page py-24 text-center">
+    <h1 class="text-3xl font-bold text-ink">Page not found</h1>
+    <p class="mt-3 text-muted">That page doesn’t exist or the operator isn’t published.</p>
+    <a href="/" class="btn-primary mt-6 inline-flex">Go home</a>
+    <a href="/search" class="btn-secondary mt-6 ml-2 inline-flex">Search operators</a>
+  </div>
+</BaseLayout>

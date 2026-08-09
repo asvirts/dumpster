@@ -1,0 +1,36 @@
+---
+import { getCollection } from 'astro:content';
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import { pageTitle } from '../../lib/seo';
+
+const guides = (await getCollection('guides'))
+  .filter((g) => !g.data.draft)
+  .sort((a, b) => a.data.title.localeCompare(b.data.title));
+---
+
+<BaseLayout
+  title={pageTitle('Dumpster Rental Guides')}
+  description="Size guides, materials, permits, and cost factors for smarter dumpster rentals."
+>
+  <div class="container-page py-12">
+    <h1 class="text-3xl font-bold text-ink">Guides</h1>
+    <p class="mt-2 max-w-2xl text-muted">
+      Practical education to avoid overages, permit surprises, and wrong-size containers.
+    </p>
+    <ul class="mt-10 grid gap-4 sm:grid-cols-2">
+      {
+        guides.map((g) => (
+          <li>
+            <a
+              href={`/guides/${g.id}`}
+              class="card block p-6 text-ink no-underline transition hover:border-brand-300 hover:shadow-md"
+            >
+              <h2 class="text-lg font-bold">{g.data.title}</h2>
+              <p class="mt-2 text-sm text-muted">{g.data.description}</p>
+            </a>
+          </li>
+        ))
+      }
+    </ul>
+  </div>
+</BaseLayout>

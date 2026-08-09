@@ -1,0 +1,184 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import SearchForm from '../components/SearchForm.astro';
+import FilterBar from '../components/FilterBar.astro';
+import OperatorCard from '../components/OperatorCard.astro';
+import MapView from '../components/MapView.astro';
+import { getDb } from '../lib/db';
+import { searchOperators } from '../lib/search';
+import { pageTitle } from '../lib/seo';
+import { events } from '../lib/schema';
+import { nanoid } from 'nanoid';
+
+const params = Astro.url.searchParams;
+const q = params.get('q') ?? '';
+const size = params.get('size') ?? '';
+const material = params.get('material') ?? '';
+const driveway = params.get('driveway') ?? '';
+const sameDay = params.get('sameDay') ?? '';
+const verified = params.get('verified') ?? '1';
+const brokers = params.get('brokers') ?? '0';
+const sort = (params.get('sort') as 'quality' | 'price' | 'distance') || 'quality';
+
+const db = getDb();
+const { operators: results, city } = await searchOperators(db, {
+  q: q || undefined,
+  size: size ? Number(size) : undefined,
+  material: material || undefined,
+  drivewayOnly: driveway === '1',
+  sameDayOnly: sameDay === '1',
+  verifiedOnly: verified !== '0',
+  excludeBrokers: brokers !== '1',
+  sort,
+});
+
+// Fire-and-forget analytics (best effort)
+try {
+  await db.insert(events).values({
+    id: nanoid(),
+    type: 'search',
+    path: '/search',
+    queryJson: JSON.stringify({ q, size, material, count: results.length }),
+  });
+} catch {
+  /* ignore */
+}
+
+const markers = results
+  .filter((o) => o.hqLat != null && o.hqLng != null)
+  .map((o) => ({
+    id: o.id,
+    name: o.name,
+    slug: o.slug,
+    lat: o.hqLat as number,
+    lng: o.hqLng as number,
+  }));
+
+const heading = city
+  ? `Dumpster rentals in ${city.name}, ${city.state}`
+  : q
+    ? `Results for “${q}”`
+    : 'Search dumpster rentals';
+
+const title = pageTitle(city ? `${city.name} Dumpster Rental` : 'Search');
+---
+
+<BaseLayout title={title} description={`Compare verified dumpster rental operators${city ? ` in ${city.name}, ${city.state}` : ''}.`}>
+  <div class="border-b border-border bg-surface py-8">
+    <div class="container-page">
+      <h1 class="text-3xl font-bold text-ink">{heading}</h1>
+      <p class="mt-2 text-muted">
+        {results.length} operator{results.length === 1 ? '' : 's'}
+        {city && (
+          <>
+            {' '}
+            ·{' '}
+            <a href={`/dumpster-rental/${city.stateSlug}/${city.slug}`} class="font-medium">
+              City guide for {city.name}
+            </a>
+          </>
+        )}
+      </p>
+      <div class="mt-6 max-w-2xl">
+        <SearchForm initialQ={q || (city ? `${city.name}, ${city.state}` : '')} />
+      </div>
+    </div>
+  </div>
+
+  <div class="container-page py-8">
+    <div class="grid gap-8 lg:grid-cols-[240px_1fr_minmax(280px,360px)]">
+      <aside>
+        <FilterBar
+          q={q || (city ? `${city.name}, ${city.state}` : '')}
+          size={size}
+          material={material}
+          driveway={driveway}
+          sameDay={sameDay}
+          verified={verified}
+          brokers={brokers}
+          sort={sort}
+        />
+      </aside>
+
+      <div class="space-y-4">
+        {
+          results.length === 0 ? (
+            <div class="card p-8 text-center">
+              <p class="font-semibold text-ink">No operators match these filters</p>
+              <p class="mt-2 text-sm text-muted">
+                Try a priority city like Houston, TX or clear filters. Brokers are hidden by default.
+              </p>
+            </div>
+          ) : (
+            results.map((op) => <OperatorCard operator={op} />)
+          )
+        }
+
+        <div
+          id="compare-bar"
+          class="fixed inset-x-0 bottom-0 z-30 hidden border-t border-border bg-white p-4 shadow-lg"
+        >
+          <div class="container-page flex flex-wrap items-center justify-between gap-3">
+            <p class="text-sm font-medium text-ink">
+              <span id="compare-count">0</span> selected for comparison (max 4)
+            </p>
+            <a id="compare-link" href="/compare" class="btn-primary pointer-events-none opacity-50"
+              >Compare</a
+            >
+          </div>
+        </div>
+      </div>
+
+      <div class="hidden lg:block">
+        <div class="sticky top-20">
+          <MapView
+            markers={markers}
+            centerLat={city?.lat}
+            centerLng={city?.lng}
+            zoom={city ? 10 : 4}
+          />
+        </div>
+      </div>
+    </div>
+
+    <div class="mt-8 lg:hidden">
+      <MapView markers={markers} centerLat={city?.lat} centerLng={city?.lng} zoom={city ? 10 : 4} />
+    </div>
+  </div>
+</BaseLayout>
+
+<script>
+  function updateCompareBar() {
+    const checks = [...document.querySelectorAll<HTMLInputElement>('.compare-check:checked')];
+    const bar = document.getElementById('compare-bar');
+    const count = document.getElementById('compare-count');
+    const link = document.getElementById('compare-link') as HTMLAnchorElement | null;
+    if (!bar || !count || !link) return;
+
+    if (checks.length === 0) {
+      bar.classList.add('hidden');
+      return;
+    }
+    bar.classList.remove('hidden');
+    count.textContent = String(checks.length);
+    const ids = checks.map((c) => c.value).slice(0, 4);
+    link.href = `/compare?ids=${ids.join(',')}`;
+    if (ids.length >= 2) {
+      link.classList.remove('pointer-events-none', 'opacity-50');
+    } else {
+      link.classList.add('pointer-events-none', 'opacity-50');
+    }
+
+    // Enforce max 4
+    document.querySelectorAll<HTMLInputElement>('.compare-check').forEach((c) => {
+      if (!c.checked && checks.length >= 4) c.disabled = true;
+      else c.disabled = false;
+    });
+  }
+
+  document.addEventListener('change', (e) => {
+    if ((e.target as HTMLElement)?.classList?.contains('compare-check')) {
+      updateCompareBar();
+    }
+  });
+</script>

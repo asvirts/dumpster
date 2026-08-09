@@ -1,0 +1,215 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import VerifiedBadge from '../../components/VerifiedBadge.astro';
+import QuoteForm from '../../components/QuoteForm.astro';
+import { getDb } from '../../lib/db';
+import { getOperatorBySlug } from '../../lib/search';
+import { formatCurrency, formatDate, formatPhone } from '../../lib/geo';
+import { MATERIALS, SIZE_GUIDE } from '../../lib/constants';
+import { operatorJsonLd, pageTitle, breadcrumbJsonLd } from '../../lib/seo';
+
+const { slug } = Astro.params;
+if (!slug) return Astro.redirect('/search');
+
+const db = getDb();
+const op = await getOperatorBySlug(db, slug);
+if (!op) return new Response(null, { status: 404, statusText: 'Not Found' });
+
+const siteUrl = Astro.site?.toString().replace(/\/$/, '') ?? Astro.url.origin;
+const priceLabel =
+  op.pricingMin != null && op.pricingMax != null
+    ? `${formatCurrency(op.pricingMin)}–${formatCurrency(op.pricingMax)}`
+    : 'Request quote for pricing';
+
+const sizes = op.sizes.map((s) => s.yards).sort((a, b) => a - b);
+const materials = op.materials.map((m) => m.material);
+const cities = op.serviceAreas
+  .map((a) => (a.city ? `${a.city.name}, ${a.city.state}` : null))
+  .filter(Boolean) as string[];
+
+const title = pageTitle([op.name, 'Dumpster Rental']);
+const description =
+  op.description?.slice(0, 155) ||
+  `${op.name} — verified dumpster rental${op.hqCity ? ` in ${op.hqCity}, ${op.hqState}` : ''}.`;
+
+const jsonLd = [
+  operatorJsonLd({
+    name: op.name,
+    description: op.description,
+    phone: op.phone,
+    website: op.website,
+    hqCity: op.hqCity,
+    hqState: op.hqState,
+    slug: op.slug,
+    siteUrl,
+  }),
+  breadcrumbJsonLd([
+    { name: 'Home', url: siteUrl },
+    { name: 'Search', url: `${siteUrl}/search` },
+    { name: op.name, url: `${siteUrl}/operator/${op.slug}` },
+  ]),
+];
+---
+
+<BaseLayout title={title} description={description} jsonLd={jsonLd}>
+  <div class="border-b border-border bg-surface py-10">
+    <div class="container-page">
+      <p class="text-sm text-muted">
+        <a href="/search" class="text-muted no-underline hover:text-brand-700">Search</a>
+        <span class="mx-2">/</span>
+        <span>{op.name}</span>
+      </p>
+      <div class="mt-4 flex flex-wrap items-start justify-between gap-4">
+        <div>
+          <h1 class="text-3xl font-extrabold text-ink sm:text-4xl">{op.name}</h1>
+          <p class="mt-2 text-muted">
+            {[op.hqCity, op.hqState].filter(Boolean).join(', ') || 'United States'}
+          </p>
+          <div class="mt-3">
+            <VerifiedBadge
+              lastVerifiedAt={op.verificationStatus === 'verified' ? op.lastVerifiedAt : null}
+              isBroker={op.isBroker}
+              isDemo={op.isDemo}
+            />
+          </div>
+        </div>
+        <div class="text-right">
+          <p class="text-2xl font-bold text-brand-700">{priceLabel}</p>
+          <p class="text-xs text-muted">Typical range · confirm all-in quote</p>
+        </div>
+      </div>
+      <div class="mt-6 flex flex-wrap gap-2">
+        {
+          op.phone && (
+            <a href={`tel:${op.phone}`} class="btn-primary">
+              Call {formatPhone(op.phone)}
+            </a>
+          )
+        }
+        {
+          op.website && (
+            <a href={op.website} class="btn-secondary" rel="noopener noreferrer" target="_blank">
+              Website
+            </a>
+          )
+        }
+        <a href="#quote" class="btn-secondary">Request quote</a>
+      </div>
+    </div>
+  </div>
+
+  <div class="container-page grid gap-10 py-10 lg:grid-cols-[1fr_360px]">
+    <div class="space-y-8">
+      {
+        op.description && (
+          <section>
+            <h2 class="text-xl font-bold text-ink">About</h2>
+            <p class="mt-3 text-slate-700 leading-relaxed">{op.description}</p>
+          </section>
+        )
+      }
+
+      <section>
+        <h2 class="text-xl font-bold text-ink">Sizes offered</h2>
+        <ul class="mt-4 grid gap-3 sm:grid-cols-2">
+          {
+            sizes.map((s) => (
+              <li class="card p-4">
+                <p class="font-semibold text-ink">{s} yard</p>
+                <p class="mt-1 text-sm text-muted">{SIZE_GUIDE[s] ?? 'Roll-off dumpster'}</p>
+              </li>
+            ))
+          }
+        </ul>
+      </section>
+
+      <section>
+        <h2 class="text-xl font-bold text-ink">Materials accepted</h2>
+        <ul class="mt-3 flex flex-wrap gap-2">
+          {
+            materials.map((id) => {
+              const label = MATERIALS.find((m) => m.id === id)?.label ?? id;
+              return (
+                <li class="rounded-lg bg-brand-50 px-3 py-1.5 text-sm font-medium text-brand-900">
+                  {label}
+                </li>
+              );
+            })
+          }
+        </ul>
+      </section>
+
+      <section class="grid gap-4 sm:grid-cols-2">
+        <div class="card p-5">
+          <h3 class="font-semibold text-ink">Pricing notes</h3>
+          <p class="mt-2 text-sm text-slate-700">
+            {op.pricingNotes || 'Contact operator for an all-in quote including delivery and dump fees.'}
+          </p>
+          {
+            op.includedTonnage != null && (
+              <p class="mt-2 text-sm text-muted">Included tonnage: ~{op.includedTonnage} tons</p>
+            )
+          }
+          {
+            op.overageRate != null && (
+              <p class="mt-1 text-sm text-muted">Overage: ~{formatCurrency(op.overageRate)}/ton</p>
+            )
+          }
+        </div>
+        <div class="card p-5">
+          <h3 class="font-semibold text-ink">Placement & delivery</h3>
+          <p class="mt-2 text-sm text-slate-700">
+            Driveway suitable: {op.drivewaySuitable ? 'Yes' : 'Limited / ask'}
+          </p>
+          {op.drivewayNotes && <p class="mt-1 text-sm text-muted">{op.drivewayNotes}</p>}
+          <p class="mt-2 text-sm text-slate-700">
+            Same-day capable: {op.sameDayCapable ? 'Yes (when available)' : 'Not listed'}
+          </p>
+        </div>
+      </section>
+
+      {
+        cities.length > 0 && (
+          <section>
+            <h2 class="text-xl font-bold text-ink">Service areas</h2>
+            <ul class="mt-3 flex flex-wrap gap-2">
+              {[...new Set(cities)].map((c) => (
+                <li class="rounded-lg bg-surface px-3 py-1.5 text-sm text-slate-700">{c}</li>
+              ))}
+            </ul>
+          </section>
+        )
+      }
+
+      <section class="card bg-surface p-5 text-sm text-muted">
+        <p>
+          Verification status: <strong class="text-ink">{op.verificationStatus}</strong>
+          {
+            op.lastVerifiedAt && (
+              <> · Last verified {formatDate(op.lastVerifiedAt)}</>
+            )
+          }
+          {op.insuranceVerified && <> · Insurance signals reviewed</>}
+        </p>
+        {op.licenseNotes && <p class="mt-2">License notes: {op.licenseNotes}</p>}
+      </section>
+    </div>
+
+    <aside class="space-y-6" id="quote">
+      <QuoteForm operatorId={op.id} operatorName={op.name} />
+      <div class="card p-5 text-sm text-muted">
+        <p class="font-semibold text-ink">Tips before you book</p>
+        <ul class="mt-2 list-disc space-y-1 pl-4">
+          <li>Confirm all-in price (delivery, rental days, tonnage, overage).</li>
+          <li>Ask about permit responsibility for street placement.</li>
+          <li>Share driveway width and surface type for residential drops.</li>
+        </ul>
+        <p class="mt-3">
+          <a href="/guides/dumpster-size-guide">Size guide</a>
+          {' · '}
+          <a href="/guides/dumpster-permits-overview">Permits</a>
+        </p>
+      </div>
+    </aside>
+  </div>
+</BaseLayout>

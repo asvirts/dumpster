@@ -1,17 +1,99 @@
 ---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import SearchForm from '../components/SearchForm.astro';
+import { BRAND } from '../lib/constants';
+import { getDb } from '../lib/db';
+import { getPriorityCities } from '../lib/search';
+import { pageTitle } from '../lib/seo';
 
+const db = getDb();
+const cities = await getPriorityCities(db);
 ---
 
-<html lang="en">
-	<head>
-		<meta charset="utf-8" />
-		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-		<link rel="icon" href="/favicon.ico" />
-		<meta name="viewport" content="width=device-width" />
-		<meta name="generator" content={Astro.generator} />
-		<title>Astro</title>
-	</head>
-	<body>
-		<h1>Astro</h1>
-	</body>
-</html>
+<BaseLayout title={pageTitle('Verified Local Dumpster Rentals')} description={BRAND.description}>
+  <section class="relative overflow-hidden bg-gradient-to-b from-brand-50 to-white">
+    <div class="container-page py-16 sm:py-24">
+      <div class="mx-auto max-w-3xl text-center">
+        <p class="text-sm font-semibold uppercase tracking-wide text-brand-700">
+          Quality over quantity
+        </p>
+        <h1 class="mt-3 text-4xl font-extrabold tracking-tight text-ink sm:text-5xl">
+          Find verified dumpster rentals near you
+        </h1>
+        <p class="mx-auto mt-4 max-w-2xl text-lg text-muted">
+          {BRAND.tagline}. Compare sizes, materials, driveway-safe options, and local permit notes —
+          without the broker noise.
+        </p>
+        <div class="mx-auto mt-8 max-w-xl">
+          <SearchForm />
+        </div>
+      </div>
+
+      <div class="mt-16 grid gap-6 sm:grid-cols-3">
+        <div class="card p-6 text-left">
+          <h2 class="font-bold text-ink">Rigorous verification</h2>
+          <p class="mt-2 text-sm text-muted">
+            Every listed operator shows a last-verified date. Pending listings stay off the public directory.
+          </p>
+        </div>
+        <div class="card p-6 text-left">
+          <h2 class="font-bold text-ink">Local intelligence</h2>
+          <p class="mt-2 text-sm text-muted">
+            City pages include pricing bands, permit notes, and placement tips Maps results don’t show.
+          </p>
+        </div>
+        <div class="card p-6 text-left">
+          <h2 class="font-bold text-ink">Transparent filters</h2>
+          <p class="mt-2 text-sm text-muted">
+            Filter by size, material, driveway-safe, same-day, and hide brokers by default.
+          </p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="container-page py-14">
+    <div class="flex flex-wrap items-end justify-between gap-4">
+      <div>
+        <h2 class="text-2xl font-bold text-ink">Priority cities</h2>
+        <p class="mt-1 text-muted">Deep coverage first — expand only while holding the quality bar.</p>
+      </div>
+      <a href="/search" class="btn-secondary">Browse all</a>
+    </div>
+    <ul class="mt-8 grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
+      {
+        cities.map((c) => (
+          <li>
+            <a
+              href={`/dumpster-rental/${c.stateSlug}/${c.slug}`}
+              class="card block p-4 text-ink no-underline transition hover:border-brand-300 hover:shadow-md"
+            >
+              <span class="font-semibold">{c.name}</span>
+              <span class="mt-0.5 block text-sm text-muted">{c.state}</span>
+            </a>
+          </li>
+        ))
+      }
+    </ul>
+  </section>
+
+  <section class="border-y border-border bg-surface py-14">
+    <div class="container-page">
+      <h2 class="text-2xl font-bold text-ink">Helpful guides</h2>
+      <div class="mt-6 grid gap-4 sm:grid-cols-3">
+        <a href="/guides/dumpster-size-guide" class="card p-5 text-ink no-underline hover:border-brand-300">
+          <h3 class="font-semibold">Dumpster size guide</h3>
+          <p class="mt-2 text-sm text-muted">Match project scope to 10–40 yard containers.</p>
+        </a>
+        <a href="/guides/what-can-go-in-a-dumpster" class="card p-5 text-ink no-underline hover:border-brand-300">
+          <h3 class="font-semibold">What can go in a dumpster</h3>
+          <p class="mt-2 text-sm text-muted">Allowed materials and common prohibited items.</p>
+        </a>
+        <a href="/guides/dumpster-permits-overview" class="card p-5 text-ink no-underline hover:border-brand-300">
+          <h3 class="font-semibold">Permit overview</h3>
+          <p class="mt-2 text-sm text-muted">When you need a permit for street placement.</p>
+        </a>
+      </div>
+    </div>
+  </section>
+</BaseLayout>

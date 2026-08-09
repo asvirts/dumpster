@@ -1,0 +1,24 @@
+---
+interface Props {
+  initialQ?: string;
+  compact?: boolean;
+}
+
+const { initialQ = '', compact = false } = Astro.props;
+---
+
+<form action="/search" method="get" class:list={['w-full', compact ? '' : '']}>
+  <div class:list={['flex flex-col gap-2 sm:flex-row', compact && 'sm:max-w-xl']}>
+    <label class="sr-only" for="search-q">City, state, or ZIP</label>
+    <input
+      id="search-q"
+      name="q"
+      type="search"
+      value={initialQ}
+      placeholder="City, state, or ZIP (e.g. Houston, TX)"
+      class="input flex-1"
+      autocomplete="address-level2"
+    />
+    <button type="submit" class="btn-primary shrink-0 px-6">Find dumpsters</button>
+  </div>
+</form>

@@ -1,0 +1,23 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "dumpsterlocal",
+  "main": "@astrojs/cloudflare/entrypoints/server",
+  "compatibility_date": "2025-10-01",
+  "compatibility_flags": ["nodejs_compat"],
+  "assets": {
+    "directory": "./dist",
+    "binding": "ASSETS"
+  },
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "dumpsterlocal",
+      "database_id": "local-dev-placeholder",
+      "migrations_dir": "migrations"
+    }
+  ],
+  "vars": {
+    "PUBLIC_SITE_NAME": "DumpsterLocal",
+    "PUBLIC_SITE_URL": "http://localhost:4321"
+  }
+}

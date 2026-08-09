@@ -1,7 +1,7 @@
 {
-  "name": "dumpster",
+  "name": "dumpsterlocal",
   "type": "module",
-  "version": "0.0.1",
+  "version": "0.1.0",
   "engines": {
     "node": ">=22.12.0"
   },
@@ -9,9 +9,31 @@
     "dev": "astro dev",
     "build": "astro build",
     "preview": "astro preview",
-    "astro": "astro"
+    "astro": "astro",
+    "check": "astro check",
+    "db:migrate:local": "wrangler d1 migrations apply dumpsterlocal --local",
+    "db:migrate:remote": "wrangler d1 migrations apply dumpsterlocal --remote",
+    "db:seed:local": "wrangler d1 execute dumpsterlocal --local --file=./seed/seed.sql",
+    "db:seed:remote": "wrangler d1 execute dumpsterlocal --remote --file=./seed/seed.sql",
+    "db:setup:local": "bun run db:migrate:local && bun run db:seed:local",
+    "types": "wrangler types",
+    "deploy": "astro build && wrangler deploy"
   },
   "dependencies": {
-    "astro": "^7.2.0"
+    "@astrojs/cloudflare": "^14.2.0",
+    "@tailwindcss/vite": "^4.3.3",
+    "astro": "^7.2.0",
+    "drizzle-orm": "^0.45.2",
+    "maplibre-gl": "^6.2.0",
+    "nanoid": "^6.0.1",
+    "tailwindcss": "^4.3.3",
+    "zod": "^4.4.3"
+  },
+  "devDependencies": {
+    "@astrojs/check": "^0.9.10",
+    "@types/node": "^26.2.0",
+    "drizzle-kit": "^0.31.10",
+    "typescript": "^7.0.2",
+    "wrangler": "^4.120.0"
   }
 }

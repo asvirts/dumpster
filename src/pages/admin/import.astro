@@ -1,0 +1,152 @@
+---
+import AdminLayout from '../../layouts/AdminLayout.astro';
+import { getDb } from '../../lib/db';
+import { createOperator } from '../../lib/admin';
+import { cities } from '../../lib/schema';
+import { and, eq } from 'drizzle-orm';
+import { slugify } from '../../lib/geo';
+
+const db = getDb();
+let message = '';
+let imported = 0;
+let errors: string[] = [];
+
+if (Astro.request.method === 'POST') {
+  const form = await Astro.request.formData();
+  const file = form.get('csv');
+  if (!(file instanceof File)) {
+    message = 'Please upload a CSV file.';
+  } else {
+    const text = await file.text();
+    const lines = text.split(/\r?\n/).filter((l) => l.trim());
+    if (lines.length < 2) {
+      message = 'CSV needs a header row and at least one data row.';
+    } else {
+      const headers = parseCsvLine(lines[0]).map((h) => h.trim().toLowerCase());
+      const idx = (name: string) => headers.indexOf(name);
+
+      for (let i = 1; i < lines.length; i++) {
+        const cols = parseCsvLine(lines[i]);
+        const get = (name: string) => {
+          const j = idx(name);
+          return j >= 0 ? (cols[j] ?? '').trim() : '';
+        };
+        const name = get('name');
+        if (!name) {
+          errors.push(`Row ${i + 1}: missing name`);
+          continue;
+        }
+        try {
+          const cityName = get('city');
+          const state = get('state').toUpperCase();
+          let cityIds: string[] = [];
+          if (cityName && state) {
+            const city = await db.query.cities.findFirst({
+              where: and(
+                eq(cities.state, state),
+                eq(cities.slug, slugify(cityName)),
+              ),
+            });
+            if (city) cityIds = [city.id];
+          }
+          const sizes = get('sizes')
+            .split(/[|;,]/)
+            .map((s) => Number(s.trim()))
+            .filter((n) => Number.isFinite(n));
+          const materials = get('materials')
+            .split(/[|;,]/)
+            .map((s) => s.trim())
+            .filter(Boolean);
+
+          await createOperator(
+            db,
+            {
+              name,
+              phone: get('phone') || undefined,
+              email: get('email') || undefined,
+              website: get('website') || undefined,
+              description: get('description') || undefined,
+              hqCity: cityName || undefined,
+              hqState: state || undefined,
+              pricingMin: get('pricing_min') ? Number(get('pricing_min')) : null,
+              pricingMax: get('pricing_max') ? Number(get('pricing_max')) : null,
+              verificationStatus: 'pending',
+              isPublished: false,
+              sizes,
+              materials,
+              cityIds,
+            },
+            Astro.locals.adminEmail,
+          );
+          imported++;
+        } catch (e) {
+          errors.push(`Row ${i + 1}: ${e instanceof Error ? e.message : 'error'}`);
+        }
+      }
+      message = `Imported ${imported} operator(s) as pending.`;
+    }
+  }
+}
+
+function parseCsvLine(line: string): string[] {
+  const result: string[] = [];
+  let cur = '';
+  let inQuotes = false;
+  for (let i = 0; i < line.length; i++) {
+    const ch = line[i];
+    if (ch === '"') {
+      if (inQuotes && line[i + 1] === '"') {
+        cur += '"';
+        i++;
+      } else {
+        inQuotes = !inQuotes;
+      }
+    } else if (ch === ',' && !inQuotes) {
+      result.push(cur);
+      cur = '';
+    } else {
+      cur += ch;
+    }
+  }
+  result.push(cur);
+  return result;
+}
+---
+
+<AdminLayout title="CSV import">
+  <div class="card max-w-2xl p-6">
+    <p class="text-sm text-muted">
+      Upload operators as <strong>pending</strong> (not published). Required column: <code>name</code>.
+      Optional: phone, email, website, description, city, state, pricing_min, pricing_max, sizes
+      (e.g. <code>10|15|20</code>), materials (e.g. <code>construction|mixed</code>).
+    </p>
+
+    {
+      message && (
+        <p class="mt-4 rounded-lg bg-brand-50 px-3 py-2 text-sm text-brand-900" role="status">
+          {message}
+        </p>
+      )
+    }
+    {
+      errors.length > 0 && (
+        <ul class="mt-3 list-disc pl-5 text-sm text-red-700">
+          {errors.slice(0, 20).map((e) => (
+            <li>{e}</li>
+          ))}
+        </ul>
+      )
+    }
+
+    <form method="POST" enctype="multipart/form-data" class="mt-6 space-y-4">
+      <div>
+        <label class="label" for="csv">CSV file</label>
+        <input class="input" id="csv" name="csv" type="file" accept=".csv,text/csv" required />
+      </div>
+      <button type="submit" class="btn-primary">Import</button>
+    </form>
+
+    <pre class="mt-6 overflow-x-auto rounded-lg bg-slate-900 p-4 text-xs text-slate-100">name,phone,email,city,state,sizes,materials,pricing_min,pricing_max
+Acme Dumpsters,5551234567,hi@acme.example,Houston,TX,10|15|20,construction|mixed,350,600</pre>
+  </div>
+</AdminLayout>

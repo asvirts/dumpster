@@ -1,0 +1,25 @@
+---
+import AdminLayout from '../../../layouts/AdminLayout.astro';
+import OperatorForm from '../../../components/admin/OperatorForm.astro';
+import { getDb } from '../../../lib/db';
+import { createOperator, parseFormOperator } from '../../../lib/admin';
+import { cities } from '../../../lib/schema';
+import { asc } from 'drizzle-orm';
+
+const db = getDb();
+const allCities = await db.select().from(cities).orderBy(asc(cities.state), asc(cities.name));
+
+if (Astro.request.method === 'POST') {
+  const form = await Astro.request.formData();
+  const data = parseFormOperator(form);
+  if (!data.name.trim()) {
+    return new Response('Name is required', { status: 400 });
+  }
+  const id = await createOperator(db, data, Astro.locals.adminEmail);
+  return Astro.redirect(`/admin/operators/${id}`);
+}
+---
+
+<AdminLayout title="Add operator">
+  <OperatorForm cities={allCities} action="/admin/operators/new" />
+</AdminLayout>

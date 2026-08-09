@@ -8,6 +8,21 @@ astro dev --background
 
 Manage the background server with `astro dev stop`, `astro dev status`, and `astro dev logs`.
 
+First-time local data:
+
+```
+bun run db:setup:local
+```
+
+Admin is at `/admin` (local bypass via `.dev.vars` `ADMIN_BYPASS=1`). Production should protect `/admin*` with Cloudflare Access.
+
+## Stack
+
+- Astro 7 + `@astrojs/cloudflare` (Workers, not Pages)
+- Cloudflare D1 + Drizzle ORM
+- Tailwind CSS v4
+- MapLibre + OpenFreeMap tiles
+
 ## Documentation
 
 Full documentation: https://docs.astro.build
@@ -20,3 +35,4 @@ Consult these guides before working on related tasks:
 - [Adding or managing content](https://docs.astro.build/en/guides/content-collections/)
 - [Adding styles or using Tailwind](https://docs.astro.build/en/guides/styling/)
 - [Supporting multiple languages](https://docs.astro.build/en/guides/internationalization/)
+- [Cloudflare adapter](https://docs.astro.build/en/guides/integrations-guide/cloudflare/)

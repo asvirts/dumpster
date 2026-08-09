@@ -1,0 +1,75 @@
+---
+import { DUMPSTER_SIZES, MATERIALS } from '../lib/constants';
+
+interface Props {
+  q?: string;
+  size?: string;
+  material?: string;
+  driveway?: string;
+  sameDay?: string;
+  verified?: string;
+  brokers?: string;
+  sort?: string;
+}
+
+const {
+  q = '',
+  size = '',
+  material = '',
+  driveway = '',
+  sameDay = '',
+  verified = '1',
+  brokers = '0',
+  sort = 'quality',
+} = Astro.props;
+---
+
+<form method="get" action="/search" class="card space-y-4 p-4">
+  <input type="hidden" name="q" value={q} />
+  <div>
+    <label class="label" for="filter-size">Dumpster size</label>
+    <select id="filter-size" name="size" class="input">
+      <option value="">Any size</option>
+      {DUMPSTER_SIZES.map((s) => (
+        <option value={s} selected={size === String(s)}>{s} yard</option>
+      ))}
+    </select>
+  </div>
+  <div>
+    <label class="label" for="filter-material">Material</label>
+    <select id="filter-material" name="material" class="input">
+      <option value="">Any material</option>
+      {MATERIALS.map((m) => (
+        <option value={m.id} selected={material === m.id}>{m.label}</option>
+      ))}
+    </select>
+  </div>
+  <div>
+    <label class="label" for="filter-sort">Sort by</label>
+    <select id="filter-sort" name="sort" class="input">
+      <option value="quality" selected={sort === 'quality'}>Quality score</option>
+      <option value="price" selected={sort === 'price'}>Price (low to high)</option>
+      <option value="distance" selected={sort === 'distance'}>Distance</option>
+    </select>
+  </div>
+  <fieldset class="space-y-2">
+    <legend class="label">Options</legend>
+    <label class="flex items-center gap-2 text-sm">
+      <input type="checkbox" name="driveway" value="1" checked={driveway === '1'} class="rounded border-border" />
+      Residential driveway-safe
+    </label>
+    <label class="flex items-center gap-2 text-sm">
+      <input type="checkbox" name="sameDay" value="1" checked={sameDay === '1'} class="rounded border-border" />
+      Same-day capable
+    </label>
+    <label class="flex items-center gap-2 text-sm">
+      <input type="checkbox" name="verified" value="1" checked={verified !== '0'} class="rounded border-border" />
+      Verified only
+    </label>
+    <label class="flex items-center gap-2 text-sm">
+      <input type="checkbox" name="brokers" value="1" checked={brokers === '1'} class="rounded border-border" />
+      Include brokers
+    </label>
+  </fieldset>
+  <button type="submit" class="btn-primary w-full">Apply filters</button>
+</form>

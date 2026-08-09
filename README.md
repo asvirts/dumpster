@@ -1,43 +1,62 @@
-# Astro Starter Kit: Minimal
+# DumpsterLocal
+
+Verified, hyper-local dumpster rental directory (MVP). Quality and verification over listing volume.
+
+**Stack:** Astro 7 · Cloudflare Workers · D1 · Drizzle · Tailwind · MapLibre
+
+## Quick start
 
 ```sh
-bun create astro@latest -- --template minimal
+bun install
+bun run db:setup:local   # migrate + seed demo data into local D1
+bun run dev              # http://localhost:4321
 ```
 
-> 🧑‍🚀 **Seasoned astronaut?** Delete this file. Have fun!
+Admin (local): [http://localhost:4321/admin](http://localhost:4321/admin)  
+Bypass is enabled via `.dev.vars` (`ADMIN_BYPASS=1`).
 
-## 🚀 Project Structure
+## Scripts
 
-Inside of your Astro project, you'll see the following folders and files:
+| Command | Purpose |
+|---------|---------|
+| `bun run dev` | Local dev (workerd + D1) |
+| `bun run build` | Production build |
+| `bun run preview` | Preview Worker build |
+| `bun run db:migrate:local` | Apply D1 migrations locally |
+| `bun run db:seed:local` | Seed demo cities/operators |
+| `bun run db:migrate:remote` | Apply migrations to remote D1 |
+| `bun run db:seed:remote` | Seed remote D1 (use carefully) |
+| `bun run deploy` | Build + `wrangler deploy` |
 
-```text
-/
-├── public/
-├── src/
-│   └── pages/
-│       └── index.astro
-└── package.json
-```
+## Cloudflare setup
 
-Astro looks for `.astro` or `.md` files in the `src/pages/` directory. Each page is exposed as a route based on its file name.
+1. Create D1 database: `bunx wrangler d1 create dumpsterlocal`
+2. Put the real `database_id` in `wrangler.jsonc` (replace `local-dev-placeholder`)
+3. `bun run db:migrate:remote`
+4. Optionally seed: `bun run db:seed:remote` (demo data — replace for production)
+5. Set secrets if using email: `bunx wrangler secret put RESEND_API_KEY` and optional `ADMIN_NOTIFY_EMAIL`
+6. Deploy: `bun run deploy`
+7. **Cloudflare Access:** protect path `/admin*` with an Access application (email allowlist)
 
-There's nothing special about `src/components/`, but that's where we like to put any Astro/React/Vue/Svelte/Preact components.
+Update `PUBLIC_SITE_URL` / `site` in `astro.config.mjs` for your domain.
 
-Any static assets, like images, can be placed in the `public/` directory.
+## Product surface
 
-## 🧞 Commands
+| Route | Description |
+|-------|-------------|
+| `/` | Home + priority cities |
+| `/search` | Filters, list, map |
+| `/dumpster-rental/[state]/[city]` | City landing (pricing + permits + operators) |
+| `/operator/[slug]` | Profile + quote form |
+| `/compare?ids=` | Side-by-side (max 4) |
+| `/guides/*` | Educational content |
+| `/admin/*` | Verification queue, CRUD, CSV import, leads, city notes |
 
-All commands are run from the root of the project, from a terminal:
+## Quality model
 
-| Command                   | Action                                           |
-| :------------------------ | :----------------------------------------------- |
-| `bun install`             | Installs dependencies                            |
-| `bun dev`             | Starts local dev server at `localhost:4321`      |
-| `bun build`           | Build your production site to `./dist/`          |
-| `bun preview`         | Preview your build locally, before deploying     |
-| `bun astro ...`       | Run CLI commands like `astro add`, `astro check` |
-| `bun astro -- --help` | Get help using the Astro CLI                     |
+- Operators start as `pending` and stay off the public directory until verified + published
+- Public “Verified · {date}” badge from `last_verified_at`
+- Brokers flaggable and filtered out by default
+- City pages store unique permit/pricing/special-rules content in D1
 
-## 👀 Want to learn more?
-
-Feel free to check [our documentation](https://docs.astro.build) or jump into our [Discord server](https://astro.build/chat).
+See `ASSUMPTIONS.md` and the product PRD for full requirements.

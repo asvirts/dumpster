@@ -1,0 +1,134 @@
+---
+import AdminLayout from '../../../layouts/AdminLayout.astro';
+import OperatorForm from '../../../components/admin/OperatorForm.astro';
+import { getDb } from '../../../lib/db';
+import { parseFormOperator, updateOperator, logAudit } from '../../../lib/admin';
+import { cities, operators, operatorMaterials, operatorServiceAreas, operatorSizes } from '../../../lib/schema';
+import { asc, eq } from 'drizzle-orm';
+import { formatDate } from '../../../lib/geo';
+
+const { id } = Astro.params;
+if (!id) return Astro.redirect('/admin/operators');
+
+const db = getDb();
+
+if (Astro.request.method === 'POST') {
+  const form = await Astro.request.formData();
+  const intent = form.get('intent')?.toString();
+
+  if (intent === 'delete') {
+    await db.delete(operators).where(eq(operators.id, id));
+    await logAudit(db, {
+      action: 'delete',
+      entityType: 'operator',
+      entityId: id,
+      actor: Astro.locals.adminEmail,
+    });
+    return Astro.redirect('/admin/operators');
+  }
+
+  if (intent === 'verify' || intent === 'reject') {
+    const status = intent === 'verify' ? 'verified' : 'rejected';
+    const now = new Date().toISOString();
+    await db
+      .update(operators)
+      .set({
+        verificationStatus: status,
+        lastVerifiedAt: status === 'verified' ? now : null,
+        verifiedBy: Astro.locals.adminEmail ?? 'admin',
+        isPublished: status === 'verified',
+        verificationNotes: form.get('quickNotes')?.toString() || null,
+        updatedAt: now,
+      })
+      .where(eq(operators.id, id));
+    await logAudit(db, {
+      action: status,
+      entityType: 'operator',
+      entityId: id,
+      actor: Astro.locals.adminEmail,
+    });
+    return Astro.redirect(`/admin/operators/${id}`);
+  }
+
+  const data = parseFormOperator(form);
+  await updateOperator(db, id, data, Astro.locals.adminEmail);
+  return Astro.redirect(`/admin/operators/${id}?saved=1`);
+}
+
+const op = await db.query.operators.findFirst({ where: eq(operators.id, id) });
+if (!op) return new Response('Not found', { status: 404 });
+
+const [sizes, materials, areas, allCities] = await Promise.all([
+  db.select().from(operatorSizes).where(eq(operatorSizes.operatorId, id)),
+  db.select().from(operatorMaterials).where(eq(operatorMaterials.operatorId, id)),
+  db.select().from(operatorServiceAreas).where(eq(operatorServiceAreas.operatorId, id)),
+  db.select().from(cities).orderBy(asc(cities.state), asc(cities.name)),
+]);
+
+const saved = Astro.url.searchParams.get('saved') === '1';
+---
+
+<AdminLayout title={`Edit: ${op.name}`}>
+  {
+    saved && (
+      <p class="mb-4 rounded-lg bg-brand-50 px-4 py-2 text-sm text-brand-900" role="status">
+        Saved.
+      </p>
+    )
+  }
+
+  <div class="mb-6 flex flex-wrap items-center gap-3 rounded-xl border border-border bg-white p-4">
+    <div class="flex-1 text-sm text-muted">
+      Status: <strong class="text-ink">{op.verificationStatus}</strong>
+      {op.lastVerifiedAt && <> · Verified {formatDate(op.lastVerifiedAt)} by {op.verifiedBy}</>}
+      {op.isPublished ? ' · Published' : ' · Not published'}
+      {op.isDemo && ' · Demo seed data'}
+    </div>
+    {
+      op.verificationStatus !== 'verified' && (
+        <form method="POST" class="flex flex-wrap items-center gap-2">
+          <input type="hidden" name="intent" value="verify" />
+          <input class="input w-48" name="quickNotes" placeholder="Verification notes" />
+          <button type="submit" class="btn-primary">Mark verified</button>
+        </form>
+      )
+    }
+    {
+      op.verificationStatus !== 'rejected' && (
+        <form method="POST">
+          <input type="hidden" name="intent" value="reject" />
+          <button type="submit" class="btn-secondary text-red-700">
+            Reject
+          </button>
+        </form>
+      )
+    }
+    {
+      op.isPublished && (
+        <a href={`/operator/${op.slug}`} class="btn-ghost text-sm" target="_blank">
+          View public →
+        </a>
+      )
+    }
+  </div>
+
+  <OperatorForm
+    operator={op}
+    sizes={sizes.map((s) => s.yards)}
+    materials={materials.map((m) => m.material)}
+    cityIds={areas.map((a) => a.cityId).filter(Boolean) as string[]}
+    cities={allCities}
+    action={`/admin/operators/${id}`}
+  />
+
+  <form
+    method="POST"
+    class="mt-10 border-t border-border pt-6"
+    onsubmit="return confirm('Delete this operator permanently?')"
+  >
+    <input type="hidden" name="intent" value="delete" />
+    <button type="submit" class="text-sm font-medium text-red-700 hover:underline">
+      Delete operator
+    </button>
+  </form>
+</AdminLayout>

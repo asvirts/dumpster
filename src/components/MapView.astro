@@ -1,0 +1,88 @@
+---
+interface Marker {
+  id: string;
+  name: string;
+  slug: string;
+  lat: number;
+  lng: number;
+}
+
+interface Props {
+  markers: Marker[];
+  centerLat?: number;
+  centerLng?: number;
+  zoom?: number;
+  heightClass?: string;
+}
+
+const {
+  markers,
+  centerLat,
+  centerLng,
+  zoom = 10,
+  heightClass = 'h-72 md:h-full md:min-h-[28rem]',
+} = Astro.props;
+
+const center = {
+  lat: centerLat ?? markers[0]?.lat ?? 39.8283,
+  lng: centerLng ?? markers[0]?.lng ?? -98.5795,
+};
+---
+
+<div
+  class:list={['map-view card overflow-hidden', heightClass]}
+  data-map
+  data-markers={JSON.stringify(markers)}
+  data-center-lat={center.lat}
+  data-center-lng={center.lng}
+  data-zoom={zoom}
+>
+  <div class="flex h-full items-center justify-center bg-slate-100 text-sm text-muted" data-map-fallback>
+    Loading map…
+  </div>
+</div>
+
+<script>
+  import { Map, Marker, Popup, NavigationControl, LngLatBounds } from 'maplibre-gl';
+  import 'maplibre-gl/dist/maplibre-gl.css';
+
+  function initMaps() {
+    document.querySelectorAll<HTMLElement>('[data-map]').forEach((el) => {
+      if (el.dataset.initialized) return;
+      el.dataset.initialized = '1';
+
+      const markers: { id: string; name: string; slug: string; lat: number; lng: number }[] =
+        JSON.parse(el.dataset.markers || '[]');
+      const centerLat = Number(el.dataset.centerLat);
+      const centerLng = Number(el.dataset.centerLng);
+      const zoom = Number(el.dataset.zoom || 10);
+
+      el.innerHTML = '';
+      const map = new Map({
+        container: el,
+        style: 'https://tiles.openfreemap.org/styles/liberty',
+        center: [centerLng, centerLat],
+        zoom: markers.length ? zoom : 3.5,
+      });
+      map.addControl(new NavigationControl({ showCompass: false }), 'top-right');
+
+      const bounds = new LngLatBounds();
+      for (const m of markers) {
+        const popup = new Popup({ offset: 16 }).setHTML(
+          `<strong>${m.name}</strong><br/><a href="/operator/${m.slug}">View profile</a>`,
+        );
+        new Marker({ color: '#15803d' })
+          .setLngLat([m.lng, m.lat])
+          .setPopup(popup)
+          .addTo(map);
+        bounds.extend([m.lng, m.lat]);
+      }
+      if (markers.length > 1) {
+        map.fitBounds(bounds, { padding: 48, maxZoom: 12 });
+      }
+    });
+  }
+
+  initMaps();
+  document.addEventListener('astro:page-load', initMaps);
+</script>

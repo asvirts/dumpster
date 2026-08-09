@@ -1,0 +1,88 @@
+---
+import AdminLayout from '../../layouts/AdminLayout.astro';
+import { getDb } from '../../lib/db';
+import { cities } from '../../lib/schema';
+import { asc, eq } from 'drizzle-orm';
+
+const db = getDb();
+
+if (Astro.request.method === 'POST') {
+  const form = await Astro.request.formData();
+  const id = form.get('id')?.toString();
+  if (id) {
+    await db
+      .update(cities)
+      .set({
+        localPermitSummary: form.get('localPermitSummary')?.toString() || null,
+        typicalPricingNotes: form.get('typicalPricingNotes')?.toString() || null,
+        specialRules: form.get('specialRules')?.toString() || null,
+        isPriority: form.get('isPriority') === 'on',
+        updatedAt: new Date().toISOString(),
+      })
+      .where(eq(cities.id, id));
+  }
+  return Astro.redirect(`/admin/cities?saved=${id}`);
+}
+
+const rows = await db.select().from(cities).orderBy(asc(cities.state), asc(cities.name));
+const saved = Astro.url.searchParams.get('saved');
+---
+
+<AdminLayout title="Cities">
+  <p class="mb-6 text-sm text-muted">
+    Edit local intelligence blocks shown on city landing pages. Unique content beats thin templates.
+  </p>
+  {
+    saved && (
+      <p class="mb-4 text-sm text-brand-700" role="status">
+        Saved city content.
+      </p>
+    )
+  }
+  <div class="space-y-6">
+    {
+      rows.map((c) => (
+        <form method="POST" class="card space-y-3 p-5">
+          <input type="hidden" name="id" value={c.id} />
+          <div class="flex flex-wrap items-center justify-between gap-2">
+            <h2 class="font-bold text-ink">
+              {c.name}, {c.state}
+            </h2>
+            <a
+              href={`/dumpster-rental/${c.stateSlug}/${c.slug}`}
+              class="text-xs font-medium"
+              target="_blank"
+            >
+              View page →
+            </a>
+          </div>
+          <div>
+            <label class="label">Permit summary</label>
+            <textarea class="input" name="localPermitSummary" rows="3">
+              {c.localPermitSummary ?? ''}
+            </textarea>
+          </div>
+          <div>
+            <label class="label">Pricing notes</label>
+            <textarea class="input" name="typicalPricingNotes" rows="3">
+              {c.typicalPricingNotes ?? ''}
+            </textarea>
+          </div>
+          <div>
+            <label class="label">Special rules / tips</label>
+            <textarea class="input" name="specialRules" rows="2">
+              {c.specialRules ?? ''}
+            </textarea>
+          </div>
+          <label class="flex items-center gap-2 text-sm">
+            <input type="checkbox" name="isPriority" checked={c.isPriority} />
+            Priority city (shown on homepage)
+          </label>
+          <button type="submit" class="btn-primary">
+            Save {c.name}
+          </button>
+        </form>
+      ))
+    }
+  </div>
+</AdminLayout>

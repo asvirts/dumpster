@@ -1,0 +1,107 @@
+---
+import type { OperatorResult } from '../lib/search';
+import { formatCurrency, formatPhone } from '../lib/geo';
+import { MATERIALS } from '../lib/constants';
+import VerifiedBadge from './VerifiedBadge.astro';
+
+interface Props {
+  operator: OperatorResult;
+  selected?: boolean;
+}
+
+const { operator: op, selected = false } = Astro.props;
+
+const materialLabels = op.materials
+  .map((id) => MATERIALS.find((m) => m.id === id)?.label ?? id)
+  .slice(0, 3);
+
+const priceLabel =
+  op.pricingMin != null && op.pricingMax != null
+    ? `${formatCurrency(op.pricingMin)}–${formatCurrency(op.pricingMax)}`
+    : 'Request quote';
+---
+
+<article
+  class:list={[
+    'card p-5 transition hover:border-brand-300 hover:shadow-md',
+    selected && 'ring-2 ring-brand-500',
+  ]}
+>
+  <div class="flex flex-wrap items-start justify-between gap-3">
+    <div>
+      <h2 class="text-lg font-bold text-ink">
+        <a href={`/operator/${op.slug}`} class="text-ink no-underline hover:text-brand-700">
+          {op.name}
+        </a>
+      </h2>
+      <p class="mt-1 text-sm text-muted">
+        {[op.hqCity, op.hqState].filter(Boolean).join(', ') || 'Local operator'}
+        {
+          op.distanceMiles != null && (
+            <span> · ~{op.distanceMiles.toFixed(1)} mi</span>
+          )
+        }
+      </p>
+    </div>
+    <p class="text-right text-base font-semibold text-brand-700">{priceLabel}</p>
+  </div>
+
+  <div class="mt-3">
+    <VerifiedBadge
+      lastVerifiedAt={op.verificationStatus === 'verified' ? op.lastVerifiedAt : null}
+      isBroker={op.isBroker}
+      isDemo={op.isDemo}
+    />
+  </div>
+
+  {
+    op.description && (
+      <p class="mt-3 line-clamp-2 text-sm text-slate-600">{op.description}</p>
+    )
+  }
+
+  <div class="mt-4 flex flex-wrap gap-2 text-xs">
+    {
+      op.sizes.map((s) => (
+        <span class="rounded-md bg-surface px-2 py-1 font-medium text-slate-700">{s} yd</span>
+      ))
+    }
+    {
+      materialLabels.map((m) => (
+        <span class="rounded-md bg-brand-50 px-2 py-1 font-medium text-brand-800">{m}</span>
+      ))
+    }
+    {
+      op.drivewaySuitable && (
+        <span class="rounded-md bg-sky-50 px-2 py-1 font-medium text-sky-800">Driveway-safe</span>
+      )
+    }
+    {
+      op.sameDayCapable && (
+        <span class="rounded-md bg-violet-50 px-2 py-1 font-medium text-violet-800">Same-day</span>
+      )
+    }
+  </div>
+
+  <div class="mt-5 flex flex-wrap items-center gap-2">
+    <a href={`/operator/${op.slug}`} class="btn-primary">View profile</a>
+    {
+      op.phone && (
+        <a href={`tel:${op.phone}`} class="btn-secondary">
+          {formatPhone(op.phone)}
+        </a>
+      )
+    }
+    <label class="ml-auto flex cursor-pointer items-center gap-2 text-xs text-muted">
+      <input
+        type="checkbox"
+        name="compare"
+        value={op.id}
+        data-compare-id={op.id}
+        data-compare-name={op.name}
+        class="compare-check rounded border-border"
+      />
+      Compare
+    </label>
+  </div>
+</article>

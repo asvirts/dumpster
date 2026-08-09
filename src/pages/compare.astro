@@ -1,0 +1,165 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import VerifiedBadge from '../components/VerifiedBadge.astro';
+import { getDb } from '../lib/db';
+import { inArray } from 'drizzle-orm';
+import { operators, operatorSizes, operatorMaterials } from '../lib/schema';
+import { formatCurrency, formatPhone } from '../lib/geo';
+import { MATERIALS } from '../lib/constants';
+import { pageTitle } from '../lib/seo';
+
+const ids = (Astro.url.searchParams.get('ids') ?? '')
+  .split(',')
+  .map((s) => s.trim())
+  .filter(Boolean)
+  .slice(0, 4);
+
+const db = getDb();
+let rows: (typeof operators.$inferSelect)[] = [];
+let sizesMap = new Map<string, number[]>();
+let matsMap = new Map<string, string[]>();
+
+if (ids.length > 0) {
+  rows = await db
+    .select()
+    .from(operators)
+    .where(inArray(operators.id, ids));
+  // Preserve selection order
+  rows = ids
+    .map((id) => rows.find((r) => r.id === id))
+    .filter(Boolean) as typeof rows;
+
+  if (rows.length) {
+    const opIds = rows.map((r) => r.id);
+    const sizes = await db
+      .select()
+      .from(operatorSizes)
+      .where(inArray(operatorSizes.operatorId, opIds));
+    const mats = await db
+      .select()
+      .from(operatorMaterials)
+      .where(inArray(operatorMaterials.operatorId, opIds));
+    for (const s of sizes) {
+      const arr = sizesMap.get(s.operatorId) ?? [];
+      arr.push(s.yards);
+      sizesMap.set(s.operatorId, arr);
+    }
+    for (const m of mats) {
+      const arr = matsMap.get(m.operatorId) ?? [];
+      arr.push(m.material);
+      matsMap.set(m.operatorId, arr);
+    }
+  }
+}
+
+const fields: { label: string; value: (id: string, op: (typeof rows)[0]) => string }[] = [
+  {
+    label: 'Typical price',
+    value: (_id, op) =>
+      op.pricingMin != null && op.pricingMax != null
+        ? `${formatCurrency(op.pricingMin)}–${formatCurrency(op.pricingMax)}`
+        : '—',
+  },
+  {
+    label: 'Sizes',
+    value: (id) =>
+      (sizesMap.get(id) ?? [])
+        .sort((a, b) => a - b)
+        .map((y) => `${y} yd`)
+        .join(', ') || '—',
+  },
+  {
+    label: 'Materials',
+    value: (id) =>
+      (matsMap.get(id) ?? [])
+        .map((m) => MATERIALS.find((x) => x.id === m)?.label ?? m)
+        .join(', ') || '—',
+  },
+  {
+    label: 'Driveway-safe',
+    value: (_id, op) => (op.drivewaySuitable ? 'Yes' : 'Limited / ask'),
+  },
+  {
+    label: 'Same-day',
+    value: (_id, op) => (op.sameDayCapable ? 'Yes' : 'No'),
+  },
+  {
+    label: 'Broker',
+    value: (_id, op) => (op.isBroker ? 'Yes' : 'No — local operator'),
+  },
+  {
+    label: 'Included tonnage',
+    value: (_id, op) => (op.includedTonnage != null ? `~${op.includedTonnage} tons` : '—'),
+  },
+  {
+    label: 'Overage rate',
+    value: (_id, op) =>
+      op.overageRate != null ? `~${formatCurrency(op.overageRate)}/ton` : '—',
+  },
+  {
+    label: 'Phone',
+    value: (_id, op) => (op.phone ? formatPhone(op.phone) : '—'),
+  },
+];
+---
+
+<BaseLayout title={pageTitle('Compare operators')} noIndex>
+  <div class="container-page py-10">
+    <h1 class="text-3xl font-bold text-ink">Compare dumpster operators</h1>
+    <p class="mt-2 text-muted">Side-by-side comparison of up to 4 operators.</p>
+
+    {
+      rows.length < 2 ? (
+        <div class="card mt-8 p-8 text-center">
+          <p class="font-semibold text-ink">Select at least 2 operators to compare</p>
+          <p class="mt-2 text-sm text-muted">Use the Compare checkboxes on search results.</p>
+          <a href="/search" class="btn-primary mt-4 inline-flex">Back to search</a>
+        </div>
+      ) : (
+        <div class="mt-8 overflow-x-auto">
+          <table class="w-full min-w-[640px] border-collapse text-left text-sm">
+            <thead>
+              <tr class="border-b border-border">
+                <th class="p-3 font-medium text-muted">Feature</th>
+                {rows.map((op) => (
+                  <th class="p-3 align-bottom">
+                    <a href={`/operator/${op.slug}`} class="font-bold text-ink no-underline hover:text-brand-700">
+                      {op.name}
+                    </a>
+                    <div class="mt-2">
+                      <VerifiedBadge
+                        lastVerifiedAt={op.verificationStatus === 'verified' ? op.lastVerifiedAt : null}
+                        isBroker={op.isBroker}
+                        isDemo={op.isDemo}
+                      />
+                    </div>
+                  </th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {fields.map((f) => (
+                <tr class="border-b border-border">
+                  <th class="p-3 font-medium text-muted">{f.label}</th>
+                  {rows.map((op) => (
+                    <td class="p-3 text-ink">{f.value(op.id, op)}</td>
+                  ))}
+                </tr>
+              ))}
+              <tr>
+                <th class="p-3" />
+                {rows.map((op) => (
+                  <td class="p-3">
+                    <a href={`/operator/${op.slug}#quote`} class="btn-primary">
+                      Request quote
+                    </a>
+                  </td>
+                ))}
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      )
+    }
+  </div>
+</BaseLayout>

@@ -1,0 +1,88 @@
+---
+import AdminLayout from '../../layouts/AdminLayout.astro';
+import { getDb } from '../../lib/db';
+import { eq, sql } from 'drizzle-orm';
+import { leads, operators } from '../../lib/schema';
+
+const db = getDb();
+
+const [pending] = await db
+  .select({ c: sql<number>`count(*)` })
+  .from(operators)
+  .where(eq(operators.verificationStatus, 'pending'));
+const [verified] = await db
+  .select({ c: sql<number>`count(*)` })
+  .from(operators)
+  .where(eq(operators.verificationStatus, 'verified'));
+const [published] = await db
+  .select({ c: sql<number>`count(*)` })
+  .from(operators)
+  .where(eq(operators.isPublished, true));
+const [newLeads] = await db
+  .select({ c: sql<number>`count(*)` })
+  .from(leads)
+  .where(eq(leads.status, 'new'));
+
+const pendingList = await db.query.operators.findMany({
+  where: eq(operators.verificationStatus, 'pending'),
+  orderBy: (o, { desc }) => [desc(o.createdAt)],
+  limit: 10,
+});
+---
+
+<AdminLayout title="Dashboard">
+  <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+    <div class="card p-5">
+      <p class="text-sm text-muted">Pending verification</p>
+      <p class="mt-1 text-3xl font-bold text-amber-700">{pending?.c ?? 0}</p>
+    </div>
+    <div class="card p-5">
+      <p class="text-sm text-muted">Verified</p>
+      <p class="mt-1 text-3xl font-bold text-brand-700">{verified?.c ?? 0}</p>
+    </div>
+    <div class="card p-5">
+      <p class="text-sm text-muted">Published</p>
+      <p class="mt-1 text-3xl font-bold text-ink">{published?.c ?? 0}</p>
+    </div>
+    <div class="card p-5">
+      <p class="text-sm text-muted">New leads</p>
+      <p class="mt-1 text-3xl font-bold text-sky-700">{newLeads?.c ?? 0}</p>
+    </div>
+  </div>
+
+  <section class="mt-10">
+    <div class="flex items-center justify-between gap-4">
+      <h2 class="text-lg font-bold text-ink">Verification queue</h2>
+      <a href="/admin/operators?status=pending" class="text-sm font-medium">View all</a>
+    </div>
+    {
+      pendingList.length === 0 ? (
+        <p class="mt-4 text-sm text-muted">No pending operators. Nice work.</p>
+      ) : (
+        <ul class="mt-4 divide-y divide-border rounded-xl border border-border bg-white">
+          {pendingList.map((op) => (
+            <li class="flex flex-wrap items-center justify-between gap-3 px-4 py-3">
+              <div>
+                <a href={`/admin/operators/${op.id}`} class="font-semibold text-ink no-underline hover:text-brand-700">
+                  {op.name}
+                </a>
+                <p class="text-xs text-muted">
+                  {[op.hqCity, op.hqState].filter(Boolean).join(', ') || 'No HQ'} · {op.phone || 'No phone'}
+                </p>
+              </div>
+              <a href={`/admin/operators/${op.id}`} class="btn-secondary text-xs">
+                Review
+              </a>
+            </li>
+          ))}
+        </ul>
+      )
+    }
+  </section>
+
+  <div class="mt-8 flex flex-wrap gap-3">
+    <a href="/admin/operators/new" class="btn-primary">Add operator</a>
+    <a href="/admin/import" class="btn-secondary">CSV import</a>
+    <a href="/admin/leads" class="btn-secondary">Leads inbox</a>
+  </div>
+</AdminLayout>
