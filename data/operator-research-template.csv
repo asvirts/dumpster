@@ -1,0 +1,20 @@
+name,phone,email,website,city,state,sizes,materials,pricing_min,pricing_max,driveway_suitable,driveway_notes,same_day_capable,description
+# TEMPLATE: Fill with REAL verified local haulers. One row per operator.
+# After filling, import via /admin/import (creates as pending).
+# Then review in /admin/operators and set verification_status=verified + is_published=1.
+# 
+# RESEARCH REQUIREMENTS:
+# - Call the phone and confirm they do roll-off dumpster rentals
+# - Verify website (if any) loads and matches
+# - Confirm service area includes the city/state listed
+# - Get realistic pricing range for 10-20yd residential (or ask for "typical range")
+# - Ask about driveway suitability and protection practices
+# - Confirm they are NOT a broker (we hide brokers by default)
+# - Get any license/insurance notes they volunteer
+#
+# DO NOT import unverified or placeholder data for production.
+#
+# Example row (DELETE before using):
+# Acme Roll Off,555-123-4567,hello@acme.example,https://acme.example,Birmingham,AL,10|15|20|30,construction|mixed|household,350,650,1,"Plywood on request",0,"Local Birmingham hauler, family owned."
+#
+# --- Add real operators below this line ---

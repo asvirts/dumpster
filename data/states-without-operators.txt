@@ -1,0 +1,46 @@
+STATES NEEDING VERIFIED OPERATORS
+==================================
+Research status updated: 2026-08-09 (Firecrawl pass)
+
+Cities exist in ALL 50 states + DC.
+
+SEED operators (placeholders) only in: AZ, CA, CO, FL, GA, TX
+
+RESEARCHED pending candidates now exist for ALL other states + DC
+in: data/research/operators-pending-nationwide.csv
+
+These are NOT verified yet. Do not publish without phone verification.
+
+NEXT STEPS:
+1. Import CSV via /admin/import (pending, unpublished)
+2. Call each recommended primary operator (see research-guide.md)
+3. Set verification_status=verified + is_published=1 only after human confirmation
+4. Replace AZ/CA/CO/FL/GA/TX seed placeholders with real businesses
+
+BLANK PHONE ROWS still needing a website scrape:
+- BC Haulers (OR alt)
+- JEG Inc (NJ)
+- Dakota Roll-off (ND alt)
+- Garbage Guys (WY alt)
+- U-LOAD-IT KC (MO alt)
+- Boren Brothers / Nordic Waste / Haul It A Day / USA Waste / Universal Waste / HTM Contractors (alts)
+
+RESEARCH CHECKLIST per operator:
+- [ ] Business name (legal/trade)
+- [ ] Phone (call to verify)
+- [ ] Website (if any)
+- [ ] HQ city + state
+- [ ] Service ZIPs or cities (at minimum tie to the state city we added)
+- [ ] Sizes offered (10|15|20|30|40)
+- [ ] Materials accepted (construction|mixed|yard|concrete|roofing|household)
+- [ ] Pricing range (realistic min-max for 10-20yd typical)
+- [ ] Driveway suitable? (yes/no + notes)
+- [ ] Same-day capable?
+- [ ] Insurance/license notes (ask)
+- [ ] NOT a broker (we hide brokers by default)
+
+See also:
+- data/research/operators-pending-nationwide.csv
+- data/research/firecrawl-research-log.md
+- data/research-guide.md
+- data/us-major-cities.json
