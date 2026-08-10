@@ -11,6 +11,9 @@ import {
   logAudit,
 } from '../../lib/admin';
 import { DUMPSTER_SIZES, MATERIALS } from '../../lib/constants';
+import { sanitizeHttpUrl } from '../../lib/urls';
+
+const MATERIAL_IDS = new Set(MATERIALS.map((m) => m.id));
 
 const auth = Astro.locals.auth();
 const orgId = auth.orgId!;
@@ -31,8 +34,11 @@ if (Astro.request.method === 'POST' && operator) {
   const sizes = form
     .getAll('sizes')
     .map((s) => Number(s))
-    .filter((n) => Number.isFinite(n));
-  const materials = form.getAll('materials').map(String);
+    .filter((n) => Number.isFinite(n) && (DUMPSTER_SIZES as readonly number[]).includes(n));
+  const materials = form
+    .getAll('materials')
+    .map(String)
+    .filter((m) => MATERIAL_IDS.has(m as (typeof MATERIALS)[number]['id']));
   const cityIds = form.getAll('cityIds').map(String);
   const now = new Date().toISOString();
 
@@ -42,7 +48,7 @@ if (Astro.request.method === 'POST' && operator) {
       name: String(form.get('name') ?? operator.name).trim() || operator.name,
       phone: form.get('phone')?.toString() || null,
       email: form.get('email')?.toString() || null,
-      website: form.get('website')?.toString() || null,
+      website: sanitizeHttpUrl(form.get('website')?.toString()) || null,
       description: form.get('description')?.toString() || null,
       hqCity: form.get('hqCity')?.toString() || null,
       hqState: form.get('hqState')?.toString() || null,

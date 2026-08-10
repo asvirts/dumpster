@@ -28,6 +28,7 @@ const materials = op.materials.map((m) => m.material);
 const cities = op.serviceAreas
   .map((a) => (a.city ? `${a.city.name}, ${a.city.state}` : null))
   .filter(Boolean) as string[];
+const websiteUrl = withUtm(op.website);
 
 const locationLabel = op.hqCity && op.hqState ? ` in ${op.hqCity}, ${op.hqState}` : '';
 const title = pageTitle([op.name, `Dumpster Rental${locationLabel}`]);
@@ -101,8 +102,8 @@ const jsonLd = [
           )
         }
         {
-          op.website && (
-            <a href={withUtm(op.website) ?? '#'} class="btn-outline-light" rel="noopener noreferrer" target="_blank">
+          websiteUrl && (
+            <a href={websiteUrl} class="btn-outline-light" rel="noopener noreferrer" target="_blank">
               Website
             </a>
           )

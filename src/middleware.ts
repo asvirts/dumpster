@@ -1,29 +1,33 @@
 import { defineMiddleware, sequence } from 'astro:middleware';
 import { clerkMiddleware } from '@clerk/astro/server';
-import { env } from 'cloudflare:workers';
+import { isLocalAdminBypass, verifyAccessJwt } from './lib/access';
 
 /**
- * Admin routes are protected by Cloudflare Access in production.
- * Locally, ADMIN_BYPASS=1 in .dev.vars allows unrestricted access.
- * We also capture Access email when present for audit trails.
+ * Admin routes:
+ * - Local: ADMIN_BYPASS=1 AND Astro DEV mode only
+ * - Production: verified Cloudflare Access JWT (CF_ACCESS_TEAM_DOMAIN + CF_ACCESS_AUD)
+ *
+ * Never trust Cf-Access-Authenticated-User-Email alone — that header is forgeable
+ * if Access is not enforced in front of the Worker.
  */
 const adminGuard = defineMiddleware(async (context, next) => {
   const path = context.url.pathname;
   const isAdmin = path.startsWith('/admin');
 
   if (isAdmin) {
-    const bypass = env.ADMIN_BYPASS === '1' || import.meta.env.DEV;
-    const accessEmail =
-      context.request.headers.get('Cf-Access-Authenticated-User-Email') ?? undefined;
-
-    if (!bypass && !accessEmail) {
-      return new Response(
-        'Admin access requires Cloudflare Access. For local development set ADMIN_BYPASS=1 in .dev.vars.',
-        { status: 401, headers: { 'Content-Type': 'text/plain' } },
-      );
+    if (isLocalAdminBypass()) {
+      context.locals.adminEmail = 'local-dev';
+      return next();
     }
 
-    context.locals.adminEmail = accessEmail ?? 'local-dev';
+    const verified = await verifyAccessJwt(context.request);
+    if (!verified.ok) {
+      return new Response(
+        `Admin access denied: ${verified.error}\n\nLocal development: set ADMIN_BYPASS=1 in .dev.vars and run \`astro dev\`.`,
+        { status: 401, headers: { 'Content-Type': 'text/plain; charset=utf-8' } },
+      );
+    }
+    context.locals.adminEmail = verified.email;
   }
 
   return next();

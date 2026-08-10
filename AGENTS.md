@@ -14,7 +14,7 @@ First-time local data:
 bun run db:setup:local
 ```
 
-Admin is at `/admin` (local bypass via `.dev.vars` `ADMIN_BYPASS=1`). Production should protect `/admin*` with Cloudflare Access.
+Admin is at `/admin`. Local bypass: `ADMIN_BYPASS=1` in `.dev.vars` **only** under `astro dev`. Production: set secrets `CF_ACCESS_TEAM_DOMAIN` + `CF_ACCESS_AUD` and put Access on `/admin*` (Worker verifies the Access JWT).
 
 ## Stack
 

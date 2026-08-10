@@ -1,7 +1,7 @@
 import { ActionError, defineAction } from 'astro:actions';
 import { z } from 'astro:schema';
 import { nanoid } from 'nanoid';
-import { and, eq } from 'drizzle-orm';
+import { and, eq, inArray } from 'drizzle-orm';
 import { getDb } from '../lib/db';
 import { events, leads, operators } from '../lib/schema';
 import { sendAdminLeadAlert } from '../lib/email';
@@ -21,8 +21,15 @@ export const server = {
       addressOrZip: z.string().max(200).optional(),
       timeline: z.string().max(120).optional(),
       notes: z.string().max(2000).optional(),
+      /** Honeypot — must be empty; bots often fill every field. */
+      companyWebsite: z.string().max(200).optional(),
     }),
     handler: async (input) => {
+      // Silent success for bots that fill the honeypot
+      if (input.companyWebsite && input.companyWebsite.trim() !== '') {
+        return { ok: true as const, leadId: 'ignored' };
+      }
+
       const db = getDb();
       const op = await db.query.operators.findFirst({
         where: eq(operators.id, input.operatorId),
@@ -112,18 +119,25 @@ export const server = {
         });
       }
 
-      const orgTaken = await db.query.operators.findFirst({
-        where: and(eq(operators.clerkOrgId, orgId), eq(operators.claimStatus, 'approved')),
+      const orgBusy = await db.query.operators.findFirst({
+        where: and(
+          eq(operators.clerkOrgId, orgId),
+          inArray(operators.claimStatus, ['approved', 'pending']),
+        ),
       });
-      if (orgTaken) {
+      if (orgBusy) {
         throw new ActionError({
           code: 'BAD_REQUEST',
-          message: 'This organization already owns another listing.',
+          message:
+            orgBusy.claimStatus === 'approved'
+              ? 'This organization already owns another listing.'
+              : 'This organization already has a claim pending review.',
         });
       }
 
       const now = new Date().toISOString();
-      await db
+      // CAS: only transition from unclaimed/rejected → pending
+      const claimed = await db
         .update(operators)
         .set({
           clerkOrgId: orgId,
@@ -133,7 +147,20 @@ export const server = {
           claimMessage: input.message || null,
           updatedAt: now,
         })
-        .where(eq(operators.id, input.operatorId));
+        .where(
+          and(
+            eq(operators.id, input.operatorId),
+            inArray(operators.claimStatus, ['unclaimed', 'rejected']),
+          ),
+        )
+        .returning({ id: operators.id });
+
+      if (claimed.length === 0) {
+        throw new ActionError({
+          code: 'BAD_REQUEST',
+          message: 'This listing is not available to claim.',
+        });
+      }
 
       return { ok: true as const };
     },

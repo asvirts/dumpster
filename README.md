@@ -16,7 +16,7 @@ bun run dev              # http://localhost:4321
 
 Admin (local): [http://localhost:4321/admin](http://localhost:4321/admin)  
 Operator portal: [http://localhost:4321/portal](http://localhost:4321/portal)  
-Bypass for admin is enabled via `.dev.vars` (`ADMIN_BYPASS=1`). Copy `.dev.vars.example` → `.dev.vars` and fill Clerk/Stripe/Resend secrets as needed.
+Local admin bypass: `.dev.vars` with `ADMIN_BYPASS=1` works only under `astro dev`. Production admin requires Cloudflare Access JWT secrets (`CF_ACCESS_TEAM_DOMAIN`, `CF_ACCESS_AUD`). Copy `.dev.vars.example` → `.dev.vars` and fill Clerk/Stripe/Resend secrets as needed.
 
 ## Scripts
 
@@ -41,9 +41,10 @@ Bypass for admin is enabled via `.dev.vars` (`ADMIN_BYPASS=1`). Copy `.dev.vars.
    - Email: `bunx wrangler secret put RESEND_API_KEY` and optional `ADMIN_NOTIFY_EMAIL`
    - Clerk: `PUBLIC_CLERK_PUBLISHABLE_KEY` (var) + `bunx wrangler secret put CLERK_SECRET_KEY`
    - Stripe: `bunx wrangler secret put STRIPE_SECRET_KEY` and `bunx wrangler secret put STRIPE_WEBHOOK_SECRET`
+   - Access: `bunx wrangler secret put CF_ACCESS_TEAM_DOMAIN` (e.g. `myteam.cloudflareaccess.com`) and `bunx wrangler secret put CF_ACCESS_AUD` (Access app AUD)
    - Optional: `LEAD_PRICE_CENTS` (default `2500`)
 6. Deploy: `bun run deploy`
-7. **Cloudflare Access:** protect path `/admin*` with an Access application (email allowlist)
+7. **Cloudflare Access:** protect path `/admin*` with an Access application (email allowlist). The Worker verifies the Access JWT — do not rely on headers alone.
 8. **Clerk:** enable Organizations; point production instance at your domain
 9. **Stripe webhook:** endpoint `https://findadumpster.net/api/stripe/webhook` for `checkout.session.completed`
 

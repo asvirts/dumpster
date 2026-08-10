@@ -10,7 +10,7 @@ Documented during Find A Dumpster MVP build (PRD v1.0, Cloudflare deploy), updat
 6. **Pricing (directory):** Typical min–max ranges and notes, not live inventory or booking.
 7. **Brokers:** Schema flag + hidden by default in search (`excludeBrokers` default true).
 8. **Maps:** MapLibre GL + OpenFreeMap tiles (no Mapbox/Google key for MVP).
-9. **Admin auth:** Cloudflare Access in production (path `/admin*`). Local/dev uses `ADMIN_BYPASS=1` in `.dev.vars` or Astro `DEV` mode.
+9. **Admin auth:** Production verifies Cloudflare Access JWT (`CF_ACCESS_TEAM_DOMAIN` + `CF_ACCESS_AUD`; header `Cf-Access-Jwt-Assertion`). Local only: `ADMIN_BYPASS=1` **and** Astro DEV mode. Do not trust the Access email header alone.
 10. **Operator auth:** Clerk Organizations for claiming listings and the `/portal` dashboard. Claims require admin approval before portal access.
 11. **Paid leads:** Stripe Checkout pay-per-lead (`LEAD_PRICE_CENTS`, default $25). First unlock per operator can be complimentary. Webhook at `/api/stripe/webhook`.
 12. **Email:** Resend optional (`RESEND_API_KEY`). Lead rows always persist; email is best-effort.

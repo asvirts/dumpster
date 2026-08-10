@@ -10,6 +10,10 @@ import {
 } from './schema';
 import { slugify } from './geo';
 import type { VerificationStatus } from './constants';
+import { MATERIALS } from './constants';
+import { sanitizeHttpUrl } from './urls';
+
+const MATERIAL_IDS = new Set(MATERIALS.map((m) => m.id));
 
 export async function logAudit(
   db: AppDb,
@@ -57,12 +61,15 @@ export async function replaceOperatorMaterials(
   operatorId: string,
   materials: string[],
 ) {
+  const allowed = materials.filter((m) =>
+    MATERIAL_IDS.has(m as (typeof MATERIALS)[number]['id']),
+  );
   await db
     .delete(operatorMaterials)
     .where(eq(operatorMaterials.operatorId, operatorId));
-  if (materials.length === 0) return;
+  if (allowed.length === 0) return;
   await db.insert(operatorMaterials).values(
-    materials.map((material) => ({
+    allowed.map((material) => ({
       id: nanoid(),
       operatorId,
       material,
@@ -136,7 +143,7 @@ export async function createOperator(
     slug,
     phone: data.phone || null,
     email: data.email || null,
-    website: data.website || null,
+    website: sanitizeHttpUrl(data.website) || null,
     description: data.description || null,
     hqCity: data.hqCity || null,
     hqState: data.hqState || null,
@@ -205,7 +212,7 @@ export async function updateOperator(
       slug: data.slug?.trim() || existing.slug,
       phone: data.phone || null,
       email: data.email || null,
-      website: data.website || null,
+      website: sanitizeHttpUrl(data.website) || null,
       description: data.description || null,
       hqCity: data.hqCity || null,
       hqState: data.hqState || null,
@@ -260,7 +267,10 @@ export function parseFormOperator(form: FormData): OperatorFormData {
     .getAll('sizes')
     .map((s) => Number(s))
     .filter((n) => Number.isFinite(n));
-  const materials = form.getAll('materials').map(String);
+  const materials = form
+    .getAll('materials')
+    .map(String)
+    .filter((m) => MATERIAL_IDS.has(m as (typeof MATERIALS)[number]['id']));
   const cityIds = form.getAll('cityIds').map(String);
 
   return {
@@ -268,7 +278,7 @@ export function parseFormOperator(form: FormData): OperatorFormData {
     slug: form.get('slug')?.toString(),
     phone: form.get('phone')?.toString(),
     email: form.get('email')?.toString(),
-    website: form.get('website')?.toString(),
+    website: sanitizeHttpUrl(form.get('website')?.toString()) ?? undefined,
     description: form.get('description')?.toString(),
     hqCity: form.get('hqCity')?.toString(),
     hqState: form.get('hqState')?.toString(),

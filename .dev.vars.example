@@ -1,8 +1,13 @@
 # Local secrets for Astro / Wrangler (do not commit real keys)
 
+# Local only: ADMIN_BYPASS works only with `astro dev` (import.meta.env.DEV)
 ADMIN_BYPASS=1
 ADMIN_NOTIFY_EMAIL=you@example.com
 RESEND_API_KEY=
+
+# Production admin: verify Cloudflare Access JWT (required when not in DEV bypass)
+# CF_ACCESS_TEAM_DOMAIN=myteam.cloudflareaccess.com
+# CF_ACCESS_AUD=<Access application AUD tag>
 
 # Clerk (optional in keyless/dev; required for production portal)
 PUBLIC_CLERK_PUBLISHABLE_KEY=

@@ -14,8 +14,12 @@ interface Env {
   CLERK_SECRET_KEY?: string;
   RESEND_API_KEY?: string;
   ADMIN_NOTIFY_EMAIL?: string;
-  /** Local dev only: skip Access-style checks */
+  /** Local DEV only (with import.meta.env.DEV): skip Access checks */
   ADMIN_BYPASS?: string;
+  /** Cloudflare Access team domain, e.g. myteam.cloudflareaccess.com */
+  CF_ACCESS_TEAM_DOMAIN?: string;
+  /** Cloudflare Access application AUD tag */
+  CF_ACCESS_AUD?: string;
   STRIPE_SECRET_KEY?: string;
   STRIPE_WEBHOOK_SECRET?: string;
   /** Pay-per-lead price in cents (default 2500) */

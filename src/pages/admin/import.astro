@@ -16,11 +16,15 @@ if (Astro.request.method === 'POST') {
   const file = form.get('csv');
   if (!(file instanceof File)) {
     message = 'Please upload a CSV file.';
+  } else if (file.size > 1_000_000) {
+    message = 'CSV too large (max 1MB).';
   } else {
     const text = await file.text();
     const lines = text.split(/\r?\n/).filter((l) => l.trim());
     if (lines.length < 2) {
       message = 'CSV needs a header row and at least one data row.';
+    } else if (lines.length > 501) {
+      message = 'CSV too many rows (max 500 data rows).';
     } else {
       const headers = parseCsvLine(lines[0]).map((h) => h.trim().toLowerCase());
       const idx = (name: string) => headers.indexOf(name);

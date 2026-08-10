@@ -46,6 +46,7 @@ if (Astro.request.method === 'POST') {
       leadId: id,
       operatorId,
       actor,
+      allowReassign: true,
     });
     if (result.ok) flash = 'Lead unlocked complimentary and emailed.';
     else flashError = result.error;
