@@ -1,0 +1,273 @@
+---
+import PortalLayout from '../../layouts/PortalLayout.astro';
+import { getDb } from '../../lib/db';
+import { getOperatorForOrg } from '../../lib/portal';
+import { asc, eq } from 'drizzle-orm';
+import { cities, operators } from '../../lib/schema';
+import {
+  replaceOperatorMaterials,
+  replaceOperatorSizes,
+  replaceServiceCityIds,
+  logAudit,
+} from '../../lib/admin';
+import { DUMPSTER_SIZES, MATERIALS } from '../../lib/constants';
+
+const auth = Astro.locals.auth();
+const orgId = auth.orgId!;
+const userId = auth.userId!;
+const db = getDb();
+let operator = await getOperatorForOrg(db, orgId);
+let saved = false;
+
+if (Astro.request.method === 'POST' && operator) {
+  const form = await Astro.request.formData();
+  const num = (key: string) => {
+    const v = form.get(key)?.toString().trim();
+    if (!v) return null;
+    const n = Number(v);
+    return Number.isFinite(n) ? n : null;
+  };
+  const bool = (key: string) => form.get(key) === 'on' || form.get(key) === '1';
+  const sizes = form
+    .getAll('sizes')
+    .map((s) => Number(s))
+    .filter((n) => Number.isFinite(n));
+  const materials = form.getAll('materials').map(String);
+  const cityIds = form.getAll('cityIds').map(String);
+  const now = new Date().toISOString();
+
+  await db
+    .update(operators)
+    .set({
+      name: String(form.get('name') ?? operator.name).trim() || operator.name,
+      phone: form.get('phone')?.toString() || null,
+      email: form.get('email')?.toString() || null,
+      website: form.get('website')?.toString() || null,
+      description: form.get('description')?.toString() || null,
+      hqCity: form.get('hqCity')?.toString() || null,
+      hqState: form.get('hqState')?.toString() || null,
+      pricingMin: num('pricingMin'),
+      pricingMax: num('pricingMax'),
+      pricingNotes: form.get('pricingNotes')?.toString() || null,
+      includedTonnage: num('includedTonnage'),
+      overageRate: num('overageRate'),
+      drivewaySuitable: bool('drivewaySuitable'),
+      drivewayNotes: form.get('drivewayNotes')?.toString() || null,
+      sameDayCapable: bool('sameDayCapable'),
+      updatedAt: now,
+    })
+    .where(eq(operators.id, operator.id));
+
+  await replaceOperatorSizes(db, operator.id, sizes);
+  await replaceOperatorMaterials(db, operator.id, materials);
+  await replaceServiceCityIds(db, operator.id, cityIds);
+  await logAudit(db, {
+    action: 'portal_listing_update',
+    entityType: 'operator',
+    entityId: operator.id,
+    actor: userId,
+  });
+
+  operator = await getOperatorForOrg(db, orgId);
+  saved = true;
+}
+
+const allCities = await db.select().from(cities).orderBy(asc(cities.state), asc(cities.name));
+const sizes = operator
+  ? (
+      await db.query.operatorSizes.findMany({
+        where: (t, { eq: e }) => e(t.operatorId, operator!.id),
+      })
+    ).map((s) => s.yards)
+  : [];
+const materials = operator
+  ? (
+      await db.query.operatorMaterials.findMany({
+        where: (t, { eq: e }) => e(t.operatorId, operator!.id),
+      })
+    ).map((m) => m.material)
+  : [];
+const cityIds = operator
+  ? (
+      await db.query.operatorServiceAreas.findMany({
+        where: (t, { eq: e }) => e(t.operatorId, operator!.id),
+      })
+    )
+      .map((a) => a.cityId)
+      .filter(Boolean) as string[]
+  : [];
+---
+
+<PortalLayout title="Listing">
+  {
+    !operator ? (
+      <p class="card p-6 text-sm text-muted">
+        Claim and get approval for a listing before editing.
+        <a href="/portal">Back to overview</a>
+      </p>
+    ) : (
+      <>
+        <p class="mb-4 text-sm text-muted">
+          Update public profile details. Publishing and verification stay under admin control
+          {operator.isPublished ? ' (currently published)' : ' (not published yet)'}.
+        </p>
+        {saved && (
+          <p class="mb-4 border-2 border-brand-600 bg-brand-50 px-3 py-2 text-sm text-brand-800">
+            Listing saved.
+          </p>
+        )}
+        <form method="POST" class="space-y-6">
+          <div class="card grid gap-4 p-6 sm:grid-cols-2">
+            <div class="sm:col-span-2">
+              <label class="label" for="name">Company name *</label>
+              <input class="input" id="name" name="name" required value={operator.name} />
+            </div>
+            <div>
+              <label class="label" for="phone">Phone</label>
+              <input class="input" id="phone" name="phone" value={operator.phone ?? ''} />
+            </div>
+            <div>
+              <label class="label" for="email">Email</label>
+              <input class="input" id="email" name="email" type="email" value={operator.email ?? ''} />
+            </div>
+            <div class="sm:col-span-2">
+              <label class="label" for="website">Website</label>
+              <input class="input" id="website" name="website" value={operator.website ?? ''} />
+            </div>
+            <div class="sm:col-span-2">
+              <label class="label" for="description">Description</label>
+              <textarea class="input min-h-[100px]" id="description" name="description">{operator.description ?? ''}</textarea>
+            </div>
+            <div>
+              <label class="label" for="hqCity">HQ city</label>
+              <input class="input" id="hqCity" name="hqCity" value={operator.hqCity ?? ''} />
+            </div>
+            <div>
+              <label class="label" for="hqState">HQ state</label>
+              <input
+                class="input"
+                id="hqState"
+                name="hqState"
+                maxlength="2"
+                value={operator.hqState ?? ''}
+              />
+            </div>
+            <div>
+              <label class="label" for="pricingMin">Pricing min</label>
+              <input
+                class="input"
+                id="pricingMin"
+                name="pricingMin"
+                type="number"
+                step="1"
+                value={operator.pricingMin ?? ''}
+              />
+            </div>
+            <div>
+              <label class="label" for="pricingMax">Pricing max</label>
+              <input
+                class="input"
+                id="pricingMax"
+                name="pricingMax"
+                type="number"
+                step="1"
+                value={operator.pricingMax ?? ''}
+              />
+            </div>
+            <div class="sm:col-span-2">
+              <label class="label" for="pricingNotes">Pricing notes</label>
+              <textarea class="input" id="pricingNotes" name="pricingNotes" rows="2">{operator.pricingNotes ?? ''}</textarea>
+            </div>
+            <div>
+              <label class="label" for="includedTonnage">Included tonnage</label>
+              <input
+                class="input"
+                id="includedTonnage"
+                name="includedTonnage"
+                type="number"
+                step="0.1"
+                value={operator.includedTonnage ?? ''}
+              />
+            </div>
+            <div>
+              <label class="label" for="overageRate">Overage rate</label>
+              <input
+                class="input"
+                id="overageRate"
+                name="overageRate"
+                type="number"
+                step="1"
+                value={operator.overageRate ?? ''}
+              />
+            </div>
+            <div class="sm:col-span-2">
+              <label class="label" for="drivewayNotes">Driveway notes</label>
+              <input
+                class="input"
+                id="drivewayNotes"
+                name="drivewayNotes"
+                value={operator.drivewayNotes ?? ''}
+              />
+            </div>
+            <label class="flex items-center gap-2 text-sm">
+              <input type="checkbox" name="drivewaySuitable" checked={!!operator.drivewaySuitable} />
+              Driveway suitable
+            </label>
+            <label class="flex items-center gap-2 text-sm">
+              <input type="checkbox" name="sameDayCapable" checked={!!operator.sameDayCapable} />
+              Same-day capable
+            </label>
+          </div>
+
+          <div class="card p-6">
+            <p class="label mb-2">Sizes</p>
+            <div class="flex flex-wrap gap-3">
+              {DUMPSTER_SIZES.map((s) => (
+                <label class="flex items-center gap-2 text-sm">
+                  <input type="checkbox" name="sizes" value={s} checked={sizes.includes(s)} />
+                  {s} yd
+                </label>
+              ))}
+            </div>
+          </div>
+
+          <div class="card p-6">
+            <p class="label mb-2">Materials</p>
+            <div class="flex flex-wrap gap-3">
+              {MATERIALS.map((m) => (
+                <label class="flex items-center gap-2 text-sm">
+                  <input
+                    type="checkbox"
+                    name="materials"
+                    value={m.id}
+                    checked={materials.includes(m.id)}
+                  />
+                  {m.label}
+                </label>
+              ))}
+            </div>
+          </div>
+
+          <div class="card p-6">
+            <p class="label mb-2">Service cities</p>
+            <div class="max-h-64 space-y-1 overflow-y-auto text-sm">
+              {allCities.map((c) => (
+                <label class="flex items-center gap-2">
+                  <input
+                    type="checkbox"
+                    name="cityIds"
+                    value={c.id}
+                    checked={cityIds.includes(c.id)}
+                  />
+                  {c.name}, {c.state}
+                </label>
+              ))}
+            </div>
+          </div>
+
+          <button type="submit" class="btn-primary">Save listing</button>
+        </form>
+      </>
+    )
+  }
+</PortalLayout>

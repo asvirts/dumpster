@@ -1,0 +1,14 @@
+# Local secrets for Astro / Wrangler (do not commit real keys)
+
+ADMIN_BYPASS=1
+ADMIN_NOTIFY_EMAIL=you@example.com
+RESEND_API_KEY=
+
+# Clerk (optional in keyless/dev; required for production portal)
+PUBLIC_CLERK_PUBLISHABLE_KEY=
+CLERK_SECRET_KEY=
+
+# Stripe (required to unlock paid leads)
+STRIPE_SECRET_KEY=
+STRIPE_WEBHOOK_SECRET=
+LEAD_PRICE_CENTS=2500

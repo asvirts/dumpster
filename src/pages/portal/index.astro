@@ -1,0 +1,85 @@
+---
+import PortalLayout from '../../layouts/PortalLayout.astro';
+import { getDb } from '../../lib/db';
+import { getOperatorForOrg, getPendingClaimForOrg } from '../../lib/portal';
+import { and, eq, sql } from 'drizzle-orm';
+import { leads } from '../../lib/schema';
+
+const auth = Astro.locals.auth();
+const orgId = auth.orgId;
+const db = getDb();
+const operator = await getOperatorForOrg(db, orgId);
+const pending = operator ? null : await getPendingClaimForOrg(db, orgId);
+
+let offered = 0;
+let unlocked = 0;
+if (operator) {
+  const [offeredRow] = await db
+    .select({ c: sql<number>`count(*)` })
+    .from(leads)
+    .where(and(eq(leads.operatorId, operator.id), eq(leads.status, 'offered')));
+  const [unlockedRow] = await db
+    .select({ c: sql<number>`count(*)` })
+    .from(leads)
+    .where(and(eq(leads.operatorId, operator.id), eq(leads.status, 'unlocked')));
+  offered = offeredRow?.c ?? 0;
+  unlocked = unlockedRow?.c ?? 0;
+}
+---
+
+<PortalLayout title="Overview">
+  {
+    !operator && pending && (
+      <div class="card border-amber-500 bg-amber-50 p-6">
+        <h2 class="font-bold text-ink">Claim pending</h2>
+        <p class="mt-2 text-sm text-charcoal-700">
+          Your claim for <strong>{pending.name}</strong> is awaiting admin approval. You’ll get portal
+          access once it’s approved.
+        </p>
+      </div>
+    )
+  }
+  {
+    !operator && !pending && (
+      <div class="card p-6">
+        <h2 class="font-bold text-ink">No listing linked</h2>
+        <p class="mt-2 text-sm text-muted">
+          Find your company on the public directory and click <strong>Claim this listing</strong>. After
+          we approve, leads and listing edits show up here.
+        </p>
+        <a href="/search" class="btn-primary mt-4 inline-flex">Browse directory</a>
+      </div>
+    )
+  }
+  {
+    operator && (
+      <>
+        <p class="mb-6 text-sm text-muted">
+          Managing <strong>{operator.name}</strong>
+          {operator.isPublished ? ' · published' : ' · not published yet'}
+          {' · '}
+          complimentary leads left: {operator.complimentaryLeadsRemaining}
+        </p>
+        <div class="grid gap-4 sm:grid-cols-3">
+          <div class="card p-5">
+            <p class="text-sm text-muted">Offered leads</p>
+            <p class="mt-1 text-3xl font-bold text-sky-700">{offered}</p>
+          </div>
+          <div class="card p-5">
+            <p class="text-sm text-muted">Unlocked leads</p>
+            <p class="mt-1 text-3xl font-bold text-brand-700">{unlocked}</p>
+          </div>
+          <div class="card p-5">
+            <p class="text-sm text-muted">Free teaser left</p>
+            <p class="mt-1 text-3xl font-bold text-ink">{operator.complimentaryLeadsRemaining}</p>
+          </div>
+        </div>
+        <div class="mt-8 flex flex-wrap gap-3">
+          <a href="/portal/leads" class="btn-primary">View leads</a>
+          <a href="/portal/listing" class="btn-secondary">Edit listing</a>
+          <a href={`/operator/${operator.slug}`} class="btn-ghost">Public profile</a>
+        </div>
+      </>
+    )
+  }
+</PortalLayout>

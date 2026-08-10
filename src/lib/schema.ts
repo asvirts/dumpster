@@ -71,6 +71,19 @@ export const operators = sqliteTable(
     qualityScore: real('quality_score').default(50),
     isPublished: integer('is_published', { mode: 'boolean' }).notNull().default(false),
     isDemo: integer('is_demo', { mode: 'boolean' }).notNull().default(false),
+    clerkOrgId: text('clerk_org_id'),
+    claimStatus: text('claim_status', {
+      enum: ['unclaimed', 'pending', 'approved', 'rejected'],
+    })
+      .notNull()
+      .default('unclaimed'),
+    claimRequestedAt: text('claim_requested_at'),
+    claimRequestedByUserId: text('claim_requested_by_user_id'),
+    claimMessage: text('claim_message'),
+    stripeCustomerId: text('stripe_customer_id'),
+    complimentaryLeadsRemaining: integer('complimentary_leads_remaining')
+      .notNull()
+      .default(1),
     createdAt: text('created_at')
       .notNull()
       .default(sql`(datetime('now'))`),
@@ -80,9 +93,11 @@ export const operators = sqliteTable(
   },
   (t) => [
     uniqueIndex('operators_slug_idx').on(t.slug),
+    uniqueIndex('operators_clerk_org_idx').on(t.clerkOrgId),
     index('operators_status_idx').on(t.verificationStatus),
     index('operators_published_idx').on(t.isPublished),
     index('operators_broker_idx').on(t.isBroker),
+    index('operators_claim_status_idx').on(t.claimStatus),
   ],
 );
 
@@ -140,6 +155,9 @@ export const leads = sqliteTable(
     operatorId: text('operator_id')
       .notNull()
       .references(() => operators.id, { onDelete: 'cascade' }),
+    requestedOperatorId: text('requested_operator_id').references(() => operators.id, {
+      onDelete: 'set null',
+    }),
     seekerName: text('seeker_name').notNull(),
     seekerEmail: text('seeker_email').notNull(),
     seekerPhone: text('seeker_phone'),
@@ -148,15 +166,21 @@ export const leads = sqliteTable(
     addressOrZip: text('address_or_zip'),
     timeline: text('timeline'),
     notes: text('notes'),
-    status: text('status', { enum: ['new', 'notified', 'closed'] })
+    status: text('status', { enum: ['new', 'offered', 'unlocked', 'closed'] })
       .notNull()
       .default('new'),
+    unlockMethod: text('unlock_method', { enum: ['complimentary', 'paid'] }),
+    offeredAt: text('offered_at'),
+    unlockedAt: text('unlocked_at'),
+    passedBy: text('passed_by'),
+    stripeCheckoutSessionId: text('stripe_checkout_session_id'),
     createdAt: text('created_at')
       .notNull()
       .default(sql`(datetime('now'))`),
   },
   (t) => [
     index('leads_operator_idx').on(t.operatorId),
+    index('leads_requested_operator_idx').on(t.requestedOperatorId),
     index('leads_status_idx').on(t.status),
   ],
 );
@@ -195,7 +219,8 @@ export const operatorsRelations = relations(operators, ({ many }) => ({
   sizes: many(operatorSizes),
   materials: many(operatorMaterials),
   serviceAreas: many(operatorServiceAreas),
-  leads: many(leads),
+  leads: many(leads, { relationName: 'assignedOperator' }),
+  requestedLeads: many(leads, { relationName: 'requestedOperator' }),
 }));
 
 export const operatorSizesRelations = relations(operatorSizes, ({ one }) => ({
@@ -227,6 +252,12 @@ export const leadsRelations = relations(leads, ({ one }) => ({
   operator: one(operators, {
     fields: [leads.operatorId],
     references: [operators.id],
+    relationName: 'assignedOperator',
+  }),
+  requestedOperator: one(operators, {
+    fields: [leads.requestedOperatorId],
+    references: [operators.id],
+    relationName: 'requestedOperator',
   }),
 }));
 
@@ -236,3 +267,4 @@ export type Lead = typeof leads.$inferSelect;
 export type NewOperator = typeof operators.$inferInsert;
 export type NewCity = typeof cities.$inferInsert;
 export type NewLead = typeof leads.$inferInsert;
+

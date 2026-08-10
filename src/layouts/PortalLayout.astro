@@ -1,6 +1,12 @@
 ---
 import '../styles/global.css';
 import { BRAND } from '../lib/constants';
+import {
+  OrganizationSwitcher,
+  Show,
+  SignInButton,
+  UserButton,
+} from '@clerk/astro/components';
 
 interface Props {
   title: string;
@@ -9,12 +15,9 @@ interface Props {
 const { title } = Astro.props;
 const path = Astro.url.pathname;
 const nav = [
-  { href: '/admin', label: 'Dashboard' },
-  { href: '/admin/operators', label: 'Operators' },
-  { href: '/admin/leads', label: 'Leads' },
-  { href: '/admin/claims', label: 'Claims' },
-  { href: '/admin/import', label: 'Import' },
-  { href: '/admin/cities', label: 'Cities' },
+  { href: '/portal', label: 'Overview' },
+  { href: '/portal/leads', label: 'Leads' },
+  { href: '/portal/listing', label: 'Listing' },
 ];
 ---
 
@@ -24,9 +27,8 @@ const nav = [
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="robots" content="noindex, nofollow" />
-    <title>{title} · Admin · {BRAND.name}</title>
+    <title>{title} · Portal · {BRAND.name}</title>
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
     <link
       href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;600&display=swap"
       rel="stylesheet"
@@ -35,19 +37,19 @@ const nav = [
   <body class="min-h-screen bg-slate-100 text-ink antialiased">
     <div class="flex min-h-screen">
       <aside class="hidden w-56 shrink-0 border-r border-border bg-white p-4 md:block">
-        <a href="/admin" class="flex items-center gap-2 text-lg font-bold text-ink no-underline">
+        <a href="/portal" class="flex items-center gap-2 text-lg font-bold text-ink no-underline">
           <img src="/logo-mark.svg" alt="" width="28" height="28" class="h-7 w-7" aria-hidden="true" />
           {BRAND.name}
         </a>
-        <p class="mt-0.5 text-xs text-muted">Admin · verification first</p>
-        <nav class="mt-8 space-y-1" aria-label="Admin">
+        <p class="mt-0.5 text-xs text-muted">Operator portal</p>
+        <nav class="mt-8 space-y-1" aria-label="Portal">
           {
             nav.map((n) => (
               <a
                 href={n.href}
                 class:list={[
                   'block rounded-lg px-3 py-2 text-sm font-medium no-underline',
-                  path === n.href || (n.href !== '/admin' && path.startsWith(n.href))
+                  path === n.href || (n.href !== '/portal' && path.startsWith(n.href))
                     ? 'bg-brand-50 text-brand-800'
                     : 'text-slate-600 hover:bg-surface',
                 ]}
@@ -63,13 +65,23 @@ const nav = [
       </aside>
       <div class="flex-1">
         <header class="border-b border-border bg-white px-4 py-3 md:px-8">
-          <div class="flex items-center justify-between gap-4">
+          <div class="flex flex-wrap items-center justify-between gap-4">
             <h1 class="text-lg font-bold text-ink">{title}</h1>
-            <p class="text-xs text-muted">
-              {Astro.locals.adminEmail ?? 'admin'}
-            </p>
+            <div class="flex items-center gap-3">
+              <OrganizationSwitcher
+                hidePersonal={true}
+                afterSelectOrganizationUrl="/portal"
+                afterCreateOrganizationUrl="/portal"
+              />
+              <Show when="signed-in">
+                <UserButton afterSignOutUrl="/" />
+              </Show>
+              <Show when="signed-out">
+                <SignInButton mode="modal" />
+              </Show>
+            </div>
           </div>
-          <nav class="mt-3 flex gap-2 overflow-x-auto md:hidden" aria-label="Admin mobile">
+          <nav class="mt-3 flex gap-2 overflow-x-auto md:hidden" aria-label="Portal mobile">
             {
               nav.map((n) => (
                 <a href={n.href} class="btn-secondary shrink-0 px-3 py-1.5 text-xs">

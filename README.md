@@ -15,7 +15,8 @@ bun run dev              # http://localhost:4321
 ```
 
 Admin (local): [http://localhost:4321/admin](http://localhost:4321/admin)  
-Bypass is enabled via `.dev.vars` (`ADMIN_BYPASS=1`).
+Operator portal: [http://localhost:4321/portal](http://localhost:4321/portal)  
+Bypass for admin is enabled via `.dev.vars` (`ADMIN_BYPASS=1`). Copy `.dev.vars.example` → `.dev.vars` and fill Clerk/Stripe/Resend secrets as needed.
 
 ## Scripts
 
@@ -36,9 +37,15 @@ Bypass is enabled via `.dev.vars` (`ADMIN_BYPASS=1`).
 2. Put the real `database_id` in `wrangler.jsonc` (replace `local-dev-placeholder`)
 3. `bun run db:migrate:remote`
 4. Optionally seed: `bun run db:seed:remote` (cities + seeded operators — verify all contact info before production marketing)
-5. Set secrets if using email: `bunx wrangler secret put RESEND_API_KEY` and optional `ADMIN_NOTIFY_EMAIL`
+5. Set secrets:
+   - Email: `bunx wrangler secret put RESEND_API_KEY` and optional `ADMIN_NOTIFY_EMAIL`
+   - Clerk: `PUBLIC_CLERK_PUBLISHABLE_KEY` (var) + `bunx wrangler secret put CLERK_SECRET_KEY`
+   - Stripe: `bunx wrangler secret put STRIPE_SECRET_KEY` and `bunx wrangler secret put STRIPE_WEBHOOK_SECRET`
+   - Optional: `LEAD_PRICE_CENTS` (default `2500`)
 6. Deploy: `bun run deploy`
 7. **Cloudflare Access:** protect path `/admin*` with an Access application (email allowlist)
+8. **Clerk:** enable Organizations; point production instance at your domain
+9. **Stripe webhook:** endpoint `https://findadumpster.net/api/stripe/webhook` for `checkout.session.completed`
 
 Update `PUBLIC_SITE_URL` / `site` in `astro.config.mjs` for your domain.
 
@@ -49,10 +56,12 @@ Update `PUBLIC_SITE_URL` / `site` in `astro.config.mjs` for your domain.
 | `/` | Home + priority cities |
 | `/search` | Filters, list, map |
 | `/dumpster-rental/[state]/[city]` | City landing (pricing + permits + operators) |
-| `/operator/[slug]` | Profile + quote form |
+| `/operator/[slug]` | Profile + quote form + claim listing |
 | `/compare?ids=` | Side-by-side (max 4) |
 | `/guides/*` | Educational content |
-| `/admin/*` | Verification queue, CRUD, CSV import, leads, city notes |
+| `/portal/*` | Operator leads + listing (Clerk org, after claim approval) |
+| `/admin/*` | Verification, claims, lead routing, CRUD, CSV import, city notes |
+| `/api/stripe/webhook` | Stripe Checkout completion → unlock lead |
 
 ## Quality model
 

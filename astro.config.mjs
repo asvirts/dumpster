@@ -1,6 +1,8 @@
 // @ts-check
 import { defineConfig } from 'astro/config';
 import cloudflare from '@astrojs/cloudflare';
+import react from '@astrojs/react';
+import clerk from '@clerk/astro';
 import tailwindcss from '@tailwindcss/vite';
 
 // https://astro.build/config
@@ -10,6 +12,7 @@ export default defineConfig({
   adapter: cloudflare({
     imageService: 'passthrough',
   }),
+  integrations: [clerk(), react()],
   session: false,
   vite: {
     plugins: [tailwindcss()],
@@ -24,10 +27,11 @@ export default defineConfig({
         'drizzle-orm/d1',
         'nanoid',
         'maplibre-gl',
+        'stripe',
       ],
     },
     ssr: {
-      noExternal: ['drizzle-orm'],
+      noExternal: ['drizzle-orm', '@clerk/astro', 'stripe'],
       optimizeDeps: {
         include: [
           'astro/assets/services/noop',

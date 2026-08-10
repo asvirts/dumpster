@@ -1,0 +1,24 @@
+---
+import PortalLayout from '../../layouts/PortalLayout.astro';
+import { CreateOrganization, OrganizationList } from '@clerk/astro/components';
+---
+
+<PortalLayout title="Select organization">
+  <p class="mb-6 text-sm text-muted">
+    Operator accounts are company organizations. Create or select one to continue.
+  </p>
+  <div class="grid gap-8 lg:grid-cols-2">
+    <div class="card p-5">
+      <h2 class="mb-4 font-bold text-ink">Your organizations</h2>
+      <OrganizationList
+        hidePersonal={true}
+        afterSelectOrganizationUrl="/portal"
+        afterCreateOrganizationUrl="/portal"
+      />
+    </div>
+    <div class="card p-5">
+      <h2 class="mb-4 font-bold text-ink">Create company</h2>
+      <CreateOrganization afterCreateOrganizationUrl="/portal" />
+    </div>
+  </div>
+</PortalLayout>

@@ -1,0 +1,85 @@
+---
+import { actions } from 'astro:actions';
+import {
+  OrganizationSwitcher,
+  Show,
+  SignInButton,
+  SignUpButton,
+} from '@clerk/astro/components';
+
+interface Props {
+  operatorId: string;
+  operatorName: string;
+  claimStatus: string;
+}
+
+const { operatorId, operatorName, claimStatus } = Astro.props;
+const result = Astro.getActionResult(actions.claimListing);
+const canClaim = claimStatus === 'unclaimed' || claimStatus === 'rejected';
+---
+
+<div class="card p-5">
+  <p class="font-mono text-xs font-bold uppercase tracking-widest text-ink">Own this listing?</p>
+  {
+    claimStatus === 'approved' && (
+      <p class="mt-2 text-sm text-muted">
+        This listing is claimed.{' '}
+        <a href="/portal">Open operator portal</a>
+      </p>
+    )
+  }
+  {
+    claimStatus === 'pending' && (
+      <p class="mt-2 text-sm text-amber-800">
+        A claim for {operatorName} is pending admin review.
+      </p>
+    )
+  }
+  {
+    canClaim && (
+      <>
+        <p class="mt-2 text-sm text-charcoal-700">
+          Claim {operatorName} with your company account to unlock leads and update your profile after
+          we approve.
+        </p>
+        <Show when="signed-out">
+          <div class="mt-4 flex flex-wrap gap-2">
+            <SignInButton mode="modal" />
+            <SignUpButton mode="modal" />
+          </div>
+        </Show>
+        <Show when="signed-in">
+          <div class="mt-4 space-y-3">
+            <p class="text-xs text-muted">Select or create your company organization, then submit.</p>
+            <OrganizationSwitcher
+              hidePersonal={true}
+              afterSelectOrganizationUrl={Astro.url.pathname}
+              afterCreateOrganizationUrl={Astro.url.pathname}
+            />
+            {result?.error && (
+              <p class="border-2 border-red-600 bg-red-50 px-3 py-2 text-sm text-red-800">
+                {result.error.message}
+              </p>
+            )}
+            {result?.data?.ok ? (
+              <p class="border-2 border-brand-600 bg-brand-50 px-3 py-2 text-sm text-brand-800">
+                Claim submitted — we’ll email you when it’s reviewed.
+              </p>
+            ) : (
+              <form method="POST" action={actions.claimListing} class="space-y-3">
+                <input type="hidden" name="operatorId" value={operatorId} />
+                <div>
+                  <label class="label" for="claim-message">Message (optional)</label>
+                  <textarea class="input" id="claim-message" name="message" rows="2" />
+                </div>
+                <button type="submit" class="btn-secondary text-xs">
+                  Submit claim
+                </button>
+              </form>
+            )}
+          </div>
+        </Show>
+      </>
+    )
+  }
+</div>

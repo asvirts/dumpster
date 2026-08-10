@@ -1,0 +1,200 @@
+---
+import PortalLayout from '../../layouts/PortalLayout.astro';
+import { getDb } from '../../lib/db';
+import { getOperatorForOrg } from '../../lib/portal';
+import { desc, eq } from 'drizzle-orm';
+import { leads } from '../../lib/schema';
+import { formatDate } from '../../lib/geo';
+import { leadPriceCents, unlockLeadComplimentary } from '../../lib/leads';
+import { getStripe } from '../../lib/stripe';
+import { siteUrl } from '../../lib/leads';
+
+const auth = Astro.locals.auth();
+const orgId = auth.orgId!;
+const userId = auth.userId!;
+const db = getDb();
+const operator = await getOperatorForOrg(db, orgId);
+
+if (Astro.request.method === 'POST' && operator) {
+  const form = await Astro.request.formData();
+  const leadId = form.get('leadId')?.toString();
+  const intent = form.get('intent')?.toString();
+
+  if (leadId && intent === 'complimentary') {
+    const result = await unlockLeadComplimentary(db, {
+      leadId,
+      operatorId: operator.id,
+      actor: userId,
+    });
+    if (!result.ok) {
+      return Astro.redirect(`/portal/leads?err=${encodeURIComponent(result.error)}`);
+    }
+    return Astro.redirect('/portal/leads?ok=unlocked');
+  }
+
+  if (leadId && intent === 'checkout') {
+    const lead = await db.query.leads.findFirst({ where: eq(leads.id, leadId) });
+    if (!lead || lead.operatorId !== operator.id || lead.status !== 'offered') {
+      return Astro.redirect('/portal/leads?err=Lead+not+available');
+    }
+    try {
+      const stripe = getStripe();
+      const price = leadPriceCents();
+      const base = siteUrl();
+      const session = await stripe.checkout.sessions.create({
+        mode: 'payment',
+        customer: operator.stripeCustomerId || undefined,
+        customer_email: operator.stripeCustomerId
+          ? undefined
+          : operator.email || undefined,
+        line_items: [
+          {
+            quantity: 1,
+            price_data: {
+              currency: 'usd',
+              unit_amount: price,
+              product_data: {
+                name: `Dumpster lead — ${lead.seekerName}`,
+                description:
+                  [lead.projectSize, lead.material, lead.addressOrZip].filter(Boolean).join(' · ') ||
+                  'Quote lead unlock',
+              },
+            },
+          },
+        ],
+        metadata: {
+          leadId: lead.id,
+          operatorId: operator.id,
+          clerkOrgId: orgId,
+        },
+        success_url: `${base}/portal/leads?unlocked=1&session_id={CHECKOUT_SESSION_ID}`,
+        cancel_url: `${base}/portal/leads?canceled=1`,
+      });
+      await db
+        .update(leads)
+        .set({ stripeCheckoutSessionId: session.id })
+        .where(eq(leads.id, lead.id));
+      if (session.url) return Astro.redirect(session.url);
+    } catch (err) {
+      console.error('[portal] checkout', err);
+      return Astro.redirect('/portal/leads?err=Checkout+unavailable');
+    }
+  }
+}
+
+const rows = operator
+  ? await db
+      .select()
+      .from(leads)
+      .where(eq(leads.operatorId, operator.id))
+      .orderBy(desc(leads.createdAt))
+      .limit(100)
+  : [];
+
+const priceLabel = `$${(leadPriceCents() / 100).toFixed(2)}`;
+const ok = Astro.url.searchParams.get('ok') || Astro.url.searchParams.get('unlocked');
+const err = Astro.url.searchParams.get('err');
+const canceled = Astro.url.searchParams.get('canceled');
+---
+
+<PortalLayout title="Leads">
+  {
+    !operator ? (
+      <p class="card p-6 text-sm text-muted">
+        Claim and get approval for a listing before unlocking leads.
+        <a href="/portal">Back to overview</a>
+      </p>
+    ) : (
+      <>
+        <p class="mb-4 text-sm text-muted">
+          Offered leads hide contact details until unlocked. You have{' '}
+          <strong>{operator.complimentaryLeadsRemaining}</strong> complimentary unlock
+          {operator.complimentaryLeadsRemaining === 1 ? '' : 's'} left; after that unlocks cost{' '}
+          {priceLabel}.
+        </p>
+        {ok && (
+          <p class="mb-4 border-2 border-brand-600 bg-brand-50 px-3 py-2 text-sm text-brand-800">
+            Lead unlocked.
+          </p>
+        )}
+        {canceled && (
+          <p class="mb-4 border-2 border-amber-500 bg-amber-50 px-3 py-2 text-sm">Checkout canceled.</p>
+        )}
+        {err && (
+          <p class="mb-4 border-2 border-red-600 bg-red-50 px-3 py-2 text-sm text-red-800">{err}</p>
+        )}
+        <div class="space-y-4">
+          {rows.length === 0 ? (
+            <p class="card p-8 text-center text-sm text-muted">No leads assigned yet.</p>
+          ) : (
+            rows.map((lead) => (
+              <article class="card p-5">
+                <div class="flex flex-wrap items-start justify-between gap-3">
+                  <div>
+                    <h2 class="font-bold text-ink">
+                      {lead.status === 'unlocked' ? lead.seekerName : 'Lead available'}
+                    </h2>
+                    {lead.status === 'unlocked' ? (
+                      <p class="text-sm text-muted">
+                        {lead.seekerEmail}
+                        {lead.seekerPhone && <> · {lead.seekerPhone}</>}
+                      </p>
+                    ) : lead.status === 'offered' ? (
+                      <p class="text-sm text-muted">
+                        Contact details unlock after complimentary or paid unlock.
+                      </p>
+                    ) : (
+                      <p class="text-sm text-muted">Status: {lead.status}</p>
+                    )}
+                  </div>
+                  <div class="text-right text-xs text-muted">
+                    <p>{formatDate(lead.createdAt)}</p>
+                    <p class="mt-1 font-semibold uppercase text-ink">{lead.status}</p>
+                  </div>
+                </div>
+                <dl class="mt-4 grid gap-2 text-sm sm:grid-cols-2">
+                  <div>
+                    <dt class="text-muted">Size</dt>
+                    <dd>{lead.projectSize || '—'}</dd>
+                  </div>
+                  <div>
+                    <dt class="text-muted">Material</dt>
+                    <dd>{lead.material || '—'}</dd>
+                  </div>
+                  <div>
+                    <dt class="text-muted">Location</dt>
+                    <dd>{lead.addressOrZip || '—'}</dd>
+                  </div>
+                  <div>
+                    <dt class="text-muted">Timeline</dt>
+                    <dd>{lead.timeline || '—'}</dd>
+                  </div>
+                  {lead.status === 'unlocked' && lead.notes && (
+                    <div class="sm:col-span-2">
+                      <dt class="text-muted">Notes</dt>
+                      <dd>{lead.notes}</dd>
+                    </div>
+                  )}
+                </dl>
+                {lead.status === 'offered' && (
+                  <form method="POST" class="mt-4 flex flex-wrap gap-2">
+                    <input type="hidden" name="leadId" value={lead.id} />
+                    {operator.complimentaryLeadsRemaining > 0 ? (
+                      <button type="submit" name="intent" value="complimentary" class="btn-primary text-xs">
+                        Unlock free teaser
+                      </button>
+                    ) : (
+                      <button type="submit" name="intent" value="checkout" class="btn-primary text-xs">
+                        Unlock for {priceLabel}
+                      </button>
+                    )}
+                  </form>
+                )}
+              </article>
+            ))
+          )}
+        </div>
+      </>
+    )
+  }
+</PortalLayout>

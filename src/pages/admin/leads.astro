@@ -2,106 +2,281 @@
 import AdminLayout from '../../layouts/AdminLayout.astro';
 import { getDb } from '../../lib/db';
 import { desc, eq } from 'drizzle-orm';
+import { alias } from 'drizzle-orm/sqlite-core';
 import { leads, operators } from '../../lib/schema';
 import { formatDate } from '../../lib/geo';
+import { LEAD_STATUSES, type LeadStatus } from '../../lib/constants';
+import { logAudit } from '../../lib/admin';
+import { offerLead, unlockLeadComplimentary } from '../../lib/leads';
 
 const db = getDb();
+const actor = Astro.locals.adminEmail ?? 'admin';
+const requested = alias(operators, 'requested_op');
+const assigned = alias(operators, 'assigned_op');
 
 if (Astro.request.method === 'POST') {
   const form = await Astro.request.formData();
   const id = form.get('id')?.toString();
-  const status = form.get('status')?.toString();
-  if (id && (status === 'new' || status === 'notified' || status === 'closed')) {
-    await db.update(leads).set({ status }).where(eq(leads.id, id));
+  const intent = form.get('intent')?.toString();
+  const operatorId = form.get('operatorId')?.toString();
+  let flash: string | null = null;
+  let flashError: string | null = null;
+
+  if (id && intent === 'close') {
+    await db.update(leads).set({ status: 'closed' }).where(eq(leads.id, id));
+    await logAudit(db, {
+      action: 'lead_close',
+      entityType: 'lead',
+      entityId: id,
+      actor,
+    });
+    flash = 'Lead closed.';
+  } else if (id && intent === 'reassign' && operatorId) {
+    await db.update(leads).set({ operatorId }).where(eq(leads.id, id));
+    await logAudit(db, {
+      action: 'lead_reassign',
+      entityType: 'lead',
+      entityId: id,
+      actor,
+      notes: `Assigned to ${operatorId}`,
+    });
+    flash = 'Lead reassigned.';
+  } else if (id && intent === 'pass_complimentary' && operatorId) {
+    const result = await unlockLeadComplimentary(db, {
+      leadId: id,
+      operatorId,
+      actor,
+    });
+    if (result.ok) flash = 'Lead unlocked complimentary and emailed.';
+    else flashError = result.error;
+  } else if (id && intent === 'offer_paid' && operatorId) {
+    const result = await offerLead(db, { leadId: id, operatorId, actor });
+    if (result.ok) flash = 'Lead offered (paid unlock).';
+    else flashError = result.error;
+  } else if (id && intent === 'status') {
+    const status = form.get('status')?.toString() as LeadStatus | undefined;
+    if (status && (LEAD_STATUSES as readonly string[]).includes(status)) {
+      await db.update(leads).set({ status }).where(eq(leads.id, id));
+      flash = 'Status updated.';
+    }
   }
-  return Astro.redirect('/admin/leads');
+
+  const params = new URLSearchParams();
+  if (flash) params.set('ok', flash);
+  if (flashError) params.set('err', flashError);
+  const statusFilter = Astro.url.searchParams.get('status');
+  if (statusFilter) params.set('status', statusFilter);
+  return Astro.redirect(`/admin/leads?${params.toString()}`);
 }
 
-const rows = await db
+const statusFilter = Astro.url.searchParams.get('status');
+const okMsg = Astro.url.searchParams.get('ok');
+const errMsg = Astro.url.searchParams.get('err');
+
+const baseSelect = db
   .select({
     lead: leads,
-    operatorName: operators.name,
-    operatorSlug: operators.slug,
+    operatorName: assigned.name,
+    operatorSlug: assigned.slug,
+    complimentaryRemaining: assigned.complimentaryLeadsRemaining,
+    claimStatus: assigned.claimStatus,
+    requestedName: requested.name,
+    requestedSlug: requested.slug,
   })
   .from(leads)
-  .leftJoin(operators, eq(leads.operatorId, operators.id))
-  .orderBy(desc(leads.createdAt))
-  .limit(200);
+  .leftJoin(assigned, eq(leads.operatorId, assigned.id))
+  .leftJoin(requested, eq(leads.requestedOperatorId, requested.id));
+
+const rows =
+  statusFilter && (LEAD_STATUSES as readonly string[]).includes(statusFilter)
+    ? await baseSelect
+        .where(eq(leads.status, statusFilter as LeadStatus))
+        .orderBy(desc(leads.createdAt))
+        .limit(200)
+    : await baseSelect.orderBy(desc(leads.createdAt)).limit(200);
+
+const operatorOptions = await db
+  .select({
+    id: operators.id,
+    name: operators.name,
+    complimentaryLeadsRemaining: operators.complimentaryLeadsRemaining,
+    claimStatus: operators.claimStatus,
+  })
+  .from(operators)
+  .orderBy(operators.name)
+  .limit(500);
 ---
 
 <AdminLayout title="Leads">
-  <p class="mb-6 text-sm text-muted">Quote requests from the public site. Email delivery is best-effort.</p>
+  <p class="mb-4 text-sm text-muted">
+    Quote requests are held until you pass them. First unlock per operator can be complimentary; after that
+    offer paid unlock via the portal.
+  </p>
+
+  {
+    okMsg && (
+      <p class="mb-4 border-2 border-brand-600 bg-brand-50 px-3 py-2 text-sm text-brand-800" role="status">
+        {okMsg}
+      </p>
+    )
+  }
+  {
+    errMsg && (
+      <p class="mb-4 border-2 border-red-600 bg-red-50 px-3 py-2 text-sm text-red-800" role="alert">
+        {errMsg}
+      </p>
+    )
+  }
+
+  <form method="GET" class="mb-6 flex flex-wrap items-end gap-3">
+    <div>
+      <label class="label" for="status">Status</label>
+      <select class="input w-40" id="status" name="status">
+        <option value="">All</option>
+        {LEAD_STATUSES.map((s) => (
+          <option value={s} selected={statusFilter === s}>
+            {s}
+          </option>
+        ))}
+      </select>
+    </div>
+    <button type="submit" class="btn-secondary text-xs">
+      Filter
+    </button>
+  </form>
+
   <div class="space-y-4">
     {
       rows.length === 0 ? (
         <p class="card p-8 text-center text-sm text-muted">No leads yet.</p>
       ) : (
-        rows.map(({ lead, operatorName, operatorSlug }) => (
-          <article class="card p-5">
-            <div class="flex flex-wrap items-start justify-between gap-3">
-              <div>
-                <h2 class="font-bold text-ink">{lead.seekerName}</h2>
-                <p class="text-sm text-muted">
-                  {lead.seekerEmail}
-                  {lead.seekerPhone && <> · {lead.seekerPhone}</>}
-                </p>
-                <p class="mt-1 text-sm">
-                  Operator:{' '}
-                  {operatorSlug ? (
-                    <a href={`/operator/${operatorSlug}`}>{operatorName}</a>
-                  ) : (
-                    operatorName || lead.operatorId
-                  )}
-                </p>
-              </div>
-              <div class="text-right text-xs text-muted">
-                <p>{formatDate(lead.createdAt)}</p>
-                <p class="mt-1 font-semibold uppercase text-ink">{lead.status}</p>
-              </div>
-            </div>
-            <dl class="mt-4 grid gap-2 text-sm sm:grid-cols-2">
-              <div>
-                <dt class="text-muted">Size</dt>
-                <dd>{lead.projectSize || '—'}</dd>
-              </div>
-              <div>
-                <dt class="text-muted">Material</dt>
-                <dd>{lead.material || '—'}</dd>
-              </div>
-              <div>
-                <dt class="text-muted">Location</dt>
-                <dd>{lead.addressOrZip || '—'}</dd>
-              </div>
-              <div>
-                <dt class="text-muted">Timeline</dt>
-                <dd>{lead.timeline || '—'}</dd>
-              </div>
-              {lead.notes && (
-                <div class="sm:col-span-2">
-                  <dt class="text-muted">Notes</dt>
-                  <dd>{lead.notes}</dd>
+        rows.map(
+          ({
+            lead,
+            operatorName,
+            operatorSlug,
+            complimentaryRemaining,
+            claimStatus,
+            requestedName,
+            requestedSlug,
+          }) => (
+            <article class="card p-5">
+              <div class="flex flex-wrap items-start justify-between gap-3">
+                <div>
+                  <h2 class="font-bold text-ink">{lead.seekerName}</h2>
+                  <p class="text-sm text-muted">
+                    {lead.seekerEmail}
+                    {lead.seekerPhone && <> · {lead.seekerPhone}</>}
+                  </p>
+                  <p class="mt-1 text-sm">
+                    Assigned:{' '}
+                    {operatorSlug ? (
+                      <a href={`/operator/${operatorSlug}`}>{operatorName}</a>
+                    ) : (
+                      operatorName || lead.operatorId
+                    )}
+                    {typeof complimentaryRemaining === 'number' && (
+                      <span class="text-muted"> · free left: {complimentaryRemaining}</span>
+                    )}
+                    {claimStatus && <span class="text-muted"> · claim: {claimStatus}</span>}
+                  </p>
+                  {(requestedName || requestedSlug) &&
+                    lead.requestedOperatorId !== lead.operatorId && (
+                      <p class="text-sm text-muted">
+                        Originally requested:{' '}
+                        {requestedSlug ? (
+                          <a href={`/operator/${requestedSlug}`}>{requestedName}</a>
+                        ) : (
+                          requestedName
+                        )}
+                      </p>
+                    )}
                 </div>
+                <div class="text-right text-xs text-muted">
+                  <p>{formatDate(lead.createdAt)}</p>
+                  <p class="mt-1 font-semibold uppercase text-ink">{lead.status}</p>
+                  {lead.unlockMethod && (
+                    <p class="mt-0.5 uppercase text-brand-700">{lead.unlockMethod}</p>
+                  )}
+                </div>
+              </div>
+              <dl class="mt-4 grid gap-2 text-sm sm:grid-cols-2">
+                <div>
+                  <dt class="text-muted">Size</dt>
+                  <dd>{lead.projectSize || '—'}</dd>
+                </div>
+                <div>
+                  <dt class="text-muted">Material</dt>
+                  <dd>{lead.material || '—'}</dd>
+                </div>
+                <div>
+                  <dt class="text-muted">Location</dt>
+                  <dd>{lead.addressOrZip || '—'}</dd>
+                </div>
+                <div>
+                  <dt class="text-muted">Timeline</dt>
+                  <dd>{lead.timeline || '—'}</dd>
+                </div>
+                {lead.notes && (
+                  <div class="sm:col-span-2">
+                    <dt class="text-muted">Notes</dt>
+                    <dd>{lead.notes}</dd>
+                  </div>
+                )}
+              </dl>
+
+              {lead.status !== 'unlocked' && lead.status !== 'closed' && (
+                <form method="POST" class="mt-4 flex flex-wrap items-end gap-2 border-t border-border pt-4">
+                  <input type="hidden" name="id" value={lead.id} />
+                  <div>
+                    <label class="label" for={`op-${lead.id}`}>
+                      Operator
+                    </label>
+                    <select class="input min-w-[14rem]" id={`op-${lead.id}`} name="operatorId" required>
+                      {operatorOptions.map((op) => (
+                        <option value={op.id} selected={op.id === lead.operatorId}>
+                          {op.name} (free:{op.complimentaryLeadsRemaining} · {op.claimStatus})
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  <button
+                    type="submit"
+                    name="intent"
+                    value="pass_complimentary"
+                    class="btn-primary text-xs"
+                  >
+                    Pass complimentary
+                  </button>
+                  <button type="submit" name="intent" value="offer_paid" class="btn-secondary text-xs">
+                    Offer paid
+                  </button>
+                  <button type="submit" name="intent" value="reassign" class="btn-ghost text-xs">
+                    Reassign only
+                  </button>
+                  <button type="submit" name="intent" value="close" class="btn-ghost text-xs text-red-700">
+                    Close
+                  </button>
+                </form>
               )}
-            </dl>
-            <form method="POST" class="mt-4 flex flex-wrap gap-2">
-              <input type="hidden" name="id" value={lead.id} />
-              <select class="input w-36" name="status">
-                <option value="new" selected={lead.status === 'new'}>
-                  new
-                </option>
-                <option value="notified" selected={lead.status === 'notified'}>
-                  notified
-                </option>
-                <option value="closed" selected={lead.status === 'closed'}>
-                  closed
-                </option>
-              </select>
-              <button type="submit" class="btn-secondary text-xs">
-                Update status
-              </button>
-            </form>
-          </article>
-        ))
+
+              <form method="POST" class="mt-3 flex flex-wrap gap-2">
+                <input type="hidden" name="id" value={lead.id} />
+                <input type="hidden" name="intent" value="status" />
+                <select class="input w-36" name="status">
+                  {LEAD_STATUSES.map((s) => (
+                    <option value={s} selected={lead.status === s}>
+                      {s}
+                    </option>
+                  ))}
+                </select>
+                <button type="submit" class="btn-secondary text-xs">
+                  Update status
+                </button>
+              </form>
+            </article>
+          ),
+        )
       )
     }
   </div>

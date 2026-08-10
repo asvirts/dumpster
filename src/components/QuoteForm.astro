@@ -21,16 +21,18 @@ const result = Astro.getActionResult(actions.submitQuote);
       </p>
       <h3 class="mt-2 font-display text-xl uppercase tracking-tight text-ink">You're on the books</h3>
       <p class="mt-2 text-sm text-charcoal-700">
-        Thanks — your quote request for <strong>{operatorName}</strong> was submitted. The operator (and our
-        team) will follow up using the contact details you provided.
+        Thanks — your quote request for <strong>{operatorName}</strong> was submitted. Our team will review
+        it and connect you with a local operator using the contact details you provided.
       </p>
     </div>
   ) : (
     <form method="POST" action={actions.submitQuote} class="card space-y-4 p-6">
       <div>
-        <p class="eyebrow text-brand-600">Direct line</p>
+        <p class="eyebrow text-brand-600">Get matched</p>
         <h3 class="mt-1 font-display text-xl uppercase tracking-tight text-ink">Request a quote</h3>
-        <p class="mt-1 text-sm text-muted">Send project details to {operatorName}.</p>
+        <p class="mt-1 text-sm text-muted">
+          Tell us about your project. We’ll route your request to {operatorName} (or another local fit).
+        </p>
       </div>
       {result?.error && (
         <p class="border-2 border-red-600 bg-red-50 px-3 py-2 text-sm font-medium text-red-800" role="alert">
@@ -86,7 +88,8 @@ const result = Astro.getActionResult(actions.submitQuote);
       </div>
       <button type="submit" class="btn-primary w-full sm:w-auto">Submit quote request</button>
       <p class="text-xs text-muted">
-        By submitting, you agree we may share these details with the selected operator for quoting purposes.
+        By submitting, you agree we may share these details with verified local operators for quoting
+        purposes.
       </p>
     </form>
   )

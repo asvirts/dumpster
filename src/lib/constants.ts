@@ -27,6 +27,14 @@ export type MaterialId = (typeof MATERIALS)[number]['id'];
 export const VERIFICATION_STATUSES = ['pending', 'verified', 'rejected'] as const;
 export type VerificationStatus = (typeof VERIFICATION_STATUSES)[number];
 
+export const LEAD_STATUSES = ['new', 'offered', 'unlocked', 'closed'] as const;
+export type LeadStatus = (typeof LEAD_STATUSES)[number];
+
+export const CLAIM_STATUSES = ['unclaimed', 'pending', 'approved', 'rejected'] as const;
+export type ClaimStatus = (typeof CLAIM_STATUSES)[number];
+
+export const DEFAULT_LEAD_PRICE_CENTS = 2500;
+
 export const SIZE_GUIDE: Record<number, string> = {
   10: 'Small cleanouts, garage junk, bathroom remodel',
   15: 'Kitchen remodel, flooring, moderate cleanouts',

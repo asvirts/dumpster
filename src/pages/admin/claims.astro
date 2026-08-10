@@ -1,0 +1,136 @@
+---
+import AdminLayout from '../../layouts/AdminLayout.astro';
+import { getDb } from '../../lib/db';
+import { desc, eq } from 'drizzle-orm';
+import { operators } from '../../lib/schema';
+import { formatDate } from '../../lib/geo';
+import { logAudit } from '../../lib/admin';
+import { sendClaimDecision } from '../../lib/email';
+import { siteUrl } from '../../lib/leads';
+
+const db = getDb();
+const actor = Astro.locals.adminEmail ?? 'admin';
+
+if (Astro.request.method === 'POST') {
+  const form = await Astro.request.formData();
+  const id = form.get('id')?.toString();
+  const intent = form.get('intent')?.toString();
+  const notes = form.get('notes')?.toString() || null;
+
+  if (id && (intent === 'approve' || intent === 'reject')) {
+    const op = await db.query.operators.findFirst({ where: eq(operators.id, id) });
+    if (op && op.claimStatus === 'pending') {
+      const now = new Date().toISOString();
+      if (intent === 'approve') {
+        await db
+          .update(operators)
+          .set({
+            claimStatus: 'approved',
+            updatedAt: now,
+          })
+          .where(eq(operators.id, id));
+        await sendClaimDecision({
+          operatorName: op.name,
+          operatorEmail: op.email,
+          approved: true,
+          portalUrl: `${siteUrl()}/portal`,
+        });
+        await logAudit(db, {
+          action: 'claim_approve',
+          entityType: 'operator',
+          entityId: id,
+          actor,
+          notes: op.clerkOrgId ? `org ${op.clerkOrgId}` : null,
+        });
+      } else {
+        await db
+          .update(operators)
+          .set({
+            claimStatus: 'rejected',
+            claimMessage: notes || op.claimMessage,
+            // Free the org slot so they can re-claim later if needed
+            clerkOrgId: null,
+            updatedAt: now,
+          })
+          .where(eq(operators.id, id));
+        await sendClaimDecision({
+          operatorName: op.name,
+          operatorEmail: op.email,
+          approved: false,
+          portalUrl: `${siteUrl()}/portal`,
+          notes,
+        });
+        await logAudit(db, {
+          action: 'claim_reject',
+          entityType: 'operator',
+          entityId: id,
+          actor,
+          notes,
+        });
+      }
+    }
+  }
+  return Astro.redirect('/admin/claims');
+}
+
+const pendingClaims = await db
+  .select()
+  .from(operators)
+  .where(eq(operators.claimStatus, 'pending'))
+  .orderBy(desc(operators.claimRequestedAt));
+---
+
+<AdminLayout title="Claims">
+  <p class="mb-6 text-sm text-muted">
+    Operators request ownership of a directory listing via Clerk. Approve to unlock the company portal.
+  </p>
+
+  <div class="space-y-4">
+    {
+      pendingClaims.length === 0 ? (
+        <p class="card p-8 text-center text-sm text-muted">No pending claims.</p>
+      ) : (
+        pendingClaims.map((op) => (
+          <article class="card p-5">
+            <div class="flex flex-wrap items-start justify-between gap-3">
+              <div>
+                <h2 class="font-bold text-ink">
+                  <a href={`/admin/operators/${op.id}`}>{op.name}</a>
+                </h2>
+                <p class="text-sm text-muted">
+                  {op.email || 'No email'} · {op.phone || 'No phone'}
+                </p>
+                <p class="mt-1 text-xs text-muted">
+                  Requested {op.claimRequestedAt ? formatDate(op.claimRequestedAt) : '—'}
+                  {op.claimRequestedByUserId && <> · user {op.claimRequestedByUserId}</>}
+                </p>
+                {op.clerkOrgId && (
+                  <p class="mt-1 font-mono text-xs text-muted">org: {op.clerkOrgId}</p>
+                )}
+                {op.claimMessage && <p class="mt-2 text-sm">{op.claimMessage}</p>}
+              </div>
+              <a href={`/operator/${op.slug}`} class="text-xs text-brand-700">
+                Public profile →
+              </a>
+            </div>
+            <form method="POST" class="mt-4 flex flex-wrap items-end gap-2">
+              <input type="hidden" name="id" value={op.id} />
+              <div class="min-w-[12rem] flex-1">
+                <label class="label" for={`notes-${op.id}`}>
+                  Reject notes (optional)
+                </label>
+                <input class="input" id={`notes-${op.id}`} name="notes" />
+              </div>
+              <button type="submit" name="intent" value="approve" class="btn-primary text-xs">
+                Approve
+              </button>
+              <button type="submit" name="intent" value="reject" class="btn-secondary text-xs">
+                Reject
+              </button>
+            </form>
+          </article>
+        ))
+      )
+    }
+  </div>
+</AdminLayout>
