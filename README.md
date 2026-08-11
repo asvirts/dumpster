@@ -70,5 +70,16 @@ Update `PUBLIC_SITE_URL` / `site` in `astro.config.mjs` for your domain.
 - Public “Verified · {date}” badge from `last_verified_at`
 - Brokers flaggable and filtered out by default
 - City pages store unique permit/pricing/special-rules content in D1
+- Demo/seed operators (`is_demo`) never appear in public search, city pages, or sitemap
 
 See `ASSUMPTIONS.md` and the product PRD for full requirements.
+
+## Launch checklist (Search Console)
+
+After deploy, in [Google Search Console](https://search.google.com/search-console) for `https://findadumpster.net`:
+
+1. Confirm property ownership and that **Sitemap** `https://findadumpster.net/sitemap.xml` is submitted without errors.
+2. **Page indexing** — fix any soft 404 / “Crawled – currently not indexed” spikes on money pages.
+3. **URL Inspection → Request indexing** for `/`, top city pages (`/dumpster-rental/{state}/{city}`), top guides, and best operator profiles.
+4. Re-check **weekly** (coverage + sitemap). Ignore CTR/position noise until pages reach roughly top 10–15 with meaningful impressions (often weeks on a new domain).
+5. After ~28 days, export Performance (Queries + Pages) for a real ranking/CTR pass.

@@ -5,7 +5,13 @@ import MapView from '../../../components/MapView.astro';
 import SearchForm from '../../../components/SearchForm.astro';
 import { getDb } from '../../../lib/db';
 import { getCityWithOperators } from '../../../lib/search';
-import { breadcrumbJsonLd, itemListJsonLd, pageTitle } from '../../../lib/seo';
+import {
+  breadcrumbJsonLd,
+  cityPageDescription,
+  cityPageTitle,
+  faqJsonLd,
+  itemListJsonLd,
+} from '../../../lib/seo';
 
 const { state, city: citySlug } = Astro.params;
 if (!state || !citySlug) return Astro.redirect('/search');
@@ -17,10 +23,12 @@ if (!data) return new Response(null, { status: 404, statusText: 'Not Found' });
 const { city, operators: ops } = data;
 const siteUrl = Astro.site?.toString().replace(/\/$/, '') ?? Astro.url.origin;
 
-const title = pageTitle([`${city.name} Dumpster Rental`, 'Verified Operators']);
-const description =
-  city.typicalPricingNotes?.slice(0, 155) ||
-  `Find verified dumpster rental operators in ${city.name}, ${city.state}. Local permit notes, pricing ranges, and transparent filters.`;
+const title = cityPageTitle(city.name, city.state);
+const description = cityPageDescription({
+  cityName: city.name,
+  state: city.state,
+  pricingNotes: city.typicalPricingNotes,
+});
 
 const markers = ops
   .filter((o) => o.hqLat != null && o.hqLng != null)
@@ -31,6 +39,32 @@ const markers = ops
     lat: o.hqLat as number,
     lng: o.hqLng as number,
   }));
+
+const faqs = [
+  {
+    question: `How much does dumpster rental cost in ${city.name}?`,
+    answer:
+      city.typicalPricingNotes ||
+      `Pricing in ${city.name} varies by size, weight, dump fees, and rental length. Compare ranges on local operator profiles and always confirm an all-in quote before booking.`,
+  },
+  {
+    question: `Do I need a permit for a dumpster in ${city.name}?`,
+    answer:
+      city.localPermitSummary ||
+      `Street placement in ${city.name} often requires a municipal right-of-way permit. Private driveway placement is usually simpler — confirm with the city and your operator.`,
+  },
+  {
+    question: 'What dumpster size should I rent?',
+    answer:
+      'Most residential cleanouts and remodels use 10–20 yard roll-offs. Roofing, heavy debris, and large construction jobs may need 20–40 yards or dedicated concrete/dirt boxes. See our size guide for project-based recommendations.',
+  },
+  {
+    question: `What should I know before delivery in ${city.name}?`,
+    answer:
+      city.specialRules ||
+      `Share driveway width, overhead clearance, and placement preference with the operator. Ask about plywood protection, weight limits, and prohibited materials before the drop.`,
+  },
+];
 
 const jsonLd = [
   itemListJsonLd(
@@ -48,6 +82,7 @@ const jsonLd = [
       url: `${siteUrl}/dumpster-rental/${city.stateSlug}/${city.slug}`,
     },
   ]),
+  faqJsonLd(faqs),
 ];
 
 Astro.response.headers.set(
@@ -81,7 +116,11 @@ Astro.response.headers.set(
         <SearchForm initialQ={`${city.name}, ${city.state}`} />
       </div>
       <p class="mt-4 font-mono text-xs uppercase tracking-widest text-charcoal-400">
-        {ops.length} verified operator{ops.length === 1 ? '' : 's'} listed · brokers excluded
+        {
+          ops.length === 0
+            ? 'Building the local lineup · request a quote via search or guides'
+            : `${ops.length} verified operator${ops.length === 1 ? '' : 's'} listed · brokers excluded`
+        }
       </p>
     </div>
   </div>
@@ -141,8 +180,21 @@ Astro.response.headers.set(
         <div class="mt-6 space-y-4">
           {
             ops.length === 0 ? (
-              <div class="card p-8 text-center text-muted">
-                No verified operators published for this city yet.
+              <div class="card border-2 border-dashed border-charcoal-300 p-8 text-center">
+                <p class="font-display text-xl uppercase tracking-tight text-ink">
+                  Operators coming soon in {city.name}
+                </p>
+                <p class="mx-auto mt-3 max-w-md text-sm leading-relaxed text-muted">
+                  We’re verifying local haulers for this metro. Meanwhile, use the guides for sizes, permits,
+                  and cost factors — or search nearby cities.
+                </p>
+                <div class="mt-6 flex flex-wrap justify-center gap-3">
+                  <a href="/guides/dumpster-size-guide" class="btn-secondary text-sm">Size guide</a>
+                  <a href="/guides/how-much-do-dumpster-rentals-cost" class="btn-secondary text-sm">
+                    Cost guide
+                  </a>
+                  <a href="/search" class="btn-primary text-sm">Search operators</a>
+                </div>
               </div>
             ) : (
               ops.map((op) => <OperatorCard operator={op} />)
@@ -152,10 +204,28 @@ Astro.response.headers.set(
       </section>
 
       <section class="card p-6">
+        <p class="eyebrow text-brand-600">FAQ</p>
+        <h2 class="mt-1 font-display text-xl uppercase tracking-tight text-ink">
+          {city.name} dumpster rental FAQ
+        </h2>
+        <dl class="mt-5 space-y-5">
+          {
+            faqs.map((f) => (
+              <div>
+                <dt class="font-semibold text-ink">{f.question}</dt>
+                <dd class="mt-1.5 text-sm leading-relaxed text-charcoal-700">{f.answer}</dd>
+              </div>
+            ))
+          }
+        </dl>
+      </section>
+
+      <section class="card p-6">
         <p class="eyebrow text-brand-600">Read next</p>
         <h2 class="mt-1 font-display text-xl uppercase tracking-tight text-ink">Related guides</h2>
         <ul class="mt-4 space-y-2.5 text-sm font-medium">
           <li><a href="/guides/dumpster-size-guide">Dumpster size guide</a></li>
+          <li><a href="/guides/how-much-do-dumpster-rentals-cost">How much do dumpster rentals cost</a></li>
           <li><a href="/guides/what-can-go-in-a-dumpster">What can go in a dumpster</a></li>
           <li><a href="/guides/dumpster-permits-overview">Permit overview</a></li>
           <li><a href="/guides/dumpster-rental-cost-factors">Cost factors</a></li>

@@ -127,6 +127,38 @@ export type OperatorFormData = {
   cityIds?: string[];
 };
 
+/** Placeholder / seed contact patterns that must not go public. */
+export function looksLikePlaceholderContact(data: {
+  phone?: string | null;
+  website?: string | null;
+  email?: string | null;
+  verificationNotes?: string | null;
+}): string | null {
+  const phone = (data.phone ?? '').replace(/\D/g, '');
+  if (/5550\d{3}$/.test(phone) || /555\d{4}$/.test(phone) || phone.includes('555555')) {
+    return 'Phone looks like a 555 placeholder — unpublish or use a real number.';
+  }
+  const website = (data.website ?? '').toLowerCase();
+  if (website.includes('example.com') || website.includes('example.org')) {
+    return 'Website is an example.com placeholder.';
+  }
+  const email = (data.email ?? '').toLowerCase();
+  if (email.endsWith('@example.com') || email.endsWith('@example.org')) {
+    return 'Email is an example.com placeholder.';
+  }
+  const notes = (data.verificationNotes ?? '').toUpperCase();
+  if (notes.includes('SEED PLACEHOLDER')) {
+    return 'Verification notes still mark this as a SEED PLACEHOLDER.';
+  }
+  return null;
+}
+
+function assertPublishable(data: OperatorFormData, willPublish: boolean) {
+  if (!willPublish) return;
+  const issue = looksLikePlaceholderContact(data);
+  if (issue) throw new Error(`Cannot publish: ${issue}`);
+}
+
 export async function createOperator(
   db: AppDb,
   data: OperatorFormData,
@@ -136,6 +168,8 @@ export async function createOperator(
   const slug = data.slug?.trim() || uniqueSlug(data.name, id.slice(0, 6));
   const status = data.verificationStatus ?? 'pending';
   const now = new Date().toISOString();
+  const willPublish = data.isPublished ?? status === 'verified';
+  assertPublishable(data, willPublish);
 
   await db.insert(operators).values({
     id,
@@ -165,7 +199,7 @@ export async function createOperator(
     insuranceVerified: data.insuranceVerified ?? false,
     licenseNotes: data.licenseNotes || null,
     qualityScore: data.qualityScore ?? 50,
-    isPublished: data.isPublished ?? status === 'verified',
+    isPublished: willPublish,
     isDemo: false,
     updatedAt: now,
   });
@@ -205,6 +239,19 @@ export async function updateOperator(
     verifiedBy = actor ?? 'admin';
   }
 
+  const willPublish =
+    data.isPublished ??
+    (status === 'verified' ? true : status === 'rejected' ? false : existing.isPublished);
+  assertPublishable(
+    {
+      phone: data.phone ?? existing.phone,
+      website: data.website ?? existing.website,
+      email: data.email ?? existing.email,
+      verificationNotes: data.verificationNotes ?? existing.verificationNotes,
+    },
+    willPublish,
+  );
+
   await db
     .update(operators)
     .set({
@@ -234,9 +281,7 @@ export async function updateOperator(
       insuranceVerified: data.insuranceVerified ?? false,
       licenseNotes: data.licenseNotes || null,
       qualityScore: data.qualityScore ?? existing.qualityScore,
-      isPublished:
-        data.isPublished ??
-        (status === 'verified' ? true : status === 'rejected' ? false : existing.isPublished),
+      isPublished: willPublish,
       updatedAt: now,
     })
     .where(eq(operators.id, id));

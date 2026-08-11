@@ -114,7 +114,8 @@ export async function searchOperators(
   const verifiedOnly = filters.verifiedOnly !== false;
   const excludeBrokers = filters.excludeBrokers !== false;
 
-  const conditions = [eq(operators.isPublished, true)];
+  // Public directory never shows demos/seeds — same bar as sitemap.
+  const conditions = [eq(operators.isPublished, true), eq(operators.isDemo, false)];
   if (verifiedOnly) {
     conditions.push(eq(operators.verificationStatus, 'verified'));
   }
@@ -278,7 +279,11 @@ export async function searchOperators(
 
 export async function getOperatorBySlug(db: AppDb, slug: string) {
   const op = await db.query.operators.findFirst({
-    where: and(eq(operators.slug, slug), eq(operators.isPublished, true)),
+    where: and(
+      eq(operators.slug, slug),
+      eq(operators.isPublished, true),
+      eq(operators.isDemo, false),
+    ),
     with: {
       sizes: true,
       materials: true,

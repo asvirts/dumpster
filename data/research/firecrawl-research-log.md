@@ -74,5 +74,5 @@ Strong leads still needing a quick site scrape + phone call: AK, AR, DE, HI, ID,
 
 1. Fill blank phones (NV Grizzly, OR BC Haulers/Oregon Recycling, OK Enviro Dispose, SD 605 Hauling, VT, NH, NJ)
 2. Phone-verify the SCRAPED high-confidence set first (highest ROI)
-3. Replace remaining seed placeholders in AZ/CA/CO/FL/GA/TX with real businesses
+3. ~~Replace remaining seed placeholders in AZ/CA/CO/FL/GA/TX with real businesses~~ **Done 2026-08-11** — seeds unpublished (`is_demo=1`); real operators loaded via `seed/real-operators-priority-metros-2026-08-11.sql` (2–3 per priority metro). Still recommend phone/insurance verification before paid ads.
 4. Re-run Firecrawl agent in smaller state batches (5–8 metros, higher max-credits) if needed

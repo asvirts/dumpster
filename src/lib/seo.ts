@@ -6,6 +6,35 @@ export function pageTitle(parts: string | string[]): string {
   return [...list, BRAND.name].join(' | ');
 }
 
+/** SERP title for city landings — keyword front-loaded, state for disambiguation. */
+export function cityPageTitle(cityName: string, state: string): string {
+  return pageTitle(`${cityName} Dumpster Rental (${state})`);
+}
+
+/**
+ * SERP meta for city landings. Pricing notes feed a short clause; they are not the whole description.
+ * Target ~150–160 characters with city + intent + differentiator + CTA.
+ */
+export function cityPageDescription(opts: {
+  cityName: string;
+  state: string;
+  pricingNotes?: string | null;
+}): string {
+  const { cityName, state } = opts;
+  const priceClause = priceClauseFromNotes(opts.pricingNotes);
+  const core = `Compare dumpster rentals in ${cityName}, ${state}. Local operators${priceClause}, permit notes & driveway options. Free quotes — 10–40 yard.`;
+  return core.length <= 160 ? core : core.slice(0, 157).trimEnd() + '…';
+}
+
+/** Pull a short pricing hint (e.g. "$350–$650") from freeform city notes. */
+function priceClauseFromNotes(notes?: string | null): string {
+  if (!notes?.trim()) return '';
+  // Prefer explicit dollar ranges already in the notes.
+  const range = notes.match(/\$[\d,]+(?:\s*[–—-]\s*\$?[\d,]+)?/);
+  if (range) return `, typical ${range[0].replace(/\s+/g, '')}`;
+  return '';
+}
+
 export function operatorJsonLd(op: {
   name: string;
   description: string | null;
