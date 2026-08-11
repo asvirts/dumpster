@@ -3,8 +3,8 @@ import type { APIRoute } from 'astro';
 const SITE_FALLBACK = 'https://findadumpster.net';
 
 /**
- * robots.txt — allow public crawl surface, block admin/compare, point to sitemap.
- * Keep in sync with noIndex routes (compare, 404, admin layout).
+ * robots.txt — allow public crawl surface, block private surfaces, point to sitemap.
+ * Keep in sync with noIndex routes (compare, 404, admin layout, portal layout).
  */
 export const GET: APIRoute = ({ site }) => {
   const base = (site?.toString() || SITE_FALLBACK).replace(/\/$/, '');
@@ -16,6 +16,8 @@ Allow: /
 # Private / non-indexable surfaces
 Disallow: /admin
 Disallow: /admin/
+Disallow: /portal
+Disallow: /portal/
 Disallow: /compare
 Disallow: /compare?
 

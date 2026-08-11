@@ -1,6 +1,7 @@
 ---
 title: How Much Do Dumpster Rentals Cost in 2026?
 description: Dumpster rentals typically cost $250–$850 for a 7-day rental. See 2026 prices by size (10–40 yard), what drives the final bill, common hidden fees, and how to get an accurate local quote.
+updated: 2026-08-09
 category: basics
 image: /guides/how-much-do-dumpster-rentals-cost.jpg
 imageAlt: Green dumpster beside a brown building — typical roll-off dumpster rental

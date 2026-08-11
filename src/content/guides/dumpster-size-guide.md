@@ -1,6 +1,7 @@
 ---
 title: Dumpster Size Guide
 description: Choose the right roll-off size (10–40 yard) for cleanouts, remodels, roofing, and construction.
+updated: 2026-08-09
 category: basics
 ---
 

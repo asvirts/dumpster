@@ -1,6 +1,7 @@
 ---
 title: Dumpster Permits Overview
 description: When you need a permit for street placement, who pulls it, and how city rules differ.
+updated: 2026-08-09
 category: local
 ---
 

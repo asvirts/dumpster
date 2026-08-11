@@ -1,6 +1,7 @@
 ---
 title: What Can Go in a Dumpster
 description: Common accepted materials, restricted items, and what to ask before your delivery.
+updated: 2026-08-09
 category: basics
 ---
 

@@ -1,6 +1,7 @@
 ---
 title: Residential vs Commercial Dumpster Rentals
 description: Differences in access, sizing, permits, and what homeowners vs contractors should ask.
+updated: 2026-08-09
 category: basics
 ---
 

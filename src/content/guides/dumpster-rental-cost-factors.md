@@ -1,6 +1,7 @@
 ---
 title: Dumpster Rental Cost Factors
 description: What drives dumpster rental prices — size, weight, rental days, haul distance, and hidden fees.
+updated: 2026-08-09
 category: basics
 ---
 

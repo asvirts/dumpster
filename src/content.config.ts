@@ -8,6 +8,8 @@ const guides = defineCollection({
     description: z.string(),
     category: z.string().default('general'),
     draft: z.boolean().default(false),
+    /** Last meaningful content update — used for sitemap lastmod. */
+    updated: z.coerce.date().optional(),
     image: z.string().optional(),
     imageAlt: z.string().optional(),
     imageCredit: z.string().optional(),
