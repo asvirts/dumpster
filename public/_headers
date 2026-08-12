@@ -1,0 +1,6 @@
+# Served by Cloudflare static assets (not the Worker / Clerk middleware).
+# Google AdSense crawls /ads.txt and expects plain text at the site root.
+/ads.txt
+  Content-Type: text/plain; charset=utf-8
+  Cache-Control: public, max-age=300
+  X-Content-Type-Options: nosniff

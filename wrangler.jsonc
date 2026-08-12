@@ -6,6 +6,9 @@
   // global_fetch_strictly_public: required so env.ASSETS.fetch() works on workers.dev
   // (error 1042 without it — Worker-to-assets same-zone fetch)
   "compatibility_flags": ["nodejs_compat", "global_fetch_strictly_public"],
+  // Static files from public/ (ads.txt, favicons, etc.) are served by the
+  // Assets pipeline first — they do NOT go through the Worker/Clerk middleware.
+  // Do not set run_worker_first: true or ads.txt would be Worker-proxied.
   "assets": {
     "directory": "./dist",
     "binding": "ASSETS",
