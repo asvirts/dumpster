@@ -1,66 +1,42 @@
 import { ActionError, defineAction } from 'astro:actions';
 import { z } from 'astro:schema';
-import { nanoid } from 'nanoid';
 import { and, eq, inArray } from 'drizzle-orm';
 import { getDb } from '../lib/db';
-import { events, leads, operators } from '../lib/schema';
-import { sendAdminLeadAlert } from '../lib/email';
-import { leadPriceCents, siteUrl, unlockLeadComplimentary } from '../lib/leads';
+import { leads, operators } from '../lib/schema';
+import { quoteInputSchema } from '../lib/lead-fields';
+import {
+  clientIpFromRequest,
+  createHeldLead,
+  priceForLead,
+  siteUrl,
+  unlockLeadComplimentary,
+} from '../lib/leads';
 import { getStripe } from '../lib/stripe';
+import { verifyTurnstile } from '../lib/turnstile';
 
 export const server = {
   submitQuote: defineAction({
     accept: 'form',
-    input: z.object({
-      operatorId: z.string().min(1),
-      seekerName: z.string().min(1).max(120),
-      seekerEmail: z.string().email(),
-      seekerPhone: z.string().max(40).optional(),
-      projectSize: z.string().max(20).optional(),
-      material: z.string().max(40).optional(),
-      addressOrZip: z.string().max(200).optional(),
-      timeline: z.string().max(120).optional(),
-      notes: z.string().max(2000).optional(),
-      /** Honeypot — must be empty; bots often fill every field. */
-      companyWebsite: z.string().max(200).optional(),
-    }),
-    handler: async (input) => {
+    input: quoteInputSchema,
+    handler: async (input, context) => {
       // Silent success for bots that fill the honeypot
       if (input.companyWebsite && input.companyWebsite.trim() !== '') {
         return { ok: true as const, leadId: 'ignored' };
       }
 
-      const db = getDb();
-      const op = await db.query.operators.findFirst({
-        where: eq(operators.id, input.operatorId),
+      const ip = clientIpFromRequest(context.request);
+      const turnstile = await verifyTurnstile({
+        token: input['cf-turnstile-response'],
+        ip,
       });
-      if (!op || !op.isPublished) {
-        throw new ActionError({
-          code: 'NOT_FOUND',
-          message: 'Operator not found or not available for quotes.',
-        });
+      if (!turnstile.ok) {
+        throw new ActionError({ code: 'BAD_REQUEST', message: turnstile.error });
       }
 
-      const leadId = nanoid();
-      await db.insert(leads).values({
-        id: leadId,
+      const mode = input.mode === 'match' ? 'match' : 'direct';
+      const result = await createHeldLead(getDb(), {
+        mode,
         operatorId: input.operatorId,
-        requestedOperatorId: input.operatorId,
-        seekerName: input.seekerName,
-        seekerEmail: input.seekerEmail,
-        seekerPhone: input.seekerPhone || null,
-        projectSize: input.projectSize || null,
-        material: input.material || null,
-        addressOrZip: input.addressOrZip || null,
-        timeline: input.timeline || null,
-        notes: input.notes || null,
-        status: 'new',
-      });
-
-      await sendAdminLeadAlert({
-        operatorName: op.name,
-        leadId,
-        adminUrl: `${siteUrl()}/admin/leads`,
         seekerName: input.seekerName,
         seekerEmail: input.seekerEmail,
         seekerPhone: input.seekerPhone,
@@ -69,16 +45,28 @@ export const server = {
         addressOrZip: input.addressOrZip,
         timeline: input.timeline,
         notes: input.notes,
+        preferredContact: input.preferredContact,
+        budgetRange: input.budgetRange,
+        howFound: input.howFound,
+        sourcePath: input.sourcePath,
+        sourceCityId: input.sourceCityId,
+        utmSource: input.utmSource,
+        utmMedium: input.utmMedium,
+        utmCampaign: input.utmCampaign,
+        utmContent: input.utmContent,
+        utmTerm: input.utmTerm,
+        referrer: input.referrer,
+        ip,
       });
 
-      await db.insert(events).values({
-        id: nanoid(),
-        type: 'quote_submit',
-        path: `/operator/${op.slug}`,
-        queryJson: JSON.stringify({ operatorId: op.id, leadId }),
-      });
+      if (!result.ok) {
+        throw new ActionError({
+          code: result.code,
+          message: result.error,
+        });
+      }
 
-      return { ok: true as const, leadId };
+      return { ok: true as const, leadId: result.leadId };
     },
   }),
 
@@ -229,7 +217,7 @@ export const server = {
       }
 
       const stripe = getStripe();
-      const price = leadPriceCents();
+      const price = priceForLead(lead);
       const base = siteUrl();
       const session = await stripe.checkout.sessions.create({
         mode: 'payment',

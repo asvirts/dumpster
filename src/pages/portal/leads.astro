@@ -2,12 +2,12 @@
 import PortalLayout from '../../layouts/PortalLayout.astro';
 import { getDb } from '../../lib/db';
 import { getOperatorForOrg } from '../../lib/portal';
-import { desc, eq } from 'drizzle-orm';
+import { and, desc, eq, inArray } from 'drizzle-orm';
 import { leads } from '../../lib/schema';
 import { formatDate } from '../../lib/geo';
-import { leadPriceCents, unlockLeadComplimentary } from '../../lib/leads';
+import { leadPriceCents, priceForLead, siteUrl, unlockLeadComplimentary } from '../../lib/leads';
 import { getStripe } from '../../lib/stripe';
-import { siteUrl } from '../../lib/leads';
+import { labelForContact, labelForMaterial } from '../../lib/lead-fields';
 
 const auth = Astro.locals.auth();
 const orgId = auth.orgId!;
@@ -39,7 +39,7 @@ if (Astro.request.method === 'POST' && operator) {
     }
     try {
       const stripe = getStripe();
-      const price = leadPriceCents();
+      const price = priceForLead(lead);
       const base = siteUrl();
       const session = await stripe.checkout.sessions.create({
         mode: 'payment',
@@ -86,7 +86,12 @@ const rows = operator
   ? await db
       .select()
       .from(leads)
-      .where(eq(leads.operatorId, operator.id))
+      .where(
+        and(
+          eq(leads.operatorId, operator.id),
+          inArray(leads.status, ['offered', 'unlocked', 'closed']),
+        ),
+      )
       .orderBy(desc(leads.createdAt))
       .limit(100)
   : [];
@@ -159,7 +164,7 @@ const canceled = Astro.url.searchParams.get('canceled');
                   </div>
                   <div>
                     <dt class="text-muted">Material</dt>
-                    <dd>{lead.material || '—'}</dd>
+                    <dd>{labelForMaterial(lead.material)}</dd>
                   </div>
                   <div>
                     <dt class="text-muted">Location</dt>
@@ -169,6 +174,12 @@ const canceled = Astro.url.searchParams.get('canceled');
                     <dt class="text-muted">Timeline</dt>
                     <dd>{lead.timeline || '—'}</dd>
                   </div>
+                  {lead.status === 'unlocked' && (
+                    <div>
+                      <dt class="text-muted">Preferred contact</dt>
+                      <dd>{labelForContact(lead.preferredContact)}</dd>
+                    </div>
+                  )}
                   {lead.status === 'unlocked' && lead.notes && (
                     <div class="sm:col-span-2">
                       <dt class="text-muted">Notes</dt>

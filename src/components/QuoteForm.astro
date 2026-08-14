@@ -1,72 +1,134 @@
 ---
-import { DUMPSTER_SIZES, MATERIALS } from '../lib/constants';
+import {
+  BUDGET_RANGES,
+  DUMPSTER_SIZES,
+  HOW_FOUND_OPTIONS,
+  MATERIALS,
+  MAX_MATCH_OFFERS,
+  PREFERRED_CONTACTS,
+} from '../lib/constants';
 import { actions } from 'astro:actions';
 
 interface Props {
-  operatorId: string;
-  operatorName: string;
+  mode?: 'direct' | 'match';
+  operatorId?: string;
+  operatorName?: string;
+  sourceCityId?: string;
   defaultSize?: string;
+  defaultMaterial?: string;
   defaultZip?: string;
 }
 
-const { operatorId, operatorName, defaultSize = '', defaultZip = '' } = Astro.props;
+const {
+  mode = 'direct',
+  operatorId = '',
+  operatorName = '',
+  sourceCityId = '',
+  defaultSize = '',
+  defaultMaterial = '',
+  defaultZip = '',
+} = Astro.props;
+
 const result = Astro.getActionResult(actions.submitQuote);
+const sourcePath = Astro.url.pathname + Astro.url.search;
+const utmSource = Astro.url.searchParams.get('utm_source') ?? '';
+const utmMedium = Astro.url.searchParams.get('utm_medium') ?? '';
+const utmCampaign = Astro.url.searchParams.get('utm_campaign') ?? '';
+const utmContent = Astro.url.searchParams.get('utm_content') ?? '';
+const utmTerm = Astro.url.searchParams.get('utm_term') ?? '';
+const referrer = Astro.request.headers.get('referer') ?? '';
+
+const turnstileKey = import.meta.env.PUBLIC_TURNSTILE_SITE_KEY || '';
+
+const isMatch = mode === 'match';
+const heading = isMatch ? 'Get free quotes' : 'Request a quote';
+const sub = isMatch
+  ? `Tell us about the job. We’ll review it and connect you with up to ${MAX_MATCH_OFFERS} local operators.`
+  : `Tell us about your project. We’ll route your request to ${operatorName || 'a local operator'}.`;
+const submitLabel = isMatch ? 'Get free quotes' : 'Get a free quote';
+const formId = isMatch ? 'match-quote-form' : 'direct-quote-form';
 ---
 
 {
   result?.data?.ok ? (
-    <div class="card border-green-600 bg-green-50 p-6" role="status">
+    <div
+      class="card border-green-600 bg-green-50 p-6"
+      role="status"
+      data-lead-success
+      data-lead-mode={mode}
+    >
       <p class="font-mono text-xs font-bold uppercase tracking-widest text-green-700">
-        Request sent
+        Request received
       </p>
-      <h3 class="mt-2 font-display text-xl uppercase tracking-tight text-ink">You're on the books</h3>
+      <h3 class="mt-2 font-display text-xl uppercase tracking-tight text-ink">
+        You’re on the list
+      </h3>
       <p class="mt-2 text-sm text-charcoal-700">
-        Thanks — your quote request for <strong>{operatorName}</strong> was submitted. Our team will review
-        it and connect you with a local operator using the contact details you provided.
+        Thanks — we got your quote request
+        {operatorName && !isMatch ? (
+          <>
+            {' '}
+            for <strong>{operatorName}</strong>
+          </>
+        ) : (
+          ' from local operators'
+        )}
+        . Watch for a confirmation email. Our team reviews requests and a verified
+        operator will follow up by phone or email — usually the same day.
       </p>
     </div>
   ) : (
-    <form method="POST" action={actions.submitQuote} class="card relative space-y-4 p-6">
+    <form
+      id={formId}
+      method="POST"
+      action={actions.submitQuote}
+      class="card relative space-y-4 p-6"
+      data-lead-form
+      data-lead-mode={mode}
+    >
       <div>
-        <p class="eyebrow text-brand-600">Get matched</p>
-        <h3 class="mt-1 font-display text-xl uppercase tracking-tight text-ink">Request a quote</h3>
-        <p class="mt-1 text-sm text-muted">
-          Tell us about your project. We’ll route your request to {operatorName} (or another local fit).
+        <p class="eyebrow text-brand-600">{isMatch ? 'Local matches' : 'Get matched'}</p>
+        <h3 class="mt-1 font-display text-xl uppercase tracking-tight text-ink">{heading}</h3>
+        <p class="mt-1 text-sm text-muted">{sub}</p>
+        <p class="mt-2 hidden font-mono text-[10px] uppercase tracking-widest text-muted" data-step-label>
+          Step 1 of 2 — Project
         </p>
       </div>
       {result?.error && (
-        <p class="border-2 border-red-600 bg-red-50 px-3 py-2 text-sm font-medium text-red-800" role="alert">
+        <p
+          class="border-2 border-red-600 bg-red-50 px-3 py-2 text-sm font-medium text-red-800"
+          role="alert"
+        >
           {result.error.message}
         </p>
       )}
-      <input type="hidden" name="operatorId" value={operatorId} />
-      {/* Honeypot — hidden from users; bots often fill it */}
+
+      <input type="hidden" name="mode" value={mode} />
+      {operatorId && <input type="hidden" name="operatorId" value={operatorId} />}
+      {sourceCityId && <input type="hidden" name="sourceCityId" value={sourceCityId} />}
+      <input type="hidden" name="sourcePath" value={sourcePath} />
+      <input type="hidden" name="utmSource" value={utmSource} />
+      <input type="hidden" name="utmMedium" value={utmMedium} />
+      <input type="hidden" name="utmCampaign" value={utmCampaign} />
+      <input type="hidden" name="utmContent" value={utmContent} />
+      <input type="hidden" name="utmTerm" value={utmTerm} />
+      <input type="hidden" name="referrer" value={referrer} />
+
       <div class="absolute -left-[9999px] h-0 w-0 overflow-hidden" aria-hidden="true">
-        <label for="companyWebsite">Company website</label>
+        <label for={`${formId}-companyWebsite`}>Company website</label>
         <input
-          id="companyWebsite"
+          id={`${formId}-companyWebsite`}
           name="companyWebsite"
           type="text"
           tabindex="-1"
           autocomplete="off"
         />
       </div>
-      <div class="grid gap-4 sm:grid-cols-2">
-        <div class="sm:col-span-2">
-          <label class="label" for="seekerName">Your name *</label>
-          <input class="input" id="seekerName" name="seekerName" required autocomplete="name" />
-        </div>
+
+      <div class="grid gap-4 sm:grid-cols-2" data-step="1">
         <div>
-          <label class="label" for="seekerEmail">Email *</label>
-          <input class="input" id="seekerEmail" name="seekerEmail" type="email" required autocomplete="email" />
-        </div>
-        <div>
-          <label class="label" for="seekerPhone">Phone</label>
-          <input class="input" id="seekerPhone" name="seekerPhone" type="tel" autocomplete="tel" />
-        </div>
-        <div>
-          <label class="label" for="projectSize">Dumpster size</label>
-          <select class="input" id="projectSize" name="projectSize">
+          <label class="label" for={`${formId}-projectSize`}>Dumpster size</label>
+          <select class="input" id={`${formId}-projectSize`} name="projectSize">
             <option value="">Not sure</option>
             {DUMPSTER_SIZES.map((s) => (
               <option value={`${s}`} selected={defaultSize === String(s)}>
@@ -76,32 +138,212 @@ const result = Astro.getActionResult(actions.submitQuote);
           </select>
         </div>
         <div>
-          <label class="label" for="material">Material</label>
-          <select class="input" id="material" name="material">
+          <label class="label" for={`${formId}-material`}>Material</label>
+          <select class="input" id={`${formId}-material`} name="material">
             <option value="">Select…</option>
             {MATERIALS.map((m) => (
-              <option value={m.id}>{m.label}</option>
+              <option value={m.id} selected={defaultMaterial === m.id}>
+                {m.label}
+              </option>
             ))}
           </select>
         </div>
         <div>
-          <label class="label" for="addressOrZip">Address or ZIP</label>
-          <input class="input" id="addressOrZip" name="addressOrZip" value={defaultZip} autocomplete="postal-code" />
+          <label class="label" for={`${formId}-addressOrZip`}>ZIP or address *</label>
+          <input
+            class="input"
+            id={`${formId}-addressOrZip`}
+            name="addressOrZip"
+            value={defaultZip}
+            required
+            autocomplete="postal-code"
+            placeholder="ZIP or street address"
+          />
         </div>
         <div>
-          <label class="label" for="timeline">Timeline</label>
-          <input class="input" id="timeline" name="timeline" placeholder="e.g. this weekend, ASAP" />
-        </div>
-        <div class="sm:col-span-2">
-          <label class="label" for="notes">Project notes</label>
-          <textarea class="input min-h-[88px]" id="notes" name="notes" rows="3" />
+          <label class="label" for={`${formId}-timeline`}>Timeline</label>
+          <input
+            class="input"
+            id={`${formId}-timeline`}
+            name="timeline"
+            placeholder="e.g. this weekend, ASAP"
+          />
         </div>
       </div>
-      <button type="submit" class="btn-primary w-full sm:w-auto">Submit quote request</button>
+
+      <div class="grid gap-4 sm:grid-cols-2" data-step="2">
+        <div class="sm:col-span-2">
+          <label class="label" for={`${formId}-seekerName`}>Your name *</label>
+          <input
+            class="input"
+            id={`${formId}-seekerName`}
+            name="seekerName"
+            required
+            autocomplete="name"
+          />
+        </div>
+        <div>
+          <label class="label" for={`${formId}-seekerEmail`}>Email *</label>
+          <input
+            class="input"
+            id={`${formId}-seekerEmail`}
+            name="seekerEmail"
+            type="email"
+            required
+            autocomplete="email"
+          />
+        </div>
+        <div>
+          <label class="label" for={`${formId}-seekerPhone`}>Phone *</label>
+          <input
+            class="input"
+            id={`${formId}-seekerPhone`}
+            name="seekerPhone"
+            type="tel"
+            required
+            autocomplete="tel"
+          />
+        </div>
+        <div>
+          <label class="label" for={`${formId}-preferredContact`}>Preferred contact</label>
+          <select class="input" id={`${formId}-preferredContact`} name="preferredContact">
+            {PREFERRED_CONTACTS.map((c) => (
+              <option value={c.id} selected={c.id === 'phone'}>
+                {c.label}
+              </option>
+            ))}
+          </select>
+        </div>
+        <div>
+          <label class="label" for={`${formId}-budgetRange`}>Budget (optional)</label>
+          <select class="input" id={`${formId}-budgetRange`} name="budgetRange">
+            <option value="">Select…</option>
+            {BUDGET_RANGES.map((b) => (
+              <option value={b.id}>{b.label}</option>
+            ))}
+          </select>
+        </div>
+        <div class="sm:col-span-2">
+          <label class="label" for={`${formId}-howFound`}>How did you find us?</label>
+          <select class="input" id={`${formId}-howFound`} name="howFound">
+            <option value="">Select…</option>
+            {HOW_FOUND_OPTIONS.map((h) => (
+              <option value={h.id}>{h.label}</option>
+            ))}
+          </select>
+        </div>
+        <div class="sm:col-span-2">
+          <label class="label" for={`${formId}-notes`}>Project notes</label>
+          <textarea class="input min-h-[88px]" id={`${formId}-notes`} name="notes" rows="3" />
+        </div>
+        {turnstileKey && (
+          <div class="sm:col-span-2">
+            <div
+              class="cf-turnstile"
+              data-sitekey={turnstileKey}
+              data-action="quote"
+            />
+          </div>
+        )}
+      </div>
+
+      <div class="flex flex-wrap items-center gap-2">
+        <button type="button" class="btn-ghost hidden" data-step-back>
+          Back
+        </button>
+        <button type="button" class="btn-primary hidden w-full sm:w-auto" data-step-next>
+          Continue
+        </button>
+        <button type="submit" class="btn-primary w-full sm:w-auto" data-step-submit>
+          {submitLabel}
+        </button>
+      </div>
       <p class="text-xs text-muted">
-        By submitting, you agree we may share these details with verified local operators for quoting
-        purposes.
+        By submitting, you agree we may share these details with verified local operators for
+        quoting. We’ll email a confirmation next.
       </p>
     </form>
   )
 }
+
+{turnstileKey && !result?.data?.ok && (
+  <script is:inline src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer />
+)}
+
+<script>
+  type Gtag = (...args: unknown[]) => void;
+  function track(name: string, params: Record<string, unknown> = {}) {
+    const gtag = (window as unknown as { gtag?: Gtag }).gtag;
+    if (typeof gtag === 'function') gtag('event', name, params);
+  }
+
+  function enhanceForm(form: HTMLFormElement) {
+    if (form.dataset.enhanced === '1') return;
+    form.dataset.enhanced = '1';
+    const mode = form.dataset.leadMode || 'direct';
+    const step1 = form.querySelector<HTMLElement>('[data-step="1"]');
+    const step2 = form.querySelector<HTMLElement>('[data-step="2"]');
+    const nextBtn = form.querySelector<HTMLButtonElement>('[data-step-next]');
+    const backBtn = form.querySelector<HTMLButtonElement>('[data-step-back]');
+    const submitBtn = form.querySelector<HTMLButtonElement>('[data-step-submit]');
+    const label = form.querySelector<HTMLElement>('[data-step-label]');
+    if (!step1 || !step2 || !nextBtn || !backBtn || !submitBtn) return;
+
+    let step = 1;
+    let started = false;
+    step2.classList.add('hidden');
+    nextBtn.classList.remove('hidden');
+    submitBtn.classList.add('hidden');
+    label?.classList.remove('hidden');
+
+    function setStep(n: number) {
+      step = n;
+      step1!.classList.toggle('hidden', n !== 1);
+      step2!.classList.toggle('hidden', n !== 2);
+      nextBtn!.classList.toggle('hidden', n !== 1);
+      backBtn!.classList.toggle('hidden', n !== 2);
+      submitBtn!.classList.toggle('hidden', n !== 2);
+      if (label) {
+        label.textContent = n === 1 ? 'Step 1 of 2 — Project' : 'Step 2 of 2 — Contact';
+      }
+    }
+
+    form.addEventListener(
+      'input',
+      () => {
+        if (started) return;
+        started = true;
+        track('lead_form_start', { lead_mode: mode });
+      },
+      { once: true },
+    );
+
+    nextBtn.addEventListener('click', () => {
+      const zip = form.querySelector<HTMLInputElement>('[name="addressOrZip"]');
+      if (zip && !zip.checkValidity()) {
+        zip.reportValidity();
+        return;
+      }
+      setStep(2);
+    });
+    backBtn.addEventListener('click', () => setStep(1));
+
+    form.addEventListener('submit', () => {
+      track('lead_form_submit', { lead_mode: mode });
+    });
+
+    track('lead_form_view', { lead_mode: mode });
+  }
+
+  function initLeadForms() {
+    document.querySelectorAll<HTMLFormElement>('[data-lead-form]').forEach(enhanceForm);
+    document.querySelectorAll('[data-lead-success]').forEach((el) => {
+      if ((el as HTMLElement).dataset.tracked === '1') return;
+      (el as HTMLElement).dataset.tracked = '1';
+      track('lead_form_success', { lead_mode: (el as HTMLElement).dataset.leadMode || 'direct' });
+    });
+  }
+
+  initLeadForms();
+  document.addEventListener('astro:page-load', initLeadForms);
+</script>

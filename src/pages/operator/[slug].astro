@@ -108,12 +108,12 @@ const jsonLd = [
             </a>
           )
         }
-        <a href="#quote" class="btn-outline-light">Request quote</a>
+        <a href="#quote" class="btn-outline-light">Get a free quote</a>
       </div>
     </div>
   </div>
 
-  <div class="container-page grid gap-10 py-10 lg:grid-cols-[1fr_360px]">
+  <div class="container-page grid gap-10 py-10 pb-24 lg:grid-cols-[1fr_360px] sm:pb-10">
     <div class="space-y-10">
       {
         op.description && (
@@ -258,7 +258,14 @@ const jsonLd = [
     </div>
 
     <aside class="space-y-6" id="quote">
-      <QuoteForm operatorId={op.id} operatorName={op.name} />
+      <QuoteForm
+        mode="direct"
+        operatorId={op.id}
+        operatorName={op.name}
+        defaultZip={Astro.url.searchParams.get('zip') ?? ''}
+        defaultSize={Astro.url.searchParams.get('size') ?? ''}
+        defaultMaterial={Astro.url.searchParams.get('material') ?? ''}
+      />
       <ClaimListing
         operatorId={op.id}
         operatorName={op.name}
@@ -281,5 +288,18 @@ const jsonLd = [
         </p>
       </div>
     </aside>
+  </div>
+
+  <div class="fixed inset-x-0 bottom-0 z-30 border-t-2 border-charcoal-900 bg-charcoal-900 p-3 sm:hidden">
+    <div class="flex gap-2">
+      {
+        op.phone && (
+          <a href={`tel:${op.phone}`} class="btn-secondary flex-1 bg-white text-center text-xs">
+            Call
+          </a>
+        )
+      }
+      <a href="#quote" class="btn-primary flex-1 text-center text-xs">Get a free quote</a>
+    </div>
   </div>
 </BaseLayout>

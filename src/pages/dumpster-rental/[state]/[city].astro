@@ -3,6 +3,7 @@ import BaseLayout from '../../../layouts/BaseLayout.astro';
 import OperatorCard from '../../../components/OperatorCard.astro';
 import MapView from '../../../components/MapView.astro';
 import SearchForm from '../../../components/SearchForm.astro';
+import QuoteForm from '../../../components/QuoteForm.astro';
 import { getDb } from '../../../lib/db';
 import { getCityWithOperators } from '../../../lib/search';
 import {
@@ -115,6 +116,9 @@ Astro.response.headers.set(
       <div class="mt-7 max-w-xl border-2 border-charcoal-600 bg-charcoal-800 p-3">
         <SearchForm initialQ={`${city.name}, ${city.state}`} />
       </div>
+      <p class="mt-4">
+        <a href="#quote" class="btn-primary">Get free quotes in {city.name}</a>
+      </p>
       <p class="mt-4 font-mono text-xs uppercase tracking-widest text-charcoal-400">
         {
           ops.length === 0
@@ -161,6 +165,14 @@ Astro.response.headers.set(
           </section>
         )
       }
+
+      <section id="quote">
+        <QuoteForm
+          mode="match"
+          sourceCityId={city.id}
+          defaultZip={`${city.name}, ${city.state}`}
+        />
+      </section>
 
       <section>
         <div class="flex flex-wrap items-end justify-between gap-3">

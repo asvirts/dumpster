@@ -27,7 +27,7 @@ Local admin bypass: `.dev.vars` with `ADMIN_BYPASS=1` works only under `astro de
 | `bun run preview` | Preview Worker build |
 | `bun run db:migrate:local` | Apply D1 migrations locally |
 | `bun run db:seed:local` | Seed cities + seeded operators |
-| `bun run db:migrate:remote` | Apply migrations to remote D1 |
+| `bun run db:migrate:remote` | Apply migrations to remote D1 (includes `0002_lead_capture`) |
 | `bun run db:seed:remote` | Seed remote D1 (cities + seeded operators; verify before marketing) |
 | `bun run deploy` | Build + `wrangler deploy` |
 
@@ -38,7 +38,7 @@ Local admin bypass: `.dev.vars` with `ADMIN_BYPASS=1` works only under `astro de
 3. `bun run db:migrate:remote`
 4. Optionally seed: `bun run db:seed:remote` (cities + seeded operators — verify all contact info before production marketing)
 5. Set secrets:
-   - Email: `bunx wrangler secret put RESEND_API_KEY` and optional `ADMIN_NOTIFY_EMAIL`
+   - Email: `bunx wrangler secret put RESEND_API_KEY` and optional `ADMIN_NOTIFY_EMAIL`. From-address defaults to `leads@findadumpster.net` (`LEAD_FROM_EMAIL`) — verify that domain on Resend (or later Cloudflare Email Sending).
    - Clerk: `PUBLIC_CLERK_PUBLISHABLE_KEY` (var) + `bunx wrangler secret put CLERK_SECRET_KEY`
    - Stripe: `bunx wrangler secret put STRIPE_SECRET_KEY` and `bunx wrangler secret put STRIPE_WEBHOOK_SECRET`
    - Access: `bunx wrangler secret put CF_ACCESS_TEAM_DOMAIN` (e.g. `myteam.cloudflareaccess.com`) and `bunx wrangler secret put CF_ACCESS_AUD` (Access app AUD)
@@ -57,11 +57,12 @@ Update `PUBLIC_SITE_URL` / `site` in `astro.config.mjs` for your domain.
 | `/` | Home + priority cities |
 | `/search` | Filters, list, map |
 | `/dumpster-rental/[state]/[city]` | City landing (pricing + permits + operators) |
-| `/operator/[slug]` | Profile + quote form + claim listing |
+| `/operator/[slug]` | Profile + multi-step quote form + claim listing |
 | `/compare?ids=` | Side-by-side (max 4) |
 | `/guides/*` | Educational content |
 | `/portal/*` | Operator leads + listing (Clerk org, after claim approval) |
 | `/admin/*` | Verification, claims, lead routing, CRUD, CSV import, city notes |
+| `/admin/leads` | Lead inbox (filters, CSV, route, notes) — see `docs/leads.md` |
 | `/api/stripe/webhook` | Stripe Checkout completion → unlock lead |
 
 ## Quality model

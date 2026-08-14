@@ -4,6 +4,7 @@ import SearchForm from '../components/SearchForm.astro';
 import FilterBar from '../components/FilterBar.astro';
 import OperatorCard from '../components/OperatorCard.astro';
 import MapView from '../components/MapView.astro';
+import QuoteForm from '../components/QuoteForm.astro';
 import { getDb } from '../lib/db';
 import { searchOperators } from '../lib/search';
 import { pageTitle } from '../lib/seo';
@@ -102,6 +103,13 @@ const title = pageTitle(city ? `${city.name} Dumpster Rental` : 'Search');
       </aside>
 
       <div class="space-y-4">
+        <QuoteForm
+          mode="match"
+          sourceCityId={city?.id}
+          defaultZip={/^\d{5}$/.test(q.trim()) ? q.trim() : city ? `${city.name}, ${city.state}` : q}
+          defaultSize={size}
+          defaultMaterial={material}
+        />
         {
           results.length === 0 ? (
             <div class="card p-8 text-center">

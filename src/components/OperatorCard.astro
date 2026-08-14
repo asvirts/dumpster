@@ -87,10 +87,11 @@ const priceLabel =
   </div>
 
   <div class="mt-5 flex flex-wrap items-center gap-2 border-t-2 border-charcoal-100 pt-4">
-    <a href={`/operator/${op.slug}`} class="btn-primary">View profile</a>
+    <a href={`/operator/${op.slug}#quote`} class="btn-primary">Get a free quote</a>
+    <a href={`/operator/${op.slug}`} class="btn-secondary">View profile</a>
     {
       op.phone && (
-        <a href={`tel:${op.phone}`} class="btn-secondary font-mono normal-case tracking-normal">
+        <a href={`tel:${op.phone}`} class="btn-ghost font-mono normal-case tracking-normal">
           {formatPhone(op.phone)}
         </a>
       )

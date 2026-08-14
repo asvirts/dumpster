@@ -17,3 +17,10 @@ CLERK_SECRET_KEY=
 STRIPE_SECRET_KEY=
 STRIPE_WEBHOOK_SECRET=
 LEAD_PRICE_CENTS=2500
+
+# Transactional email from-address (verify the domain on Resend; later Cloudflare Email)
+LEAD_FROM_EMAIL=Find A Dumpster <leads@findadumpster.net>
+
+# Optional Cloudflare Turnstile (omit both to skip captcha)
+# PUBLIC_TURNSTILE_SITE_KEY=
+# TURNSTILE_SECRET=

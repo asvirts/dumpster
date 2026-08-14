@@ -24,6 +24,7 @@
   ],
   "vars": {
     "PUBLIC_SITE_NAME": "Find A Dumpster",
-    "PUBLIC_SITE_URL": "https://findadumpster.net"
+    "PUBLIC_SITE_URL": "https://findadumpster.net",
+    "LEAD_FROM_EMAIL": "Find A Dumpster <leads@findadumpster.net>"
   }
 }

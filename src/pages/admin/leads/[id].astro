@@ -1,0 +1,341 @@
+---
+import AdminLayout from '../../../layouts/AdminLayout.astro';
+import { getDb } from '../../../lib/db';
+import { desc, eq } from 'drizzle-orm';
+import { leads, operators } from '../../../lib/schema';
+import { formatDate } from '../../../lib/geo';
+import { LEAD_STATUSES, MAX_MATCH_OFFERS, type LeadStatus } from '../../../lib/constants';
+import { logAudit } from '../../../lib/admin';
+import { resendLeadOffer, routeLeadToOperator } from '../../../lib/leads';
+import {
+  labelForBudget,
+  labelForContact,
+  labelForHowFound,
+  labelForMaterial,
+} from '../../../lib/lead-fields';
+
+const { id } = Astro.params;
+if (!id) return Astro.redirect('/admin/leads');
+
+const db = getDb();
+const actor = Astro.locals.adminEmail ?? 'admin';
+
+if (Astro.request.method === 'POST') {
+  const form = await Astro.request.formData();
+  const intent = form.get('intent')?.toString();
+  const operatorId = form.get('operatorId')?.toString();
+  let flash: string | null = null;
+  let flashError: string | null = null;
+
+  if (intent === 'notes') {
+    await db
+      .update(leads)
+      .set({ adminNotes: form.get('adminNotes')?.toString() || null })
+      .where(eq(leads.id, id));
+    await logAudit(db, { action: 'lead_notes', entityType: 'lead', entityId: id, actor });
+    flash = 'Notes saved.';
+  } else if (intent === 'close') {
+    await db.update(leads).set({ status: 'closed' }).where(eq(leads.id, id));
+    flash = 'Lead closed.';
+  } else if (intent === 'spam' || intent === 'invalid') {
+    await db.update(leads).set({ status: intent }).where(eq(leads.id, id));
+    flash = `Lead marked ${intent}.`;
+  } else if (intent === 'status') {
+    const status = form.get('status')?.toString() as LeadStatus | undefined;
+    if (status && (LEAD_STATUSES as readonly string[]).includes(status)) {
+      await db.update(leads).set({ status }).where(eq(leads.id, id));
+      flash = 'Status updated.';
+    }
+  } else if (intent === 'resend') {
+    const result = await resendLeadOffer(db, { leadId: id, actor });
+    if (result.ok) flash = 'Offer email resent.';
+    else flashError = result.error;
+  } else if (intent === 'pass_complimentary' && operatorId) {
+    const result = await routeLeadToOperator(db, {
+      leadId: id,
+      operatorId,
+      action: 'complimentary',
+      actor,
+    });
+    if (result.ok) flash = 'Unlocked complimentary.';
+    else flashError = result.error;
+  } else if (intent === 'offer_paid' && operatorId) {
+    const result = await routeLeadToOperator(db, {
+      leadId: id,
+      operatorId,
+      action: 'offer',
+      actor,
+    });
+    if (result.ok) flash = result.leadId !== id ? 'Offered to additional operator.' : 'Lead offered.';
+    else flashError = result.error;
+  }
+
+  const params = new URLSearchParams();
+  if (flash) params.set('ok', flash);
+  if (flashError) params.set('err', flashError);
+  return Astro.redirect(`/admin/leads/${id}?${params.toString()}`);
+}
+
+const lead = await db.query.leads.findFirst({ where: eq(leads.id, id) });
+if (!lead) return new Response('Not found', { status: 404 });
+
+const assigned = lead.operatorId
+  ? await db.query.operators.findFirst({ where: eq(operators.id, lead.operatorId) })
+  : null;
+const requested = lead.requestedOperatorId
+  ? await db.query.operators.findFirst({ where: eq(operators.id, lead.requestedOperatorId) })
+  : null;
+
+const groupId = lead.groupId || lead.id;
+const group = await db.select().from(leads).where(eq(leads.groupId, groupId)).orderBy(desc(leads.createdAt));
+
+const operatorOptions = await db
+  .select({
+    id: operators.id,
+    name: operators.name,
+    complimentaryLeadsRemaining: operators.complimentaryLeadsRemaining,
+    claimStatus: operators.claimStatus,
+    email: operators.email,
+  })
+  .from(operators)
+  .orderBy(operators.name)
+  .limit(500);
+
+const okMsg = Astro.url.searchParams.get('ok');
+const errMsg = Astro.url.searchParams.get('err');
+const canRoute =
+  lead.status !== 'unlocked' &&
+  lead.status !== 'closed' &&
+  lead.status !== 'spam' &&
+  lead.status !== 'invalid';
+const groupAssigned = group.filter((g) => g.operatorId).length;
+---
+
+<AdminLayout title={`Lead · ${lead.seekerName}`}>
+  <p class="mb-4 text-sm">
+    <a href="/admin/leads">← All leads</a>
+  </p>
+
+  {
+    okMsg && (
+      <p class="mb-4 border-2 border-brand-600 bg-brand-50 px-3 py-2 text-sm text-brand-800" role="status">
+        {okMsg}
+      </p>
+    )
+  }
+  {
+    errMsg && (
+      <p class="mb-4 border-2 border-red-600 bg-red-50 px-3 py-2 text-sm text-red-800" role="alert">
+        {errMsg}
+      </p>
+    )
+  }
+
+  <div class="grid gap-6 lg:grid-cols-[1fr_320px]">
+    <div class="space-y-6">
+      <article class="card p-5">
+        <div class="flex flex-wrap items-start justify-between gap-3">
+          <div>
+            <p class="font-mono text-xs uppercase tracking-widest text-muted">
+              {lead.mode} · {lead.id}
+            </p>
+            <h2 class="mt-1 text-xl font-bold text-ink">{lead.seekerName}</h2>
+            <p class="text-sm text-muted">
+              <a href={`mailto:${lead.seekerEmail}`}>{lead.seekerEmail}</a>
+              {lead.seekerPhone && (
+                <>
+                  {' · '}
+                  <a href={`tel:${lead.seekerPhone}`}>{lead.seekerPhone}</a>
+                </>
+              )}
+            </p>
+          </div>
+          <div class="text-right text-xs text-muted">
+            <p>{formatDate(lead.createdAt)}</p>
+            <p class="mt-1 font-semibold uppercase text-ink">{lead.status}</p>
+            {lead.unlockMethod && <p class="uppercase text-brand-700">{lead.unlockMethod}</p>}
+          </div>
+        </div>
+
+        <dl class="mt-5 grid gap-3 text-sm sm:grid-cols-2">
+          <div>
+            <dt class="text-muted">Preferred contact</dt>
+            <dd>{labelForContact(lead.preferredContact)}</dd>
+          </div>
+          <div>
+            <dt class="text-muted">Location</dt>
+            <dd>{lead.addressOrZip || '—'}</dd>
+          </div>
+          <div>
+            <dt class="text-muted">Size</dt>
+            <dd>{lead.projectSize || '—'}</dd>
+          </div>
+          <div>
+            <dt class="text-muted">Material</dt>
+            <dd>{labelForMaterial(lead.material)}</dd>
+          </div>
+          <div>
+            <dt class="text-muted">Timeline</dt>
+            <dd>{lead.timeline || '—'}</dd>
+          </div>
+          <div>
+            <dt class="text-muted">Budget</dt>
+            <dd>{labelForBudget(lead.budgetRange)}</dd>
+          </div>
+          <div>
+            <dt class="text-muted">How found</dt>
+            <dd>{labelForHowFound(lead.howFound)}</dd>
+          </div>
+          <div>
+            <dt class="text-muted">Price</dt>
+            <dd>{lead.priceCents != null ? `$${(lead.priceCents / 100).toFixed(2)}` : 'Default'}</dd>
+          </div>
+          <div class="sm:col-span-2">
+            <dt class="text-muted">Notes</dt>
+            <dd>{lead.notes || '—'}</dd>
+          </div>
+        </dl>
+      </article>
+
+      <article class="card p-5">
+        <h3 class="font-bold text-ink">Attribution</h3>
+        <dl class="mt-3 grid gap-2 text-sm sm:grid-cols-2">
+          <div>
+            <dt class="text-muted">Source path</dt>
+            <dd class="break-all font-mono text-xs">{lead.sourcePath || '—'}</dd>
+          </div>
+          <div>
+            <dt class="text-muted">Referrer</dt>
+            <dd class="break-all font-mono text-xs">{lead.referrer || '—'}</dd>
+          </div>
+          <div>
+            <dt class="text-muted">UTM</dt>
+            <dd class="font-mono text-xs">
+              {[lead.utmSource, lead.utmMedium, lead.utmCampaign, lead.utmContent, lead.utmTerm]
+                .filter(Boolean)
+                .join(' / ') || '—'}
+            </dd>
+          </div>
+          <div>
+            <dt class="text-muted">Group</dt>
+            <dd class="font-mono text-xs">{lead.groupId || lead.id}</dd>
+          </div>
+        </dl>
+      </article>
+
+      {
+        group.length > 1 && (
+          <article class="card p-5">
+            <h3 class="font-bold text-ink">
+              Group ({groupAssigned}/{MAX_MATCH_OFFERS} assigned)
+            </h3>
+            <ul class="mt-3 divide-y divide-border text-sm">
+              {group.map((g) => (
+                <li class="flex flex-wrap justify-between gap-2 py-2">
+                  <a href={`/admin/leads/${g.id}`}>{g.id === lead.id ? 'This row' : g.id}</a>
+                  <span class="text-muted">
+                    {g.status}
+                    {g.operatorId ? ` · ${g.operatorId}` : ' · unassigned'}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          </article>
+        )
+      }
+
+      <form method="POST" class="card p-5 space-y-3">
+        <input type="hidden" name="intent" value="notes" />
+        <label class="label" for="adminNotes">Internal notes</label>
+        <textarea class="input min-h-[100px]" id="adminNotes" name="adminNotes" rows="4">{lead.adminNotes ?? ''}</textarea>
+        <button type="submit" class="btn-secondary text-xs">Save notes</button>
+      </form>
+    </div>
+
+    <aside class="space-y-4">
+      <div class="card p-5">
+        <h3 class="font-bold text-ink">Routing</h3>
+        <p class="mt-2 text-sm text-muted">
+          Assigned:{' '}
+          {assigned ? (
+            <a href={`/admin/operators/${assigned.id}`}>{assigned.name}</a>
+          ) : (
+            'unassigned'
+          )}
+        </p>
+        {requested && requested.id !== assigned?.id && (
+          <p class="text-sm text-muted">
+            Requested: <a href={`/admin/operators/${requested.id}`}>{requested.name}</a>
+          </p>
+        )}
+        {lead.mode === 'match' && (
+          <p class="mt-2 text-xs text-muted">
+            Match group: {groupAssigned} of {MAX_MATCH_OFFERS} operators. Additional offers clone this
+            request.
+          </p>
+        )}
+
+        {
+          canRoute && (
+            <form method="POST" class="mt-4 space-y-3">
+              <div>
+                <label class="label" for="operatorId">Operator</label>
+                <select class="input" id="operatorId" name="operatorId" required>
+                  {operatorOptions.map((op) => (
+                    <option value={op.id} selected={op.id === lead.operatorId}>
+                      {op.name} (free:{op.complimentaryLeadsRemaining}
+                      {op.email ? '' : ' · no email'})
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div class="flex flex-wrap gap-2">
+                <button type="submit" name="intent" value="offer_paid" class="btn-secondary text-xs">
+                  Offer paid
+                </button>
+                <button type="submit" name="intent" value="pass_complimentary" class="btn-primary text-xs">
+                  Pass complimentary
+                </button>
+              </div>
+            </form>
+          )
+        }
+
+        {
+          lead.status === 'offered' && (
+            <form method="POST" class="mt-3">
+              <button type="submit" name="intent" value="resend" class="btn-ghost text-xs">
+                Resend offer email
+              </button>
+            </form>
+          )
+        }
+      </div>
+
+      <form method="POST" class="card p-5 space-y-3">
+        <label class="label" for="status">Status</label>
+        <select class="input" id="status" name="status">
+          {LEAD_STATUSES.map((s) => (
+            <option value={s} selected={lead.status === s}>
+              {s}
+            </option>
+          ))}
+        </select>
+        <div class="flex flex-wrap gap-2">
+          <button type="submit" name="intent" value="status" class="btn-secondary text-xs">
+            Update status
+          </button>
+          <button type="submit" name="intent" value="close" class="btn-ghost text-xs">
+            Close
+          </button>
+          <button type="submit" name="intent" value="spam" class="btn-ghost text-xs text-red-700">
+            Spam
+          </button>
+          <button type="submit" name="intent" value="invalid" class="btn-ghost text-xs">
+            Invalid
+          </button>
+        </div>
+      </form>
+    </aside>
+  </div>
+</AdminLayout>

@@ -152,9 +152,8 @@ export const leads = sqliteTable(
   'leads',
   {
     id: text('id').primaryKey(),
-    operatorId: text('operator_id')
-      .notNull()
-      .references(() => operators.id, { onDelete: 'cascade' }),
+    /** Null until admin routes a match request. Direct quotes set this immediately. */
+    operatorId: text('operator_id').references(() => operators.id, { onDelete: 'set null' }),
     requestedOperatorId: text('requested_operator_id').references(() => operators.id, {
       onDelete: 'set null',
     }),
@@ -166,7 +165,9 @@ export const leads = sqliteTable(
     addressOrZip: text('address_or_zip'),
     timeline: text('timeline'),
     notes: text('notes'),
-    status: text('status', { enum: ['new', 'offered', 'unlocked', 'closed'] })
+    status: text('status', {
+      enum: ['new', 'offered', 'unlocked', 'closed', 'spam', 'invalid'],
+    })
       .notNull()
       .default('new'),
     unlockMethod: text('unlock_method', { enum: ['complimentary', 'paid'] }),
@@ -177,11 +178,40 @@ export const leads = sqliteTable(
     createdAt: text('created_at')
       .notNull()
       .default(sql`(datetime('now'))`),
+    mode: text('mode', { enum: ['direct', 'match'] })
+      .notNull()
+      .default('direct'),
+    sourcePath: text('source_path'),
+    sourceCityId: text('source_city_id').references(() => cities.id, { onDelete: 'set null' }),
+    utmSource: text('utm_source'),
+    utmMedium: text('utm_medium'),
+    utmCampaign: text('utm_campaign'),
+    utmContent: text('utm_content'),
+    utmTerm: text('utm_term'),
+    referrer: text('referrer'),
+    preferredContact: text('preferred_contact'),
+    budgetRange: text('budget_range'),
+    howFound: text('how_found'),
+    /** Niche-specific answers. Dumpster also mirrors size/material columns. */
+    qualificationJson: text('qualification_json'),
+    adminNotes: text('admin_notes'),
+    seekerIpHash: text('seeker_ip_hash'),
+    /** Shared across cloned rows when one match request is offered to multiple operators. */
+    groupId: text('group_id'),
+    duplicateOfLeadId: text('duplicate_of_lead_id'),
+    /** Frozen PPL price at offer time. */
+    priceCents: integer('price_cents'),
   },
   (t) => [
     index('leads_operator_idx').on(t.operatorId),
     index('leads_requested_operator_idx').on(t.requestedOperatorId),
     index('leads_status_idx').on(t.status),
+    index('leads_mode_idx').on(t.mode),
+    index('leads_group_idx').on(t.groupId),
+    index('leads_email_idx').on(t.seekerEmail),
+    index('leads_created_idx').on(t.createdAt),
+    index('leads_ip_hash_idx').on(t.seekerIpHash),
+    index('leads_city_idx').on(t.sourceCityId),
   ],
 );
 
@@ -213,6 +243,7 @@ export const adminAudit = sqliteTable('admin_audit', {
 
 export const citiesRelations = relations(cities, ({ many }) => ({
   serviceAreas: many(operatorServiceAreas),
+  leads: many(leads),
 }));
 
 export const operatorsRelations = relations(operators, ({ many }) => ({
@@ -258,6 +289,10 @@ export const leadsRelations = relations(leads, ({ one }) => ({
     fields: [leads.requestedOperatorId],
     references: [operators.id],
     relationName: 'requestedOperator',
+  }),
+  sourceCity: one(cities, {
+    fields: [leads.sourceCityId],
+    references: [cities.id],
   }),
 }));
 

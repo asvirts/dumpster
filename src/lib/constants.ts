@@ -27,8 +27,44 @@ export type MaterialId = (typeof MATERIALS)[number]['id'];
 export const VERIFICATION_STATUSES = ['pending', 'verified', 'rejected'] as const;
 export type VerificationStatus = (typeof VERIFICATION_STATUSES)[number];
 
-export const LEAD_STATUSES = ['new', 'offered', 'unlocked', 'closed'] as const;
+export const LEAD_STATUSES = [
+  'new',
+  'offered',
+  'unlocked',
+  'closed',
+  'spam',
+  'invalid',
+] as const;
 export type LeadStatus = (typeof LEAD_STATUSES)[number];
+
+export const LEAD_MODES = ['direct', 'match'] as const;
+export type LeadMode = (typeof LEAD_MODES)[number];
+
+export const PREFERRED_CONTACTS = [
+  { id: 'phone', label: 'Phone' },
+  { id: 'email', label: 'Email' },
+  { id: 'either', label: 'Either' },
+] as const;
+export type PreferredContact = (typeof PREFERRED_CONTACTS)[number]['id'];
+
+export const BUDGET_RANGES = [
+  { id: 'under-400', label: 'Under $400' },
+  { id: '400-700', label: '$400–$700' },
+  { id: '700-1200', label: '$700–$1,200' },
+  { id: '1200-plus', label: '$1,200+' },
+  { id: 'not-sure', label: 'Not sure' },
+] as const;
+
+export const HOW_FOUND_OPTIONS = [
+  { id: 'google', label: 'Google' },
+  { id: 'ai-search', label: 'AI / ChatGPT / Perplexity' },
+  { id: 'social', label: 'Social media' },
+  { id: 'referral', label: 'Friend or referral' },
+  { id: 'other', label: 'Other' },
+] as const;
+
+/** Max operators a single match request can be offered to. */
+export const MAX_MATCH_OFFERS = 3;
 
 export const CLAIM_STATUSES = ['unclaimed', 'pending', 'approved', 'rejected'] as const;
 export type ClaimStatus = (typeof CLAIM_STATUSES)[number];

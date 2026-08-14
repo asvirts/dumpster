@@ -1,5 +1,6 @@
 import { env } from 'cloudflare:workers';
 import { BRAND } from './constants';
+import { labelForBudget, labelForContact, labelForMaterial } from './lead-fields';
 
 type LeadFields = {
   seekerName: string;
@@ -10,7 +11,51 @@ type LeadFields = {
   addressOrZip?: string | null;
   timeline?: string | null;
   notes?: string | null;
+  preferredContact?: string | null;
+  budgetRange?: string | null;
 };
+
+const RESEND_ONBOARDING = `${BRAND.name} <onboarding@resend.dev>`;
+
+function fromAddress(): string {
+  const raw = (env as { LEAD_FROM_EMAIL?: string }).LEAD_FROM_EMAIL?.trim();
+  if (!raw) return `${BRAND.name} <leads@findadumpster.net>`;
+  return raw.includes('<') ? raw : `${BRAND.name} <${raw}>`;
+}
+
+async function postResend(from: string, opts: {
+  to: string[];
+  subject: string;
+  text: string;
+}): Promise<{ ok: boolean; status: number; body: string }> {
+  const apiKey = (env as { RESEND_API_KEY?: string }).RESEND_API_KEY;
+  if (!apiKey) {
+    return { ok: false, status: 0, body: 'no-key' };
+  }
+  const to = opts.to.filter(Boolean);
+  if (to.length === 0) return { ok: false, status: 0, body: 'no-recipients' };
+
+  try {
+    const res = await fetch('https://api.resend.com/emails', {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${apiKey}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        from,
+        to,
+        subject: opts.subject,
+        text: opts.text,
+      }),
+    });
+    const body = await res.text();
+    return { ok: res.ok, status: res.status, body };
+  } catch (err) {
+    console.error('[email] send failed', err);
+    return { ok: false, status: 0, body: 'network' };
+  }
+}
 
 async function sendResend(opts: {
   to: string[];
@@ -22,32 +67,21 @@ async function sendResend(opts: {
     console.info('[email] RESEND_API_KEY not set; skipping email');
     return false;
   }
-  const to = opts.to.filter(Boolean);
-  if (to.length === 0) return false;
 
-  try {
-    const res = await fetch('https://api.resend.com/emails', {
-      method: 'POST',
-      headers: {
-        Authorization: `Bearer ${apiKey}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        from: `${BRAND.name} <onboarding@resend.dev>`,
-        to,
-        subject: opts.subject,
-        text: opts.text,
-      }),
-    });
-    if (!res.ok) {
-      console.error('[email] Resend error', await res.text());
-      return false;
+  const primary = fromAddress();
+  const first = await postResend(primary, opts);
+  if (first.ok) return true;
+
+  console.error('[email] Resend error', first.status, first.body);
+  if (primary !== RESEND_ONBOARDING) {
+    const fallback = await postResend(RESEND_ONBOARDING, opts);
+    if (fallback.ok) {
+      console.info('[email] sent via onboarding@resend.dev fallback — verify leads@findadumpster.net');
+      return true;
     }
-    return true;
-  } catch (err) {
-    console.error('[email] send failed', err);
-    return false;
+    console.error('[email] fallback Resend error', fallback.status, fallback.body);
   }
+  return false;
 }
 
 function formatLeadBody(payload: LeadFields): string {
@@ -55,17 +89,24 @@ function formatLeadBody(payload: LeadFields): string {
     `Name: ${payload.seekerName}`,
     `Email: ${payload.seekerEmail}`,
     `Phone: ${payload.seekerPhone ?? '—'}`,
+    `Preferred contact: ${labelForContact(payload.preferredContact)}`,
     `Size: ${payload.projectSize ?? '—'}`,
-    `Material: ${payload.material ?? '—'}`,
+    `Material: ${labelForMaterial(payload.material)}`,
     `Location: ${payload.addressOrZip ?? '—'}`,
     `Timeline: ${payload.timeline ?? '—'}`,
+    `Budget: ${labelForBudget(payload.budgetRange)}`,
     `Notes: ${payload.notes ?? '—'}`,
   ].join('\n');
 }
 
 /** Admin-only alert when a quote is submitted (held for routing). */
 export async function sendAdminLeadAlert(
-  payload: LeadFields & { operatorName: string; leadId: string; adminUrl: string },
+  payload: LeadFields & {
+    operatorName: string;
+    leadId: string;
+    adminUrl: string;
+    mode?: string | null;
+  },
 ): Promise<boolean> {
   const adminEmail = (env as { ADMIN_NOTIFY_EMAIL?: string }).ADMIN_NOTIFY_EMAIL;
   if (!adminEmail) {
@@ -73,12 +114,14 @@ export async function sendAdminLeadAlert(
     return false;
   }
 
+  const modeLabel = payload.mode === 'match' ? 'match request' : 'direct quote';
   return sendResend({
     to: [adminEmail],
-    subject: `New held lead — ${payload.seekerName} → ${payload.operatorName}`,
+    subject: `New held lead (${modeLabel}) — ${payload.seekerName} → ${payload.operatorName}`,
     text: [
       `A new quote request is held for routing.`,
       '',
+      `Type: ${modeLabel}`,
       `Requested operator: ${payload.operatorName}`,
       `Lead ID: ${payload.leadId}`,
       `Admin: ${payload.adminUrl}`,
@@ -86,6 +129,37 @@ export async function sendAdminLeadAlert(
       formatLeadBody(payload),
       '',
       `— ${BRAND.name}`,
+    ].join('\n'),
+  });
+}
+
+/** Confirmation to the seeker immediately after submit (before routing). */
+export async function sendSeekerConfirmation(payload: {
+  seekerName: string;
+  seekerEmail: string;
+  operatorName?: string | null;
+  mode: 'direct' | 'match';
+}): Promise<boolean> {
+  const who = payload.operatorName
+    ? ` for ${payload.operatorName}`
+    : ' from local dumpster rental operators';
+  return sendResend({
+    to: [payload.seekerEmail],
+    subject: `We received your dumpster quote request`,
+    text: [
+      `Hi ${payload.seekerName},`,
+      '',
+      `Thanks — we received your quote request${who}.`,
+      '',
+      `What happens next:`,
+      `1. Our team reviews the request (usually the same day).`,
+      `2. We connect you with a verified local operator.`,
+      `3. They’ll reach out using the phone and email you provided.`,
+      '',
+      `No need to reply to this email. If your plans change, just ignore any follow-up.`,
+      '',
+      `— ${BRAND.name}`,
+      `https://findadumpster.net`,
     ].join('\n'),
   });
 }
@@ -146,7 +220,7 @@ export async function sendLeadOffer(payload: {
       '',
       `Seeker: ${payload.seekerName}`,
       `Size: ${payload.projectSize ?? '—'}`,
-      `Material: ${payload.material ?? '—'}`,
+      `Material: ${labelForMaterial(payload.material)}`,
       `Location: ${payload.addressOrZip ?? '—'}`,
       '',
       `Contact details unlock for ${price} (first lead may be complimentary).`,

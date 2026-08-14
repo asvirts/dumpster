@@ -24,4 +24,9 @@ interface Env {
   STRIPE_WEBHOOK_SECRET?: string;
   /** Pay-per-lead price in cents (default 2500) */
   LEAD_PRICE_CENTS?: string;
+  /** From address, e.g. Find A Dumpster <leads@findadumpster.net> */
+  LEAD_FROM_EMAIL?: string;
+  LEAD_IP_SALT?: string;
+  PUBLIC_TURNSTILE_SITE_KEY?: string;
+  TURNSTILE_SECRET?: string;
 }

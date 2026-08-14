@@ -1,18 +1,26 @@
 ---
 import AdminLayout from '../../layouts/AdminLayout.astro';
 import { getDb } from '../../lib/db';
-import { desc, eq } from 'drizzle-orm';
+import { and, desc, eq, gte, like, lte, or } from 'drizzle-orm';
 import { alias } from 'drizzle-orm/sqlite-core';
 import { leads, operators } from '../../lib/schema';
 import { formatDate } from '../../lib/geo';
-import { LEAD_STATUSES, type LeadStatus } from '../../lib/constants';
+import { LEAD_MODES, LEAD_STATUSES, type LeadStatus } from '../../lib/constants';
 import { logAudit } from '../../lib/admin';
-import { offerLead, unlockLeadComplimentary } from '../../lib/leads';
+import { csvEscape, routeLeadToOperator } from '../../lib/leads';
+import { labelForMaterial } from '../../lib/lead-fields';
 
 const db = getDb();
 const actor = Astro.locals.adminEmail ?? 'admin';
 const requested = alias(operators, 'requested_op');
 const assigned = alias(operators, 'assigned_op');
+
+const statusFilter = Astro.url.searchParams.get('status') ?? '';
+const modeFilter = Astro.url.searchParams.get('mode') ?? '';
+const operatorFilter = Astro.url.searchParams.get('operator') ?? '';
+const q = Astro.url.searchParams.get('q') ?? '';
+const from = Astro.url.searchParams.get('from') ?? '';
+const to = Astro.url.searchParams.get('to') ?? '';
 
 if (Astro.request.method === 'POST') {
   const form = await Astro.request.formData();
@@ -24,13 +32,30 @@ if (Astro.request.method === 'POST') {
 
   if (id && intent === 'close') {
     await db.update(leads).set({ status: 'closed' }).where(eq(leads.id, id));
-    await logAudit(db, {
-      action: 'lead_close',
-      entityType: 'lead',
-      entityId: id,
+    await logAudit(db, { action: 'lead_close', entityType: 'lead', entityId: id, actor });
+    flash = 'Lead closed.';
+  } else if (id && (intent === 'spam' || intent === 'invalid')) {
+    await db.update(leads).set({ status: intent }).where(eq(leads.id, id));
+    await logAudit(db, { action: `lead_${intent}`, entityType: 'lead', entityId: id, actor });
+    flash = `Lead marked ${intent}.`;
+  } else if (id && intent === 'pass_complimentary' && operatorId) {
+    const result = await routeLeadToOperator(db, {
+      leadId: id,
+      operatorId,
+      action: 'complimentary',
       actor,
     });
-    flash = 'Lead closed.';
+    if (result.ok) flash = 'Lead unlocked complimentary and emailed.';
+    else flashError = result.error;
+  } else if (id && intent === 'offer_paid' && operatorId) {
+    const result = await routeLeadToOperator(db, {
+      leadId: id,
+      operatorId,
+      action: 'offer',
+      actor,
+    });
+    if (result.ok) flash = 'Lead offered (paid unlock).';
+    else flashError = result.error;
   } else if (id && intent === 'reassign' && operatorId) {
     await db.update(leads).set({ operatorId }).where(eq(leads.id, id));
     await logAudit(db, {
@@ -41,19 +66,6 @@ if (Astro.request.method === 'POST') {
       notes: `Assigned to ${operatorId}`,
     });
     flash = 'Lead reassigned.';
-  } else if (id && intent === 'pass_complimentary' && operatorId) {
-    const result = await unlockLeadComplimentary(db, {
-      leadId: id,
-      operatorId,
-      actor,
-      allowReassign: true,
-    });
-    if (result.ok) flash = 'Lead unlocked complimentary and emailed.';
-    else flashError = result.error;
-  } else if (id && intent === 'offer_paid' && operatorId) {
-    const result = await offerLead(db, { leadId: id, operatorId, actor });
-    if (result.ok) flash = 'Lead offered (paid unlock).';
-    else flashError = result.error;
   } else if (id && intent === 'status') {
     const status = form.get('status')?.toString() as LeadStatus | undefined;
     if (status && (LEAD_STATUSES as readonly string[]).includes(status)) {
@@ -65,14 +77,46 @@ if (Astro.request.method === 'POST') {
   const params = new URLSearchParams();
   if (flash) params.set('ok', flash);
   if (flashError) params.set('err', flashError);
-  const statusFilter = Astro.url.searchParams.get('status');
-  if (statusFilter) params.set('status', statusFilter);
+  for (const [k, v] of [
+    ['status', statusFilter],
+    ['mode', modeFilter],
+    ['operator', operatorFilter],
+    ['q', q],
+    ['from', from],
+    ['to', to],
+  ]) {
+    if (v) params.set(k, v);
+  }
   return Astro.redirect(`/admin/leads?${params.toString()}`);
 }
 
-const statusFilter = Astro.url.searchParams.get('status');
-const okMsg = Astro.url.searchParams.get('ok');
-const errMsg = Astro.url.searchParams.get('err');
+const conditions = [];
+if (statusFilter && (LEAD_STATUSES as readonly string[]).includes(statusFilter)) {
+  conditions.push(eq(leads.status, statusFilter as LeadStatus));
+}
+if (modeFilter && (LEAD_MODES as readonly string[]).includes(modeFilter as (typeof LEAD_MODES)[number])) {
+  conditions.push(eq(leads.mode, modeFilter as (typeof LEAD_MODES)[number]));
+}
+if (operatorFilter) {
+  conditions.push(
+    or(eq(leads.operatorId, operatorFilter), eq(leads.requestedOperatorId, operatorFilter)),
+  );
+}
+if (q.trim()) {
+  const likeQ = `%${q.trim()}%`;
+  conditions.push(
+    or(
+      like(leads.seekerName, likeQ),
+      like(leads.seekerEmail, likeQ),
+      like(leads.seekerPhone, likeQ),
+      like(leads.addressOrZip, likeQ),
+    ),
+  );
+}
+if (from) conditions.push(gte(leads.createdAt, `${from}T00:00:00.000Z`));
+if (to) conditions.push(lte(leads.createdAt, `${to}T23:59:59.999Z`));
+
+const where = conditions.length ? and(...conditions) : undefined;
 
 const baseSelect = db
   .select({
@@ -88,13 +132,77 @@ const baseSelect = db
   .leftJoin(assigned, eq(leads.operatorId, assigned.id))
   .leftJoin(requested, eq(leads.requestedOperatorId, requested.id));
 
-const rows =
-  statusFilter && (LEAD_STATUSES as readonly string[]).includes(statusFilter)
-    ? await baseSelect
-        .where(eq(leads.status, statusFilter as LeadStatus))
-        .orderBy(desc(leads.createdAt))
-        .limit(200)
-    : await baseSelect.orderBy(desc(leads.createdAt)).limit(200);
+const rows = await (where ? baseSelect.where(where) : baseSelect)
+  .orderBy(desc(leads.createdAt))
+  .limit(200);
+
+if (Astro.url.searchParams.get('export') === 'csv') {
+  const header = [
+    'id',
+    'createdAt',
+    'status',
+    'mode',
+    'seekerName',
+    'seekerEmail',
+    'seekerPhone',
+    'preferredContact',
+    'addressOrZip',
+    'projectSize',
+    'material',
+    'timeline',
+    'budgetRange',
+    'howFound',
+    'notes',
+    'assignedOperator',
+    'requestedOperator',
+    'sourcePath',
+    'utmSource',
+    'utmMedium',
+    'utmCampaign',
+    'groupId',
+    'unlockMethod',
+    'priceCents',
+  ];
+  const lines = [
+    header.join(','),
+    ...rows.map(({ lead, operatorName, requestedName }) =>
+      [
+        lead.id,
+        lead.createdAt,
+        lead.status,
+        lead.mode,
+        lead.seekerName,
+        lead.seekerEmail,
+        lead.seekerPhone,
+        lead.preferredContact,
+        lead.addressOrZip,
+        lead.projectSize,
+        lead.material,
+        lead.timeline,
+        lead.budgetRange,
+        lead.howFound,
+        lead.notes,
+        operatorName,
+        requestedName,
+        lead.sourcePath,
+        lead.utmSource,
+        lead.utmMedium,
+        lead.utmCampaign,
+        lead.groupId,
+        lead.unlockMethod,
+        lead.priceCents,
+      ]
+        .map(csvEscape)
+        .join(','),
+    ),
+  ];
+  return new Response(lines.join('\n'), {
+    headers: {
+      'Content-Type': 'text/csv; charset=utf-8',
+      'Content-Disposition': 'attachment; filename="leads.csv"',
+    },
+  });
+}
 
 const operatorOptions = await db
   .select({
@@ -106,12 +214,17 @@ const operatorOptions = await db
   .from(operators)
   .orderBy(operators.name)
   .limit(500);
+
+const okMsg = Astro.url.searchParams.get('ok');
+const errMsg = Astro.url.searchParams.get('err');
+const exportQs = new URLSearchParams(Astro.url.searchParams);
+exportQs.set('export', 'csv');
 ---
 
 <AdminLayout title="Leads">
   <p class="mb-4 text-sm text-muted">
-    Quote requests are held until you pass them. First unlock per operator can be complimentary; after that
-    offer paid unlock via the portal.
+    Quotes stay held until you route them. First unlock per operator can be complimentary; after that
+    offer paid unlock. Match requests can go to up to 3 operators.
   </p>
 
   {
@@ -131,8 +244,12 @@ const operatorOptions = await db
 
   <form method="GET" class="mb-6 flex flex-wrap items-end gap-3">
     <div>
+      <label class="label" for="q">Search</label>
+      <input class="input w-48" id="q" name="q" value={q} placeholder="Name, email, ZIP" />
+    </div>
+    <div>
       <label class="label" for="status">Status</label>
-      <select class="input w-40" id="status" name="status">
+      <select class="input w-36" id="status" name="status">
         <option value="">All</option>
         {LEAD_STATUSES.map((s) => (
           <option value={s} selected={statusFilter === s}>
@@ -141,15 +258,44 @@ const operatorOptions = await db
         ))}
       </select>
     </div>
-    <button type="submit" class="btn-secondary text-xs">
-      Filter
-    </button>
+    <div>
+      <label class="label" for="mode">Mode</label>
+      <select class="input w-32" id="mode" name="mode">
+        <option value="">All</option>
+        {LEAD_MODES.map((m) => (
+          <option value={m} selected={modeFilter === m}>
+            {m}
+          </option>
+        ))}
+      </select>
+    </div>
+    <div>
+      <label class="label" for="operator">Operator</label>
+      <select class="input min-w-[12rem]" id="operator" name="operator">
+        <option value="">All</option>
+        {operatorOptions.map((op) => (
+          <option value={op.id} selected={operatorFilter === op.id}>
+            {op.name}
+          </option>
+        ))}
+      </select>
+    </div>
+    <div>
+      <label class="label" for="from">From</label>
+      <input class="input" id="from" name="from" type="date" value={from} />
+    </div>
+    <div>
+      <label class="label" for="to">To</label>
+      <input class="input" id="to" name="to" type="date" value={to} />
+    </div>
+    <button type="submit" class="btn-secondary text-xs">Filter</button>
+    <a href={`/admin/leads?${exportQs.toString()}`} class="btn-ghost text-xs">Export CSV</a>
   </form>
 
   <div class="space-y-4">
     {
       rows.length === 0 ? (
-        <p class="card p-8 text-center text-sm text-muted">No leads yet.</p>
+        <p class="card p-8 text-center text-sm text-muted">No leads match these filters.</p>
       ) : (
         rows.map(
           ({
@@ -164,17 +310,21 @@ const operatorOptions = await db
             <article class="card p-5">
               <div class="flex flex-wrap items-start justify-between gap-3">
                 <div>
-                  <h2 class="font-bold text-ink">{lead.seekerName}</h2>
+                  <h2 class="font-bold text-ink">
+                    <a href={`/admin/leads/${lead.id}`}>{lead.seekerName}</a>
+                  </h2>
                   <p class="text-sm text-muted">
                     {lead.seekerEmail}
                     {lead.seekerPhone && <> · {lead.seekerPhone}</>}
                   </p>
                   <p class="mt-1 text-sm">
+                    <span class="font-mono text-xs uppercase text-muted">{lead.mode}</span>
+                    {' · '}
                     Assigned:{' '}
                     {operatorSlug ? (
                       <a href={`/operator/${operatorSlug}`}>{operatorName}</a>
                     ) : (
-                      operatorName || lead.operatorId
+                      operatorName || (lead.operatorId ?? 'unassigned')
                     )}
                     {typeof complimentaryRemaining === 'number' && (
                       <span class="text-muted"> · free left: {complimentaryRemaining}</span>
@@ -192,6 +342,9 @@ const operatorOptions = await db
                         )}
                       </p>
                     )}
+                  {lead.sourcePath && (
+                    <p class="mt-1 font-mono text-[11px] text-muted">{lead.sourcePath}</p>
+                  )}
                 </div>
                 <div class="text-right text-xs text-muted">
                   <p>{formatDate(lead.createdAt)}</p>
@@ -208,7 +361,7 @@ const operatorOptions = await db
                 </div>
                 <div>
                   <dt class="text-muted">Material</dt>
-                  <dd>{lead.material || '—'}</dd>
+                  <dd>{labelForMaterial(lead.material)}</dd>
                 </div>
                 <div>
                   <dt class="text-muted">Location</dt>
@@ -226,55 +379,53 @@ const operatorOptions = await db
                 )}
               </dl>
 
-              {lead.status !== 'unlocked' && lead.status !== 'closed' && (
-                <form method="POST" class="mt-4 flex flex-wrap items-end gap-2 border-t border-border pt-4">
-                  <input type="hidden" name="id" value={lead.id} />
-                  <div>
-                    <label class="label" for={`op-${lead.id}`}>
-                      Operator
-                    </label>
-                    <select class="input min-w-[14rem]" id={`op-${lead.id}`} name="operatorId" required>
-                      {operatorOptions.map((op) => (
-                        <option value={op.id} selected={op.id === lead.operatorId}>
-                          {op.name} (free:{op.complimentaryLeadsRemaining} · {op.claimStatus})
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-                  <button
-                    type="submit"
-                    name="intent"
-                    value="pass_complimentary"
-                    class="btn-primary text-xs"
-                  >
-                    Pass complimentary
-                  </button>
-                  <button type="submit" name="intent" value="offer_paid" class="btn-secondary text-xs">
-                    Offer paid
-                  </button>
-                  <button type="submit" name="intent" value="reassign" class="btn-ghost text-xs">
-                    Reassign only
-                  </button>
-                  <button type="submit" name="intent" value="close" class="btn-ghost text-xs text-red-700">
-                    Close
-                  </button>
-                </form>
-              )}
+              {lead.status !== 'unlocked' &&
+                lead.status !== 'closed' &&
+                lead.status !== 'spam' &&
+                lead.status !== 'invalid' && (
+                  <form method="POST" class="mt-4 flex flex-wrap items-end gap-2 border-t border-border pt-4">
+                    <input type="hidden" name="id" value={lead.id} />
+                    <div>
+                      <label class="label" for={`op-${lead.id}`}>
+                        Operator
+                      </label>
+                      <select class="input min-w-[14rem]" id={`op-${lead.id}`} name="operatorId" required>
+                        {operatorOptions.map((op) => (
+                          <option value={op.id} selected={op.id === lead.operatorId}>
+                            {op.name} (free:{op.complimentaryLeadsRemaining} · {op.claimStatus})
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                    <button
+                      type="submit"
+                      name="intent"
+                      value="pass_complimentary"
+                      class="btn-primary text-xs"
+                    >
+                      Pass complimentary
+                    </button>
+                    <button type="submit" name="intent" value="offer_paid" class="btn-secondary text-xs">
+                      Offer paid
+                    </button>
+                    <button type="submit" name="intent" value="reassign" class="btn-ghost text-xs">
+                      Reassign only
+                    </button>
+                    <button type="submit" name="intent" value="close" class="btn-ghost text-xs">
+                      Close
+                    </button>
+                    <button type="submit" name="intent" value="spam" class="btn-ghost text-xs text-red-700">
+                      Spam
+                    </button>
+                    <button type="submit" name="intent" value="invalid" class="btn-ghost text-xs">
+                      Invalid
+                    </button>
+                  </form>
+                )}
 
-              <form method="POST" class="mt-3 flex flex-wrap gap-2">
-                <input type="hidden" name="id" value={lead.id} />
-                <input type="hidden" name="intent" value="status" />
-                <select class="input w-36" name="status">
-                  {LEAD_STATUSES.map((s) => (
-                    <option value={s} selected={lead.status === s}>
-                      {s}
-                    </option>
-                  ))}
-                </select>
-                <button type="submit" class="btn-secondary text-xs">
-                  Update status
-                </button>
-              </form>
+              <p class="mt-3 text-xs">
+                <a href={`/admin/leads/${lead.id}`}>Open details →</a>
+              </p>
             </article>
           ),
         )
