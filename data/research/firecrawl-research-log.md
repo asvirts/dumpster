@@ -1,5 +1,26 @@
 # Firecrawl Operator Research Log
 
+## 2026-08-15 — Listicle-ready metros
+
+**Method:** Firecrawl CLI `search` (metro-targeted, brokers filtered) + `scrape` of company sites. Agent run for 6 metros hit max-credits; search+scrape used instead.
+
+**Quality bar (all published):**
+- Company website scraped (not a directory)
+- Public local/regional phone
+- Roll-off dumpster rental (not junk-only)
+- Not WastePlace / Budget Dumpster / ZTERS / Dumpsters.com / Sourgum / WM / Republic / Waste Connections
+- Prefer independent local haulers; one locally operated franchise per metro max when needed
+
+**Loaded:** `seed/listicle-operators-metros-2026-08-15.sql` (69 operators, 29 cities) — applied to local + remote D1. Cities from `seed/add-all-states.sql` plus Tulsa also applied to remote.
+
+**Oklahoma (example listicle):** 11 published operators (6 Oklahoma City + 5 Tulsa). Live on `/dumpster-rental/ok/oklahoma-city` and `/dumpster-rental/ok/tulsa`.
+
+**Skipped / not published:** national brokers, 50-state quote sites, companies with no phone on site, junk-only shops.
+
+**Still recommended before paid “best of” ads:** phone call for insurance/license (same note as the 2026-08-11 seed).
+
+---
+
 **Date:** 2026-08-09  
 **Method:** Firecrawl CLI (`search` + `scrape`; agent attempted for bulk remaining states but hit max-credits cap)  
 **Output:** `data/research/operators-pending-nationwide.csv`
