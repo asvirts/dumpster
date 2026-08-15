@@ -1,28 +1,23 @@
 import type { APIRoute } from 'astro';
 import { getCollection } from 'astro:content';
-import { and, eq } from 'drizzle-orm';
+import { and, asc, eq, sql } from 'drizzle-orm';
 import { getDb } from '../lib/db';
-import { cities, operators } from '../lib/schema';
+import { cities, operatorServiceAreas, operators } from '../lib/schema';
 import {
   absoluteUrl,
+  cityPageLastmod,
+  maxLastmod,
   renderUrlset,
-  toW3cDate,
   type SitemapEntry,
 } from '../lib/sitemap';
 
 const SITE_FALLBACK = 'https://findadumpster.net';
 
-/** Latest W3C date among candidates (null if none parse). */
-function maxLastmod(
-  ...values: Array<string | Date | null | undefined>
-): string | null {
-  let best: string | null = null;
-  for (const v of values) {
-    const d = toW3cDate(v);
-    if (d && (!best || d > best)) best = d;
-  }
-  return best;
-}
+const publishedOperator = and(
+  eq(operators.isPublished, true),
+  eq(operators.isDemo, false),
+  eq(operators.isBroker, false),
+);
 
 export const GET: APIRoute = async ({ site }) => {
   const base = (site?.toString() || SITE_FALLBACK).replace(/\/$/, '');
@@ -50,7 +45,8 @@ export const GET: APIRoute = async ({ site }) => {
   const operatorLastmods: Array<string | Date | null | undefined> = [];
   const guideLastmods: Array<string | Date | null | undefined> = [];
 
-  // Priority city landings — primary SEO money pages.
+  // City landings that have at least one public listing — stays current as
+  // operators are added. Empty cities stay out (thin pages).
   try {
     const db = getDb();
     const cityRows = await db
@@ -58,15 +54,21 @@ export const GET: APIRoute = async ({ site }) => {
         slug: cities.slug,
         stateSlug: cities.stateSlug,
         updatedAt: cities.updatedAt,
+        listingLastmod: sql<string>`max(coalesce(${operators.lastVerifiedAt}, ${operators.updatedAt}))`,
       })
       .from(cities)
-      .where(eq(cities.isPriority, true));
+      .innerJoin(operatorServiceAreas, eq(operatorServiceAreas.cityId, cities.id))
+      .innerJoin(operators, eq(operators.id, operatorServiceAreas.operatorId))
+      .where(publishedOperator)
+      .groupBy(cities.id, cities.slug, cities.stateSlug, cities.updatedAt)
+      .orderBy(asc(cities.stateSlug), asc(cities.slug));
 
     for (const c of cityRows) {
-      cityLastmods.push(c.updatedAt);
+      const lastmod = cityPageLastmod(c.updatedAt, [c.listingLastmod]);
+      cityLastmods.push(lastmod);
       entries.push({
         loc: absoluteUrl(base, `/dumpster-rental/${c.stateSlug}/${c.slug}`),
-        lastmod: c.updatedAt,
+        lastmod,
         changefreq: 'weekly',
         priority: 0.9,
       });
@@ -80,13 +82,7 @@ export const GET: APIRoute = async ({ site }) => {
         lastVerifiedAt: operators.lastVerifiedAt,
       })
       .from(operators)
-      .where(
-        and(
-          eq(operators.isPublished, true),
-          eq(operators.isDemo, false),
-          eq(operators.isBroker, false),
-        ),
-      );
+      .where(publishedOperator);
 
     for (const o of ops) {
       const lastmod = o.lastVerifiedAt ?? o.updatedAt;

@@ -73,6 +73,26 @@ export function absoluteUrl(base: string, path: string): string {
   return `${root}${p === '/' ? '/' : p.replace(/\/$/, '')}`;
 }
 
+/** Latest W3C date among candidates (null if none parse). */
+export function maxLastmod(
+  ...values: Array<string | Date | null | undefined>
+): string | null {
+  let best: string | null = null;
+  for (const v of values) {
+    const d = toW3cDate(v);
+    if (d && (!best || d > best)) best = d;
+  }
+  return best;
+}
+
+/** City landing lastmod: city row or newest published listing on that page. */
+export function cityPageLastmod(
+  cityUpdatedAt: string | Date | null | undefined,
+  listingDates: Array<string | Date | null | undefined>,
+): string | null {
+  return maxLastmod(cityUpdatedAt, ...listingDates);
+}
+
 /** Build a urlset XML document (with optional image extension). */
 export function renderUrlset(entries: SitemapEntry[]): string {
   // Dedupe by loc (first wins — callers should order by importance).
