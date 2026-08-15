@@ -8,6 +8,7 @@ import { formatDate } from '../../lib/geo';
 import { LEAD_MODES, LEAD_STATUSES, type LeadStatus } from '../../lib/constants';
 import { logAudit } from '../../lib/admin';
 import { csvEscape, routeLeadToOperator } from '../../lib/leads';
+import { releaseLeadCheckout } from '../../lib/lead-checkout';
 import { labelForMaterial } from '../../lib/lead-fields';
 
 const db = getDb();
@@ -31,10 +32,14 @@ if (Astro.request.method === 'POST') {
   let flashError: string | null = null;
 
   if (id && intent === 'close') {
+    const existing = await db.query.leads.findFirst({ where: eq(leads.id, id) });
+    if (existing) await releaseLeadCheckout(db, existing);
     await db.update(leads).set({ status: 'closed' }).where(eq(leads.id, id));
     await logAudit(db, { action: 'lead_close', entityType: 'lead', entityId: id, actor });
     flash = 'Lead closed.';
   } else if (id && (intent === 'spam' || intent === 'invalid')) {
+    const existing = await db.query.leads.findFirst({ where: eq(leads.id, id) });
+    if (existing) await releaseLeadCheckout(db, existing);
     await db.update(leads).set({ status: intent }).where(eq(leads.id, id));
     await logAudit(db, { action: `lead_${intent}`, entityType: 'lead', entityId: id, actor });
     flash = `Lead marked ${intent}.`;
@@ -57,7 +62,17 @@ if (Astro.request.method === 'POST') {
     if (result.ok) flash = 'Lead offered (paid unlock).';
     else flashError = result.error;
   } else if (id && intent === 'reassign' && operatorId) {
-    await db.update(leads).set({ operatorId }).where(eq(leads.id, id));
+    const existing = await db.query.leads.findFirst({ where: eq(leads.id, id) });
+    if (existing && existing.operatorId !== operatorId) {
+      await releaseLeadCheckout(db, existing);
+    }
+    await db
+      .update(leads)
+      .set({
+        operatorId,
+        ...(existing && existing.operatorId !== operatorId ? { stripeCheckoutSessionId: null } : {}),
+      })
+      .where(eq(leads.id, id));
     await logAudit(db, {
       action: 'lead_reassign',
       entityType: 'lead',
@@ -69,6 +84,10 @@ if (Astro.request.method === 'POST') {
   } else if (id && intent === 'status') {
     const status = form.get('status')?.toString() as LeadStatus | undefined;
     if (status && (LEAD_STATUSES as readonly string[]).includes(status)) {
+      const existing = await db.query.leads.findFirst({ where: eq(leads.id, id) });
+      if (existing && existing.status === 'offered' && status !== 'offered') {
+        await releaseLeadCheckout(db, existing);
+      }
       await db.update(leads).set({ status }).where(eq(leads.id, id));
       flash = 'Status updated.';
     }

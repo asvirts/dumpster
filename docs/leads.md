@@ -33,6 +33,13 @@ Terminal without unlock: `spam`, `invalid`, `closed`.
 
 Monetization: **1 complimentary unlock per operator**, then Stripe Checkout (`LEAD_PRICE_CENTS`, default $25). Price is frozen on the lead at offer time (`price_cents`).
 
+Paid unlock fulfills in two places (idempotent):
+
+1. Stripe webhook `checkout.session.completed` and `checkout.session.async_payment_succeeded` at `/api/stripe/webhook`
+2. Operator return to `/portal/leads?session_id={CHECKOUT_SESSION_ID}` (covers webhook delay or a missing endpoint)
+
+An open Checkout Session is reused on repeat clicks. Re-routing or complimentary unlock expires the stale session so a later payment cannot attach to the wrong operator.
+
 ## Niche fields
 
 `src/lib/lead-fields.ts` is the adapter:

@@ -33,7 +33,7 @@ const adminGuard = defineMiddleware(async (context, next) => {
   return next();
 });
 
-const clerkAuth = clerkMiddleware((auth, context, next) => {
+const portalClerk = clerkMiddleware((auth, context, next) => {
   const path = context.url.pathname;
   const isPortal = path.startsWith('/portal');
   if (isPortal) {
@@ -46,6 +46,14 @@ const clerkAuth = clerkMiddleware((auth, context, next) => {
     }
   }
   return next();
+});
+
+const clerkAuth = defineMiddleware(async (context, next) => {
+  // Stripe must be able to POST here even if Clerk keys are missing or Clerk is down.
+  if (context.url.pathname === '/api/stripe/webhook') {
+    return next();
+  }
+  return portalClerk(context, next);
 });
 
 export const onRequest = sequence(adminGuard, clerkAuth);

@@ -7,6 +7,7 @@ import { logAudit } from './admin';
 import { sendAdminLeadAlert, sendLeadOffer, sendLeadUnlocked, sendSeekerConfirmation } from './email';
 import { DEFAULT_LEAD_PRICE_CENTS, MAX_MATCH_OFFERS } from './constants';
 import { emptyToNull, qualificationFromInput } from './lead-fields';
+import { decidePaidUnlock } from './paid-unlock';
 
 export function leadPriceCents(): number {
   const raw = (env as { LEAD_PRICE_CENTS?: string }).LEAD_PRICE_CENTS;
@@ -478,6 +479,11 @@ export async function unlockLeadComplimentary(
     return { ok: false, error: 'Lead is not available to unlock.' };
   }
 
+  if (lead.stripeCheckoutSessionId) {
+    const { expireCheckoutSession } = await import('./stripe');
+    await expireCheckoutSession(lead.stripeCheckoutSessionId);
+  }
+
   await sendLeadUnlocked({
     operatorName: op.name,
     operatorEmail: op.email,
@@ -521,6 +527,11 @@ export async function offerLead(
 
   const now = new Date().toISOString();
   const price = lead.priceCents ?? leadPriceCents();
+  const reassigned = !!lead.operatorId && lead.operatorId !== opts.operatorId;
+  if (reassigned && lead.stripeCheckoutSessionId) {
+    const { expireCheckoutSession } = await import('./stripe');
+    await expireCheckoutSession(lead.stripeCheckoutSessionId);
+  }
   const updated = await db
     .update(leads)
     .set({
@@ -529,6 +540,7 @@ export async function offerLead(
       offeredAt: now,
       passedBy: opts.actor ?? null,
       priceCents: price,
+      ...(reassigned ? { stripeCheckoutSessionId: null } : {}),
     })
     .where(and(eq(leads.id, opts.leadId), inArray(leads.status, ['new', 'offered'])))
     .returning({ id: leads.id });
@@ -580,8 +592,9 @@ export async function resendLeadOffer(
 }
 
 /**
- * Paid unlock from Stripe webhook. Idempotent when already unlocked for the same session.
- * Binds payment to the expected operator, stored checkout session, and offered status.
+ * Paid unlock from Stripe webhook or success-url retrieve.
+ * Idempotent when already unlocked for the same session. A still-offered lead
+ * can be unlocked by any paid session for this lead+operator at the frozen price.
  */
 export async function unlockLeadPaid(
   db: AppDb,
@@ -597,43 +610,23 @@ export async function unlockLeadPaid(
   const lead = await db.query.leads.findFirst({ where: eq(leads.id, opts.leadId) });
   if (!lead) return { ok: false, error: 'Lead not found' };
 
-  if (lead.status === 'unlocked') {
-    if (
-      lead.stripeCheckoutSessionId &&
-      lead.stripeCheckoutSessionId !== opts.stripeCheckoutSessionId
-    ) {
-      return { ok: false, error: 'Lead already unlocked by a different checkout session' };
-    }
+  const decision = decidePaidUnlock(lead, {
+    operatorId: opts.operatorId,
+    stripeCheckoutSessionId: opts.stripeCheckoutSessionId,
+    amountTotal: opts.amountTotal,
+    expectedPriceCents: priceForLead(lead),
+  });
+
+  if (decision.action === 'reject') {
+    return { ok: false, error: decision.error };
+  }
+
+  if (decision.action === 'already_unlocked') {
     const op = lead.operatorId
       ? await db.query.operators.findFirst({ where: eq(operators.id, lead.operatorId) })
       : null;
     if (!op) return { ok: false, error: 'Operator not found' };
     return { ok: true, operator: op, lead };
-  }
-
-  if (lead.status !== 'offered') {
-    return { ok: false, error: `Lead is not offered (status=${lead.status})` };
-  }
-
-  if (opts.operatorId && lead.operatorId !== opts.operatorId) {
-    return { ok: false, error: 'Checkout operator does not match lead assignment' };
-  }
-
-  if (
-    lead.stripeCheckoutSessionId &&
-    lead.stripeCheckoutSessionId !== opts.stripeCheckoutSessionId
-  ) {
-    return { ok: false, error: 'Checkout session does not match lead' };
-  }
-
-  if (opts.amountTotal != null) {
-    const expected = priceForLead(lead);
-    if (opts.amountTotal !== expected) {
-      return {
-        ok: false,
-        error: `Payment amount ${opts.amountTotal} does not match lead price ${expected}`,
-      };
-    }
   }
 
   if (!lead.operatorId) return { ok: false, error: 'Operator not found' };

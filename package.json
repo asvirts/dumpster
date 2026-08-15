@@ -17,6 +17,8 @@
     "db:seed:remote": "wrangler d1 execute dumpsterlocal --remote --file=./seed/seed.sql",
     "db:setup:local": "bun run db:migrate:local && bun run db:seed:local",
     "types": "wrangler types",
+    "test": "bun test",
+    "stripe:listen": "stripe listen --forward-to localhost:4332/api/stripe/webhook --events checkout.session.completed,checkout.session.async_payment_succeeded,checkout.session.async_payment_failed",
     "deploy": "bun run build && wrangler deploy",
     "postinstall": "node scripts/patch-astro-workerd.mjs"
   },

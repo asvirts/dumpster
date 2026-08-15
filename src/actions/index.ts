@@ -7,11 +7,9 @@ import { quoteInputSchema } from '../lib/lead-fields';
 import {
   clientIpFromRequest,
   createHeldLead,
-  priceForLead,
-  siteUrl,
   unlockLeadComplimentary,
 } from '../lib/leads';
-import { getStripe } from '../lib/stripe';
+import { createLeadUnlockCheckout } from '../lib/lead-checkout';
 import { verifyTurnstile } from '../lib/turnstile';
 
 export const server = {
@@ -216,47 +214,16 @@ export const server = {
         throw new ActionError({ code: 'BAD_REQUEST', message: 'Lead is not available to purchase.' });
       }
 
-      const stripe = getStripe();
-      const price = priceForLead(lead);
-      const base = siteUrl();
-      const session = await stripe.checkout.sessions.create({
-        mode: 'payment',
-        customer: op.stripeCustomerId || undefined,
-        customer_email: op.stripeCustomerId ? undefined : op.email || undefined,
-        line_items: [
-          {
-            quantity: 1,
-            price_data: {
-              currency: 'usd',
-              unit_amount: price,
-              product_data: {
-                name: `Dumpster lead — ${lead.seekerName}`,
-                description: [lead.projectSize, lead.material, lead.addressOrZip]
-                  .filter(Boolean)
-                  .join(' · ') || 'Quote lead unlock',
-              },
-            },
-          },
-        ],
-        metadata: {
-          leadId: lead.id,
-          operatorId: op.id,
-          clerkOrgId: orgId,
-        },
-        success_url: `${base}/portal/leads?unlocked=1&session_id={CHECKOUT_SESSION_ID}`,
-        cancel_url: `${base}/portal/leads?canceled=1`,
+      const checkout = await createLeadUnlockCheckout(db, {
+        lead,
+        operator: op,
+        clerkOrgId: orgId,
       });
-
-      if (!session.url) {
-        throw new ActionError({ code: 'INTERNAL_SERVER_ERROR', message: 'Checkout failed.' });
+      if (!checkout.ok) {
+        throw new ActionError({ code: 'INTERNAL_SERVER_ERROR', message: checkout.error });
       }
 
-      await db
-        .update(leads)
-        .set({ stripeCheckoutSessionId: session.id })
-        .where(eq(leads.id, lead.id));
-
-      return { ok: true as const, url: session.url };
+      return { ok: true as const, url: checkout.url };
     },
   }),
 };

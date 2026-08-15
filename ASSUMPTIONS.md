@@ -12,7 +12,7 @@ Documented during Find A Dumpster MVP build (PRD v1.0, Cloudflare deploy), updat
 8. **Maps:** MapLibre GL + OpenFreeMap tiles (no Mapbox/Google key for MVP).
 9. **Admin auth:** Production verifies Cloudflare Access JWT (`CF_ACCESS_TEAM_DOMAIN` + `CF_ACCESS_AUD`; header `Cf-Access-Jwt-Assertion`). Local only: `ADMIN_BYPASS=1` **and** Astro DEV mode. Do not trust the Access email header alone.
 10. **Operator auth:** Clerk Organizations for claiming listings and the `/portal` dashboard. Claims require admin approval before portal access.
-11. **Paid leads:** Stripe Checkout pay-per-lead (`LEAD_PRICE_CENTS`, default $25). First unlock per operator can be complimentary. Webhook at `/api/stripe/webhook`.
+11. **Paid leads:** Stripe Checkout pay-per-lead (`LEAD_PRICE_CENTS`, default $25). First unlock per operator can be complimentary. Unlock fulfills from `/api/stripe/webhook` (`checkout.session.completed` + `checkout.session.async_payment_succeeded`) and from `/portal/leads?session_id=…` after Checkout.
 12. **Email:** Resend optional (`RESEND_API_KEY`). Lead rows always persist; email is best-effort.
 13. **Coverage:** Seeded 10 priority metros (TX/FL/CA/AZ/GA/CO). Not national on day one.
 14. **Reviews / subscriptions / Connect payouts:** Still out of scope (one-time lead unlock only).

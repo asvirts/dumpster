@@ -46,7 +46,7 @@ Local admin bypass: `.dev.vars` with `ADMIN_BYPASS=1` works only under `astro de
 6. Deploy: `bun run deploy`
 7. **Cloudflare Access:** protect path `/admin*` with an Access application (email allowlist). The Worker verifies the Access JWT — do not rely on headers alone.
 8. **Clerk:** enable Organizations; point production instance at your domain
-9. **Stripe webhook:** endpoint `https://findadumpster.net/api/stripe/webhook` for `checkout.session.completed`
+9. **Stripe webhook:** endpoint `https://findadumpster.net/api/stripe/webhook` for `checkout.session.completed`, `checkout.session.async_payment_succeeded`, and `checkout.session.async_payment_failed`. Paid unlock also fulfills when the operator returns to `/portal/leads?session_id=…`.
 
 Update `PUBLIC_SITE_URL` / `site` in `astro.config.mjs` for your domain.
 

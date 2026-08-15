@@ -5,8 +5,9 @@ import { getOperatorForOrg } from '../../lib/portal';
 import { and, desc, eq, inArray } from 'drizzle-orm';
 import { leads } from '../../lib/schema';
 import { formatDate } from '../../lib/geo';
-import { leadPriceCents, priceForLead, siteUrl, unlockLeadComplimentary } from '../../lib/leads';
-import { getStripe } from '../../lib/stripe';
+import { leadPriceCents, priceForLead, unlockLeadComplimentary } from '../../lib/leads';
+import { createLeadUnlockCheckout, fulfillCheckoutSessionById } from '../../lib/lead-checkout';
+import { formatUsdFromCents } from '../../lib/paid-unlock';
 import { labelForContact, labelForMaterial } from '../../lib/lead-fields';
 
 const auth = Astro.locals.auth();
@@ -14,6 +15,23 @@ const orgId = auth.orgId!;
 const userId = auth.userId!;
 const db = getDb();
 const operator = await getOperatorForOrg(db, orgId);
+
+if (Astro.request.method === 'GET' && operator) {
+  const sessionId = Astro.url.searchParams.get('session_id');
+  if (sessionId) {
+    const result = await fulfillCheckoutSessionById(db, sessionId, operator.id);
+    if (result.ok && result.pending) {
+      return Astro.redirect('/portal/leads?ok=processing');
+    }
+    if (result.ok && !result.skipped) {
+      return Astro.redirect('/portal/leads?ok=unlocked');
+    }
+    if (!result.ok) {
+      return Astro.redirect(`/portal/leads?err=${encodeURIComponent(result.error)}`);
+    }
+    return Astro.redirect('/portal/leads');
+  }
+}
 
 if (Astro.request.method === 'POST' && operator) {
   const form = await Astro.request.formData();
@@ -38,43 +56,15 @@ if (Astro.request.method === 'POST' && operator) {
       return Astro.redirect('/portal/leads?err=Lead+not+available');
     }
     try {
-      const stripe = getStripe();
-      const price = priceForLead(lead);
-      const base = siteUrl();
-      const session = await stripe.checkout.sessions.create({
-        mode: 'payment',
-        customer: operator.stripeCustomerId || undefined,
-        customer_email: operator.stripeCustomerId
-          ? undefined
-          : operator.email || undefined,
-        line_items: [
-          {
-            quantity: 1,
-            price_data: {
-              currency: 'usd',
-              unit_amount: price,
-              product_data: {
-                name: `Dumpster lead — ${lead.seekerName}`,
-                description:
-                  [lead.projectSize, lead.material, lead.addressOrZip].filter(Boolean).join(' · ') ||
-                  'Quote lead unlock',
-              },
-            },
-          },
-        ],
-        metadata: {
-          leadId: lead.id,
-          operatorId: operator.id,
-          clerkOrgId: orgId,
-        },
-        success_url: `${base}/portal/leads?unlocked=1&session_id={CHECKOUT_SESSION_ID}`,
-        cancel_url: `${base}/portal/leads?canceled=1`,
+      const checkout = await createLeadUnlockCheckout(db, {
+        lead,
+        operator,
+        clerkOrgId: orgId,
       });
-      await db
-        .update(leads)
-        .set({ stripeCheckoutSessionId: session.id })
-        .where(eq(leads.id, lead.id));
-      if (session.url) return Astro.redirect(session.url);
+      if (!checkout.ok) {
+        return Astro.redirect(`/portal/leads?err=${encodeURIComponent(checkout.error)}`);
+      }
+      return Astro.redirect(checkout.url);
     } catch (err) {
       console.error('[portal] checkout', err);
       return Astro.redirect('/portal/leads?err=Checkout+unavailable');
@@ -96,8 +86,8 @@ const rows = operator
       .limit(100)
   : [];
 
-const priceLabel = `$${(leadPriceCents() / 100).toFixed(2)}`;
-const ok = Astro.url.searchParams.get('ok') || Astro.url.searchParams.get('unlocked');
+const defaultPriceLabel = formatUsdFromCents(leadPriceCents());
+const ok = Astro.url.searchParams.get('ok');
 const err = Astro.url.searchParams.get('err');
 const canceled = Astro.url.searchParams.get('canceled');
 ---
@@ -114,12 +104,17 @@ const canceled = Astro.url.searchParams.get('canceled');
         <p class="mb-4 text-sm text-muted">
           Offered leads hide contact details until unlocked. You have{' '}
           <strong>{operator.complimentaryLeadsRemaining}</strong> complimentary unlock
-          {operator.complimentaryLeadsRemaining === 1 ? '' : 's'} left; after that unlocks cost{' '}
-          {priceLabel}.
+          {operator.complimentaryLeadsRemaining === 1 ? '' : 's'} left; after that unlocks cost
+          the price shown on each lead (default {defaultPriceLabel}).
         </p>
-        {ok && (
+        {ok === 'unlocked' && (
           <p class="mb-4 border-2 border-brand-600 bg-brand-50 px-3 py-2 text-sm text-brand-800">
             Lead unlocked.
+          </p>
+        )}
+        {ok === 'processing' && (
+          <p class="mb-4 border-2 border-amber-500 bg-amber-50 px-3 py-2 text-sm">
+            Payment received. Contact details appear once the payment fully clears.
           </p>
         )}
         {canceled && (
@@ -196,7 +191,7 @@ const canceled = Astro.url.searchParams.get('canceled');
                       </button>
                     ) : (
                       <button type="submit" name="intent" value="checkout" class="btn-primary text-xs">
-                        Unlock for {priceLabel}
+                        Unlock for {formatUsdFromCents(priceForLead(lead))}
                       </button>
                     )}
                   </form>

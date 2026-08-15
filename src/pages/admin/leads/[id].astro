@@ -7,6 +7,7 @@ import { formatDate } from '../../../lib/geo';
 import { LEAD_STATUSES, MAX_MATCH_OFFERS, type LeadStatus } from '../../../lib/constants';
 import { logAudit } from '../../../lib/admin';
 import { resendLeadOffer, routeLeadToOperator } from '../../../lib/leads';
+import { releaseLeadCheckout } from '../../../lib/lead-checkout';
 import {
   labelForBudget,
   labelForContact,
@@ -35,14 +36,22 @@ if (Astro.request.method === 'POST') {
     await logAudit(db, { action: 'lead_notes', entityType: 'lead', entityId: id, actor });
     flash = 'Notes saved.';
   } else if (intent === 'close') {
+    const existing = await db.query.leads.findFirst({ where: eq(leads.id, id) });
+    if (existing) await releaseLeadCheckout(db, existing);
     await db.update(leads).set({ status: 'closed' }).where(eq(leads.id, id));
     flash = 'Lead closed.';
   } else if (intent === 'spam' || intent === 'invalid') {
+    const existing = await db.query.leads.findFirst({ where: eq(leads.id, id) });
+    if (existing) await releaseLeadCheckout(db, existing);
     await db.update(leads).set({ status: intent }).where(eq(leads.id, id));
     flash = `Lead marked ${intent}.`;
   } else if (intent === 'status') {
     const status = form.get('status')?.toString() as LeadStatus | undefined;
     if (status && (LEAD_STATUSES as readonly string[]).includes(status)) {
+      const existing = await db.query.leads.findFirst({ where: eq(leads.id, id) });
+      if (existing && existing.status === 'offered' && status !== 'offered') {
+        await releaseLeadCheckout(db, existing);
+      }
       await db.update(leads).set({ status }).where(eq(leads.id, id));
       flash = 'Status updated.';
     }
