@@ -5,6 +5,7 @@ import type { AppDb } from './db';
 import { events, leads, operators, type Lead, type NewLead, type Operator } from './schema';
 import { logAudit } from './admin';
 import { sendLeadOffer, sendLeadUnlocked } from './email';
+import { leadTagId } from './email-tags';
 import { DEFAULT_LEAD_PRICE_CENTS, MAX_MATCH_OFFERS } from './constants';
 import { emptyToNull, qualificationFromInput } from './lead-fields';
 import { decidePaidUnlock } from './paid-unlock';
@@ -487,6 +488,7 @@ export async function unlockLeadComplimentary(
     operatorEmail: op.email,
     ...leadPayloadFromRow(lead),
     unlockMethod: 'complimentary',
+    refs: { leadId: leadTagId(lead), operatorId: op.id },
   });
 
   await logAudit(db, {
@@ -566,7 +568,7 @@ export async function offerLead(
 /** "Lead waiting" email. Skipped for operators who unsubscribed. */
 export async function notifyLeadOffer(
   op: Operator,
-  lead: Pick<Lead, 'seekerName' | 'projectSize' | 'material' | 'addressOrZip' | 'priceCents'>,
+  lead: Pick<Lead, 'id' | 'groupId' | 'seekerName' | 'projectSize' | 'material' | 'addressOrZip' | 'priceCents'>,
 ): Promise<boolean> {
   if (op.leadEmailsOptOut) return false;
   const portalUrl = `${siteUrl()}/portal/leads`;
@@ -583,6 +585,7 @@ export async function notifyLeadOffer(
     isClaimed: op.claimStatus === 'approved',
     priceCents: priceForLead(lead),
     unsubscribeUrl: await unsubscribeUrlFor(op.id),
+    refs: { leadId: leadTagId(lead), operatorId: op.id },
   });
 }
 
@@ -687,6 +690,7 @@ export async function unlockLeadPaid(
     operatorEmail: op.email,
     ...leadPayloadFromRow(refreshed),
     unlockMethod: 'paid',
+    refs: { leadId: leadTagId(refreshed), operatorId: op.id },
   });
 
   await logAudit(db, {

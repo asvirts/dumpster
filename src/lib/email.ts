@@ -1,6 +1,7 @@
 import { env } from 'cloudflare:workers';
 import { BRAND } from './constants';
 import { labelForBudget, labelForContact, labelForMaterial } from './lead-fields';
+import { emailTags, type EmailRefs, type EmailTag } from './email-tags';
 
 type LeadFields = {
   seekerName: string;
@@ -31,6 +32,8 @@ type SendOpts = {
   unsubscribeUrl?: string | null;
   /** Extra headers, e.g. In-Reply-To / References when answering a reply. */
   headers?: Record<string, string>;
+  /** Resend tags (site, kind, lead_id, operator_id); see email-tags.ts. */
+  tags: EmailTag[];
 };
 
 /**
@@ -61,6 +64,7 @@ async function postResend(from: string, opts: SendOpts): Promise<{ ok: boolean; 
         to,
         subject: opts.subject,
         text: opts.text,
+        tags: opts.tags,
         ...(replyToAddress() ? { reply_to: replyToAddress() } : {}),
         ...(opts.unsubscribeUrl || opts.headers
           ? {
@@ -133,6 +137,7 @@ export async function sendAdminLeadAlert(
     adminUrl: string;
     mode?: string | null;
     outcome: string;
+    refs?: EmailRefs;
   },
 ): Promise<boolean> {
   const to = adminEmail();
@@ -145,6 +150,7 @@ export async function sendAdminLeadAlert(
   const modeLabel = payload.mode === 'match' ? 'match request' : 'direct quote';
   return sendResend({
     to: [to],
+    tags: emailTags('admin_lead_alert', payload.refs),
     subject: `New lead (${modeLabel}) — ${payload.seekerName}: ${payload.outcome}`,
     text: [
       `Autopilot: ${payload.outcome}`,
@@ -167,12 +173,14 @@ export async function sendSeekerConfirmation(payload: {
   seekerEmail: string;
   operatorName?: string | null;
   mode: 'direct' | 'match';
+  refs?: EmailRefs;
 }): Promise<boolean> {
   const who = payload.operatorName
     ? ` for ${payload.operatorName}`
     : ' from local dumpster rental operators';
   return sendResend({
     to: [payload.seekerEmail],
+    tags: emailTags('lead_confirm', payload.refs),
     subject: `We received your dumpster quote request`,
     text: [
       `Hi ${payload.seekerName},`,
@@ -198,12 +206,14 @@ export async function sendLeadUnlocked(
     operatorName: string;
     operatorEmail: string | null;
     unlockMethod: 'complimentary' | 'paid';
+    refs?: EmailRefs;
   },
 ): Promise<boolean> {
   if (!payload.operatorEmail) return false;
   const label = payload.unlockMethod === 'complimentary' ? 'complimentary teaser' : 'purchased';
   return sendResend({
     to: [payload.operatorEmail],
+    tags: emailTags('lead_unlocked', payload.refs),
     subject: `Lead unlocked (${label}) — ${payload.seekerName}`,
     text: [
       `Hi ${payload.operatorName},`,
@@ -232,6 +242,7 @@ export async function sendLeadOffer(payload: {
   isClaimed: boolean;
   priceCents: number;
   unsubscribeUrl?: string | null;
+  refs?: EmailRefs;
 }): Promise<boolean> {
   if (!payload.operatorEmail) return false;
   const price = `$${(payload.priceCents / 100).toFixed(2)}`;
@@ -242,6 +253,7 @@ export async function sendLeadOffer(payload: {
   return sendResend({
     to: [payload.operatorEmail],
     unsubscribeUrl: payload.unsubscribeUrl,
+    tags: emailTags('lead_offer', payload.refs),
     subject: `Lead waiting — ${payload.seekerName} (${price} to unlock)`,
     text: [
       `Hi ${payload.operatorName},`,
@@ -276,6 +288,7 @@ export async function sendLeadReminder(payload: {
   priceCents: number;
   url: string;
   unsubscribeUrl?: string | null;
+  refs?: EmailRefs;
 }): Promise<boolean> {
   if (!payload.operatorEmail) return false;
   const price = `$${(payload.priceCents / 100).toFixed(2)}`;
@@ -283,6 +296,7 @@ export async function sendLeadReminder(payload: {
   return sendResend({
     to: [payload.operatorEmail],
     unsubscribeUrl: payload.unsubscribeUrl,
+    tags: emailTags('lead_reminder', payload.refs),
     subject: `Still available: dumpster lead in ${payload.addressOrZip ?? 'your area'}`,
     text: [
       `Hi ${payload.operatorName},`,
@@ -304,10 +318,12 @@ export async function sendAutoBuyPaused(payload: {
   operatorEmail: string | null;
   reason: string;
   portalUrl: string;
+  refs?: EmailRefs;
 }): Promise<boolean> {
   if (!payload.operatorEmail) return false;
   return sendResend({
     to: [payload.operatorEmail],
+    tags: emailTags('auto_buy_paused', payload.refs),
     subject: `Auto-buy paused — ${payload.operatorName}`,
     text: [
       `Hi ${payload.operatorName},`,
@@ -327,7 +343,7 @@ export async function sendAdminDigest(payload: { subject: string; text: string }
     console.info('[email] ADMIN_NOTIFY_EMAIL not set; skipping digest');
     return false;
   }
-  return sendResend({ to: [to], subject: payload.subject, text: payload.text });
+  return sendResend({ to: [to], tags: emailTags('admin_digest'), subject: payload.subject, text: payload.text });
 }
 
 export async function sendClaimDecision(payload: {
@@ -336,11 +352,13 @@ export async function sendClaimDecision(payload: {
   approved: boolean;
   portalUrl: string;
   notes?: string | null;
+  refs?: EmailRefs;
 }): Promise<boolean> {
   if (!payload.operatorEmail) return false;
   if (payload.approved) {
     return sendResend({
       to: [payload.operatorEmail],
+      tags: emailTags('claim_approved', payload.refs),
       subject: `Listing claim approved — ${payload.operatorName}`,
       text: [
         `Hi ${payload.operatorName},`,
@@ -355,6 +373,7 @@ export async function sendClaimDecision(payload: {
   }
   return sendResend({
     to: [payload.operatorEmail],
+    tags: emailTags('claim_rejected', payload.refs),
     subject: `Listing claim update — ${payload.operatorName}`,
     text: [
       `Hi ${payload.operatorName},`,
@@ -384,6 +403,7 @@ export async function sendLeadNotification(payload: {
   addressOrZip?: string | null;
   timeline?: string | null;
   notes?: string | null;
+  refs?: EmailRefs;
 }): Promise<boolean> {
   const adminEmail = (env as { ADMIN_NOTIFY_EMAIL?: string }).ADMIN_NOTIFY_EMAIL;
   const to: string[] = [];
@@ -391,6 +411,7 @@ export async function sendLeadNotification(payload: {
   if (adminEmail) to.push(adminEmail);
   return sendResend({
     to,
+    tags: emailTags('lead_notification', payload.refs),
     subject: `New dumpster quote request — ${payload.seekerName}`,
     text: [
       `New quote request for ${payload.operatorName}`,
@@ -409,11 +430,13 @@ export async function sendAdminReplyAlert(payload: {
   replyText: string;
   operatorName: string | null;
   adminUrl: string;
+  refs?: EmailRefs;
 }): Promise<boolean> {
   const to = adminEmail();
   if (!to) return false;
   return sendResend({
     to: [to],
+    tags: emailTags('inbound_forward', payload.refs),
     subject: `Reply from ${payload.operatorName ?? payload.fromHeader}: ${payload.subject}`,
     text: [
       `${payload.fromHeader}${payload.operatorName ? ` (${payload.operatorName})` : ''} replied:`,
@@ -431,10 +454,12 @@ export async function sendReplyAnswer(payload: {
   subject: string;
   text: string;
   inReplyTo: string | null;
+  refs?: EmailRefs;
 }): Promise<boolean> {
   const subject = /^re:/i.test(payload.subject) ? payload.subject : `Re: ${payload.subject}`;
   return sendResend({
     to: [payload.to],
+    tags: emailTags('inbound_reply', payload.refs),
     subject,
     text: payload.text,
     headers: payload.inReplyTo ? { 'In-Reply-To': payload.inReplyTo, References: payload.inReplyTo } : undefined,

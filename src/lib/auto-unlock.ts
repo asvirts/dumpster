@@ -2,9 +2,10 @@ import { env } from 'cloudflare:workers';
 import { and, eq, gte, sql } from 'drizzle-orm';
 import type Stripe from 'stripe';
 import type { AppDb } from './db';
-import { leads, operators, type Operator } from './schema';
+import { leads, operators, type Lead, type Operator } from './schema';
 import { logAudit } from './admin';
 import { sendAutoBuyPaused, sendLeadUnlocked } from './email';
+import { leadTagId } from './email-tags';
 import { leadPayloadFromRow, priceForLead, siteUrl } from './leads';
 import { expireCheckoutSession, getStripe } from './stripe';
 import { hoursAgoIso } from './autopilot-rules';
@@ -43,7 +44,7 @@ export async function autoBuysThisWeek(db: AppDb, operatorId: string): Promise<n
   return row?.c ?? 0;
 }
 
-async function pauseAutoBuy(db: AppDb, op: Operator, reason: string): Promise<void> {
+async function pauseAutoBuy(db: AppDb, op: Operator, reason: string, lead: Lead): Promise<void> {
   await db
     .update(operators)
     .set({ autoUnlockEnabled: false, updatedAt: new Date().toISOString() })
@@ -53,6 +54,7 @@ async function pauseAutoBuy(db: AppDb, op: Operator, reason: string): Promise<vo
     operatorEmail: op.email,
     reason,
     portalUrl: `${siteUrl()}/portal/leads`,
+    refs: { leadId: leadTagId(lead), operatorId: op.id },
   });
   await logAudit(db, {
     action: 'auto_buy_paused',
@@ -110,7 +112,7 @@ export async function tryAutoUnlock(db: AppDb, leadId: string): Promise<AutoUnlo
   } catch (err) {
     const reason = stripeErrorReason(err);
     console.warn('[auto-buy] charge failed', op.id, lead.id, reason);
-    await pauseAutoBuy(db, op, reason);
+    await pauseAutoBuy(db, op, reason, lead);
     return { status: 'failed', reason };
   }
 
@@ -120,7 +122,7 @@ export async function tryAutoUnlock(db: AppDb, leadId: string): Promise<AutoUnlo
     } catch {
       // Already terminal; nothing to release.
     }
-    await pauseAutoBuy(db, op, `payment ${pi.status}`);
+    await pauseAutoBuy(db, op, `payment ${pi.status}`, lead);
     return { status: 'failed', reason: `payment ${pi.status}` };
   }
 
@@ -160,6 +162,7 @@ export async function tryAutoUnlock(db: AppDb, leadId: string): Promise<AutoUnlo
     operatorEmail: op.email,
     ...leadPayloadFromRow(unlocked[0]),
     unlockMethod: 'paid',
+    refs: { leadId: leadTagId(unlocked[0]), operatorId: op.id },
   });
   await logAudit(db, {
     action: 'lead_unlock_auto_buy',

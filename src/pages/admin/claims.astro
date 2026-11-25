@@ -34,6 +34,7 @@ if (Astro.request.method === 'POST') {
           operatorEmail: op.email,
           approved: true,
           portalUrl: `${siteUrl()}/portal`,
+          refs: { operatorId: op.id },
         });
         await logAudit(db, {
           action: 'claim_approve',
@@ -59,6 +60,7 @@ if (Astro.request.method === 'POST') {
           approved: false,
           portalUrl: `${siteUrl()}/portal`,
           notes,
+          refs: { operatorId: op.id },
         });
         await logAudit(db, {
           action: 'claim_reject',
