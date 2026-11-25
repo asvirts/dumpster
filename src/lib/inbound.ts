@@ -128,6 +128,7 @@ export async function handleReceivedEmail(db: AppDb, data: ReceivedEventData): P
       replyText: fullText === null ? '(Reply text unavailable — set RESEND_RECEIVING_API_KEY.)' : replyText,
       operatorName: operator?.name ?? null,
       adminUrl: `${siteUrl()}/admin/replies#${id}`,
+      refs: { operatorId: operator?.id ?? null },
     });
   }
   return outcome;

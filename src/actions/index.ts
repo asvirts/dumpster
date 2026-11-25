@@ -193,6 +193,7 @@ export const server = {
             operatorEmail: op.email,
             approved: true,
             portalUrl: `${siteUrl()}/portal`,
+            refs: { operatorId: op.id },
           });
           await logAudit(db, {
             action: 'claim_auto_approve',

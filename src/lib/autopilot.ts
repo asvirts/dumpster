@@ -4,6 +4,7 @@ import { cities, inboundEmails, leads, operatorServiceAreas, operators, type Lea
 import { MAX_MATCH_OFFERS } from './constants';
 import { logAudit } from './admin';
 import { sendAdminDigest, sendAdminLeadAlert, sendLeadReminder, sendSeekerConfirmation } from './email';
+import { leadTagId } from './email-tags';
 import {
   leadPayloadFromRow,
   leadPriceCents,
@@ -286,6 +287,7 @@ export async function processNewLead(db: AppDb, leadId: string): Promise<void> {
     seekerEmail: lead.seekerEmail,
     operatorName: lead.mode === 'direct' ? (requested?.name ?? null) : null,
     mode: lead.mode,
+    refs: { leadId: leadTagId(lead) },
   });
   await sendAdminLeadAlert({
     ...leadPayloadFromRow(lead),
@@ -294,6 +296,7 @@ export async function processNewLead(db: AppDb, leadId: string): Promise<void> {
     adminUrl: `${siteUrl()}/admin/leads/${leadId}`,
     mode: lead.mode,
     outcome: describeOutcome(outcome),
+    refs: { leadId: leadTagId(lead) },
   });
 }
 
@@ -437,6 +440,7 @@ async function sendReminders(db: AppDb, stats: AutopilotRunStats): Promise<void>
       priceCents: priceForLead(lead),
       url,
       unsubscribeUrl: await unsubscribeUrlFor(op.id),
+      refs: { leadId: leadTagId(lead), operatorId: op.id },
     });
     stats.reminded++;
   }

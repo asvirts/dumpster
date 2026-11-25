@@ -27,6 +27,7 @@ if (Astro.request.method === 'POST') {
         subject: row.subject ?? 'Your message',
         text,
         inReplyTo: row.messageId,
+        refs: { operatorId: row.operatorId },
       });
       if (sent) {
         const now = new Date().toISOString();
