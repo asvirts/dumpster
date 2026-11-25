@@ -31,6 +31,8 @@ Local admin bypass: `.dev.vars` with `ADMIN_BYPASS=1` works only under `astro de
 | `bun run db:seed:remote` | Seed remote D1 (cities + seeded operators; verify before marketing) |
 | `bun run deploy` | Build + `wrangler deploy` |
 
+**Deploys happen on push.** Cloudflare Workers Builds deploys every push to `main`. Its build runs `bun run build`, which first applies pending D1 migrations to production (`scripts/ci-migrate.mjs`, only when `WORKERS_CI=1`). A failed migration fails the build, so code never goes live ahead of its schema. Migrations must stay backward compatible with the code currently live (add columns and tables; don't drop or rename in the same push).
+
 ## Cloudflare setup
 
 1. Create D1 database: `bunx wrangler d1 create dumpsterlocal`
