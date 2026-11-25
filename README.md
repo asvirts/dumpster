@@ -16,7 +16,7 @@ bun run dev              # http://localhost:4321
 
 Admin (local): [http://localhost:4321/admin](http://localhost:4321/admin)  
 Operator portal: [http://localhost:4321/portal](http://localhost:4321/portal)  
-Local admin bypass: `.dev.vars` with `ADMIN_BYPASS=1` works only under `astro dev`. Production admin requires Cloudflare Access JWT secrets (`CF_ACCESS_TEAM_DOMAIN`, `CF_ACCESS_AUD`). Copy `.dev.vars.example` → `.dev.vars` and fill Clerk/Stripe/Resend secrets as needed.
+Local admin bypass: `.dev.vars` with `ADMIN_BYPASS=1` works only under `astro dev`. Production admin requires Cloudflare Access JWT secrets (`CF_ACCESS_TEAM_DOMAIN`, `CF_ACCESS_AUD`). Copy `.dev.vars.example` → `.dev.vars` and fill Clerk/Stripe secrets as needed.
 
 ## Scripts
 
@@ -38,7 +38,7 @@ Local admin bypass: `.dev.vars` with `ADMIN_BYPASS=1` works only under `astro de
 3. `bun run db:migrate:remote`
 4. Optionally seed: `bun run db:seed:remote` (cities + seeded operators — verify all contact info before production marketing)
 5. Set secrets:
-   - Email: `bunx wrangler secret put RESEND_API_KEY` and optional `ADMIN_NOTIFY_EMAIL`. From-address defaults to `leads@findadumpster.net` (`LEAD_FROM_EMAIL`) — verify that domain on Resend (or later Cloudflare Email Sending).
+   - Email: Cloudflare Email Sending via the `EMAIL` binding (domain onboarded with `wrangler email sending enable findadumpster.net`). Set `ADMIN_NOTIFY_EMAIL` for the digest. `RESEND_API_KEY` is an optional fallback.
    - Clerk: `PUBLIC_CLERK_PUBLISHABLE_KEY` (var) + `bunx wrangler secret put CLERK_SECRET_KEY`
    - Stripe: `bunx wrangler secret put STRIPE_SECRET_KEY` and `bunx wrangler secret put STRIPE_WEBHOOK_SECRET`
    - Access: `bunx wrangler secret put CF_ACCESS_TEAM_DOMAIN` (e.g. `myteam.cloudflareaccess.com`) and `bunx wrangler secret put CF_ACCESS_AUD` (Access app AUD)
@@ -54,7 +54,7 @@ Update `PUBLIC_SITE_URL` / `site` in `astro.config.mjs` for your domain.
 
 Leads route and sell themselves; see `docs/leads.md`. Cron triggers are in `wrangler.jsonc` and handled by `src/worker.ts`. `/admin/autopilot` shows the daily digest and can run a cycle by hand.
 
-Production needs `RESEND_API_KEY` (verified sending domain) and `ADMIN_NOTIFY_EMAIL` for any of it to reach operators. Optional: `LEAD_PRICE_EXCLUSIVE_CENTS` (default 4000), `ADMIN_LEAD_ALERTS=1`, `LINK_SIGNING_SECRET`.
+Production needs Cloudflare Email Sending enabled for findadumpster.net (the `EMAIL` binding) for any of it to reach operators, and `ADMIN_NOTIFY_EMAIL` for the digest. Optional: `LEAD_PRICE_EXCLUSIVE_CENTS` (default 4000), `ADMIN_LEAD_ALERTS=1`, `LINK_SIGNING_SECRET`.
 
 ## Product surface
 
