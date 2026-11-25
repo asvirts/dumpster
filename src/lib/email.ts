@@ -35,7 +35,7 @@ type SendOpts = {
 
 /**
  * Where replies go. LEAD_REPLY_TO is an address on the Resend Inbound subdomain
- * (e.g. leads@reply.findadumpster.net); unset means replies go to the From address.
+ * (e.g. leads@eeildoiint.resend.app); unset means replies go to the From address.
  */
 function replyToAddress(): string | null {
   return (env as { LEAD_REPLY_TO?: string }).LEAD_REPLY_TO?.trim() || null;

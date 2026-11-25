@@ -4,7 +4,7 @@ import { getDb } from '../../../lib/db';
 import { handleReceivedEmail, type ReceivedEventData } from '../../../lib/inbound';
 import { verifySvixSignature } from '../../../lib/inbound-rules';
 
-/** Resend Inbound webhook (`email.received`) for replies to leads@reply.findadumpster.net. */
+/** Resend Inbound webhook (`email.received`) for replies to leads@eeildoiint.resend.app. */
 export const POST: APIRoute = async ({ request }) => {
   const secret = (env as { RESEND_WEBHOOK_SECRET?: string }).RESEND_WEBHOOK_SECRET;
   if (!secret) return new Response('Inbound webhook is not configured', { status: 400 });

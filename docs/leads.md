@@ -86,7 +86,7 @@ To use Cloudflare Email Sending later (needs the Workers Paid plan; on Free it c
 
 ### Replies
 
-Every email sets `reply_to` to `LEAD_REPLY_TO` (`leads@reply.findadumpster.net`). The root domain's MX stays on iCloud; only `reply.findadumpster.net` has Resend's receiving MX.
+Every email sets `reply_to` to `LEAD_REPLY_TO` (`leads@eeildoiint.resend.app`). That is the Resend account's built-in receiving domain (no DNS). The root domain's MX stays on iCloud — **never add Resend's receiving MX on findadumpster.net**; it would take mail from iCloud. A branded `reply.findadumpster.net` needs a Resend plan with another domain slot.
 
 Resend posts `email.received` to `/api/resend/inbound` (Svix signature checked with `RESEND_WEBHOOK_SECRET`). The handler fetches the text with `RESEND_RECEIVING_API_KEY` (full access; the send-only key can't read received mail), then:
 
@@ -118,7 +118,7 @@ First-party: `events` rows for search, submit, and duplicates.
 | `LEAD_PRICE_CENTS` | Shared (match) price, default 2500 |
 | `LEAD_PRICE_EXCLUSIVE_CENTS` | Exclusive (direct) price, default 4000 |
 | `LINK_SIGNING_SECRET` | Optional unsubscribe-link key (falls back to `CLERK_SECRET_KEY`) |
-| `LEAD_REPLY_TO` | Reply-To on every email (var; `leads@reply.findadumpster.net`). Unset → replies go to the From address |
+| `LEAD_REPLY_TO` | Reply-To on every email (var; `leads@eeildoiint.resend.app`). Unset → replies go to the From address |
 | `RESEND_WEBHOOK_SECRET` | Signing secret of the Resend `email.received` webhook |
 | `RESEND_RECEIVING_API_KEY` | Full-access Resend key, only used to read reply text |
 | `LEAD_IP_SALT` | Optional IP hash salt |

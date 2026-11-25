@@ -29,6 +29,6 @@ LEAD_FROM_EMAIL=Find A Dumpster <leads@findadumpster.net>
 # TURNSTILE_SECRET=
 
 # Replies via Resend Inbound (docs/leads.md → Replies)
-# LEAD_REPLY_TO=leads@reply.findadumpster.net
+# LEAD_REPLY_TO=leads@eeildoiint.resend.app
 # RESEND_WEBHOOK_SECRET=whsec_...
 # RESEND_RECEIVING_API_KEY=
