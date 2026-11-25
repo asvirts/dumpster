@@ -76,9 +76,13 @@ To reuse on another directory, copy `leads.ts`, `lead-fields.ts`, `QuoteForm.ast
 
 From-address: `LEAD_FROM_EMAIL` (default `Find A Dumpster <leads@findadumpster.net>`).
 
-Sending is **Cloudflare Email Sending** through the `EMAIL` `send_email` binding in `wrangler.jsonc` (restricted to `leads@findadumpster.net`). The domain was onboarded with `wrangler email sending enable findadumpster.net`; check it with `wrangler email sending settings findadumpster.net` and `wrangler email sending dns get findadumpster.net`. Needs the Workers paid plan.
+Sending is Resend (`RESEND_API_KEY`). If the custom from-domain is not verified, send falls back to `onboarding@resend.dev`.
 
-If the binding is missing or a send fails, `src/lib/email.ts` falls back to Resend when `RESEND_API_KEY` is set. Under `astro dev` the binding is simulated: emails are logged to the console, not delivered.
+To use Cloudflare Email Sending later (needs the Workers Paid plan; on Free it can only send to verified addresses, error `recipient_plan_restricted`):
+
+1. `wrangler email sending enable findadumpster.net`
+2. Add `"send_email": [{ "name": "EMAIL" }]` to `wrangler.jsonc`
+3. Switch `src/lib/email.ts` to `env.EMAIL.send()` with `from: { email: "leads@findadumpster.net", name: "Find A Dumpster" }`
 
 ## Analytics
 
@@ -96,7 +100,7 @@ First-party: `events` rows for search, submit, and duplicates.
 
 | Name | Purpose |
 |---|---|
-| `RESEND_API_KEY` | Optional fallback sender if Cloudflare Email Sending fails |
+| `RESEND_API_KEY` | Send mail (**required** — without it no operator is ever offered a lead) |
 | `ADMIN_NOTIFY_EMAIL` | Daily digest (and per-lead alerts if `ADMIN_LEAD_ALERTS=1`) |
 | `LEAD_FROM_EMAIL` | From header |
 | `LEAD_PRICE_CENTS` | Shared (match) price, default 2500 |

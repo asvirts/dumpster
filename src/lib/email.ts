@@ -23,13 +23,6 @@ function fromAddress(): string {
   return raw.includes('<') ? raw : `${BRAND.name} <${raw}>`;
 }
 
-/** "Name <addr>" → { email, name } for the Cloudflare binding (name is required there). */
-function fromParts(): { email: string; name: string } {
-  const raw = fromAddress();
-  const m = raw.match(/^\s*(.*?)\s*<([^>]+)>\s*$/);
-  return m ? { email: m[2].trim(), name: m[1].trim() || BRAND.name } : { email: raw, name: BRAND.name };
-}
-
 type SendOpts = {
   to: string[];
   subject: string;
@@ -37,49 +30,6 @@ type SendOpts = {
   /** Adds a List-Unsubscribe header (mail clients show an unsubscribe button). */
   unsubscribeUrl?: string | null;
 };
-
-type SendEmailBinding = {
-  send(message: {
-    from: { email: string; name: string };
-    to: string[];
-    subject: string;
-    text: string;
-    headers?: Record<string, string>;
-  }): Promise<{ messageId: string }>;
-};
-
-/**
- * Cloudflare Email Sending via the `EMAIL` send_email binding (wrangler.jsonc).
- * Returns null when the binding is absent so the caller can fall back to Resend.
- */
-async function sendCloudflare(opts: SendOpts): Promise<boolean | null> {
-  const binding = (env as { EMAIL?: SendEmailBinding }).EMAIL;
-  if (!binding) return null;
-  const to = opts.to.filter(Boolean);
-  if (to.length === 0) return false;
-
-  const message = { from: fromParts(), to, subject: opts.subject, text: opts.text };
-  const headers = opts.unsubscribeUrl ? { 'List-Unsubscribe': `<${opts.unsubscribeUrl}>` } : undefined;
-  try {
-    await binding.send(headers ? { ...message, headers } : message);
-    return true;
-  } catch (err) {
-    const code = (err as { code?: string }).code ?? '';
-    // A rejected header fails the whole send; the email matters more than the header.
-    if (headers && code.startsWith('E_HEADER')) {
-      console.error('[email] Cloudflare rejected List-Unsubscribe; resending without it', code);
-      try {
-        await binding.send(message);
-        return true;
-      } catch (retryErr) {
-        console.error('[email] Cloudflare send failed', (retryErr as { code?: string }).code, retryErr);
-        return false;
-      }
-    }
-    console.error('[email] Cloudflare send failed', code, err);
-    return false;
-  }
-}
 
 async function postResend(from: string, opts: SendOpts): Promise<{ ok: boolean; status: number; body: string }> {
   const apiKey = (env as { RESEND_API_KEY?: string }).RESEND_API_KEY;
@@ -114,13 +64,6 @@ async function postResend(from: string, opts: SendOpts): Promise<{ ok: boolean; 
   }
 }
 
-async function sendEmail(opts: SendOpts): Promise<boolean> {
-  const viaCloudflare = await sendCloudflare(opts);
-  if (viaCloudflare) return true;
-  return sendResend(opts);
-}
-
-/** Fallback transport, used only when the Cloudflare binding is missing or fails. */
 async function sendResend(opts: SendOpts): Promise<boolean> {
   const apiKey = (env as { RESEND_API_KEY?: string }).RESEND_API_KEY;
   if (!apiKey) {
@@ -184,7 +127,7 @@ export async function sendAdminLeadAlert(
   if ((env as { ADMIN_LEAD_ALERTS?: string }).ADMIN_LEAD_ALERTS !== '1') return false;
 
   const modeLabel = payload.mode === 'match' ? 'match request' : 'direct quote';
-  return sendEmail({
+  return sendResend({
     to: [to],
     subject: `New lead (${modeLabel}) — ${payload.seekerName}: ${payload.outcome}`,
     text: [
@@ -212,7 +155,7 @@ export async function sendSeekerConfirmation(payload: {
   const who = payload.operatorName
     ? ` for ${payload.operatorName}`
     : ' from local dumpster rental operators';
-  return sendEmail({
+  return sendResend({
     to: [payload.seekerEmail],
     subject: `We received your dumpster quote request`,
     text: [
@@ -243,7 +186,7 @@ export async function sendLeadUnlocked(
 ): Promise<boolean> {
   if (!payload.operatorEmail) return false;
   const label = payload.unlockMethod === 'complimentary' ? 'complimentary teaser' : 'purchased';
-  return sendEmail({
+  return sendResend({
     to: [payload.operatorEmail],
     subject: `Lead unlocked (${label}) — ${payload.seekerName}`,
     text: [
@@ -280,7 +223,7 @@ export async function sendLeadOffer(payload: {
     ? `Sign in to unlock this lead in your portal:\n${payload.portalUrl}\n\nTip: turn on auto-buy in the portal and new leads arrive with full contact details instantly.`
     : `Claim your listing (free, and instant if you sign in with this email address), then unlock this lead:\n${payload.claimUrl}\n\nPortal: ${payload.portalUrl}`;
 
-  return sendEmail({
+  return sendResend({
     to: [payload.operatorEmail],
     unsubscribeUrl: payload.unsubscribeUrl,
     subject: `Lead waiting — ${payload.seekerName} (${price} to unlock)`,
@@ -321,7 +264,7 @@ export async function sendLeadReminder(payload: {
   if (!payload.operatorEmail) return false;
   const price = `$${(payload.priceCents / 100).toFixed(2)}`;
   const size = payload.projectSize ? `${payload.projectSize} ` : '';
-  return sendEmail({
+  return sendResend({
     to: [payload.operatorEmail],
     unsubscribeUrl: payload.unsubscribeUrl,
     subject: `Still available: dumpster lead in ${payload.addressOrZip ?? 'your area'}`,
@@ -347,7 +290,7 @@ export async function sendAutoBuyPaused(payload: {
   portalUrl: string;
 }): Promise<boolean> {
   if (!payload.operatorEmail) return false;
-  return sendEmail({
+  return sendResend({
     to: [payload.operatorEmail],
     subject: `Auto-buy paused — ${payload.operatorName}`,
     text: [
@@ -368,7 +311,7 @@ export async function sendAdminDigest(payload: { subject: string; text: string }
     console.info('[email] ADMIN_NOTIFY_EMAIL not set; skipping digest');
     return false;
   }
-  return sendEmail({ to: [to], subject: payload.subject, text: payload.text });
+  return sendResend({ to: [to], subject: payload.subject, text: payload.text });
 }
 
 export async function sendClaimDecision(payload: {
@@ -380,7 +323,7 @@ export async function sendClaimDecision(payload: {
 }): Promise<boolean> {
   if (!payload.operatorEmail) return false;
   if (payload.approved) {
-    return sendEmail({
+    return sendResend({
       to: [payload.operatorEmail],
       subject: `Listing claim approved — ${payload.operatorName}`,
       text: [
@@ -394,7 +337,7 @@ export async function sendClaimDecision(payload: {
       ].join('\n'),
     });
   }
-  return sendEmail({
+  return sendResend({
     to: [payload.operatorEmail],
     subject: `Listing claim update — ${payload.operatorName}`,
     text: [
@@ -430,7 +373,7 @@ export async function sendLeadNotification(payload: {
   const to: string[] = [];
   if (payload.operatorEmail) to.push(payload.operatorEmail);
   if (adminEmail) to.push(adminEmail);
-  return sendEmail({
+  return sendResend({
     to,
     subject: `New dumpster quote request — ${payload.seekerName}`,
     text: [

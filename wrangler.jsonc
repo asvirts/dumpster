@@ -27,14 +27,6 @@
       "migrations_dir": "migrations"
     }
   ],
-  // Cloudflare Email Sending (findadumpster.net is onboarded). Under `astro dev`
-  // the binding is simulated: emails are logged, not sent.
-  "send_email": [
-    {
-      "name": "EMAIL",
-      "allowed_sender_addresses": ["leads@findadumpster.net"]
-    }
-  ],
   "vars": {
     "PUBLIC_SITE_NAME": "Find A Dumpster",
     "PUBLIC_SITE_URL": "https://findadumpster.net",
