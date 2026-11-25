@@ -4,7 +4,7 @@ import VerifiedBadge from '../../components/VerifiedBadge.astro';
 import QuoteForm from '../../components/QuoteForm.astro';
 import ClaimListing from '../../components/ClaimListing.astro';
 import { getDb } from '../../lib/db';
-import { getOperatorBySlug } from '../../lib/search';
+import { getAreaPriceAverage, getOperatorBySlug } from '../../lib/search';
 import { formatCurrency, formatDate, formatPhone } from '../../lib/geo';
 import { MATERIALS, SIZE_GUIDE } from '../../lib/constants';
 import { withUtm } from '../../lib/utm';
@@ -18,10 +18,18 @@ const op = await getOperatorBySlug(db, slug);
 if (!op) return new Response(null, { status: 404, statusText: 'Not Found' });
 
 const siteUrl = Astro.site?.toString().replace(/\/$/, '') ?? Astro.url.origin;
-const priceLabel =
-  op.pricingMin != null && op.pricingMax != null
-    ? `${formatCurrency(op.pricingMin)}–${formatCurrency(op.pricingMax)}`
-    : 'Request quote for pricing';
+const hasPublishedPrice = op.pricingMin != null && op.pricingMax != null;
+const priceLabel = hasPublishedPrice
+  ? `${formatCurrency(op.pricingMin)}–${formatCurrency(op.pricingMax)}`
+  : 'Request quote for pricing';
+
+// When the company doesn't publish prices, show what other local companies
+// publish instead, clearly labeled as an area average (never as this company's price).
+const primaryCityId = op.serviceAreas.find((a) => a.cityId)?.cityId ?? null;
+const areaAverage =
+  !hasPublishedPrice && primaryCityId
+    ? await getAreaPriceAverage(db, primaryCityId, op.id)
+    : null;
 
 const sizes = op.sizes.map((s) => s.yards).sort((a, b) => a - b);
 const materials = op.materials.map((m) => m.material);
@@ -89,8 +97,26 @@ const jsonLd = [
         <div class="border-2 border-charcoal-600 bg-charcoal-800 p-4 text-right">
           <p class="font-mono text-2xl font-bold text-brand-400">{priceLabel}</p>
           <p class="mt-1 font-mono text-[10px] uppercase tracking-widest text-charcoal-400">
-            Typical range · confirm all-in quote
+            {hasPublishedPrice
+              ? 'Published by this company · confirm all-in quote'
+              : 'This company does not publish prices'}
           </p>
+          {
+            areaAverage && (
+              <div class="mt-3 border-t-2 border-charcoal-700 pt-3">
+                <p class="font-mono text-[10px] uppercase tracking-widest text-charcoal-400">
+                  Area average · {areaAverage.cityName}, {areaAverage.state}
+                </p>
+                <p class="mt-1 font-mono text-lg font-bold text-charcoal-100">
+                  {formatCurrency(areaAverage.avgMin)}–{formatCurrency(areaAverage.avgMax)}
+                </p>
+                <p class="mt-1 max-w-[16rem] text-xs text-charcoal-400 sm:ml-auto">
+                  Average of {areaAverage.companies} other local companies' published prices. Not{' '}
+                  {op.name.endsWith('s') ? `${op.name}'` : `${op.name}'s`} price.
+                </p>
+              </div>
+            )
+          }
         </div>
       </div>
       <div class="mt-7 flex flex-wrap gap-3">

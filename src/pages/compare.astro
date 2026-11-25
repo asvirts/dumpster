@@ -54,11 +54,11 @@ if (ids.length > 0) {
 
 const fields: { label: string; value: (id: string, op: (typeof rows)[0]) => string }[] = [
   {
-    label: 'Typical price',
+    label: 'Published price',
     value: (_id, op) =>
       op.pricingMin != null && op.pricingMax != null
         ? `${formatCurrency(op.pricingMin)}–${formatCurrency(op.pricingMax)}`
-        : '—',
+        : 'Not published',
   },
   {
     label: 'Sizes',

@@ -293,6 +293,64 @@ export async function getOperatorBySlug(db: AppDb, slug: string) {
   return op ?? null;
 }
 
+/** Fewer companies than this and the "average" is really one company's price. */
+const MIN_AREA_SAMPLE = 2;
+
+export type AreaPriceAverage = {
+  cityName: string;
+  state: string;
+  companies: number;
+  avgMin: number;
+  avgMax: number;
+};
+
+/**
+ * Average of the published price ranges of other companies serving a city.
+ * Only operators with a price range count (ranges are validated against the
+ * company's own site). Returns null when too few companies publish prices.
+ */
+export async function getAreaPriceAverage(
+  db: AppDb,
+  cityId: string,
+  excludeOperatorId: string,
+): Promise<AreaPriceAverage | null> {
+  const [row] = await db
+    .select({
+      cityName: cities.name,
+      state: cities.state,
+      companies: sql<number>`count(distinct ${operators.id})`,
+      avgMin: sql<number | null>`avg(${operators.pricingMin})`,
+      avgMax: sql<number | null>`avg(${operators.pricingMax})`,
+    })
+    .from(operatorServiceAreas)
+    .innerJoin(operators, eq(operators.id, operatorServiceAreas.operatorId))
+    .innerJoin(cities, eq(cities.id, operatorServiceAreas.cityId))
+    .where(
+      and(
+        eq(operatorServiceAreas.cityId, cityId),
+        eq(operators.isPublished, true),
+        eq(operators.isDemo, false),
+        eq(operators.isBroker, false),
+        sql`${operators.id} <> ${excludeOperatorId}`,
+        sql`${operators.pricingMin} is not null`,
+        sql`${operators.pricingMax} is not null`,
+      ),
+    )
+    .groupBy(cities.id);
+
+  if (!row || row.companies < MIN_AREA_SAMPLE || row.avgMin == null || row.avgMax == null) {
+    return null;
+  }
+  const round5 = (n: number) => Math.round(n / 5) * 5;
+  return {
+    cityName: row.cityName,
+    state: row.state,
+    companies: row.companies,
+    avgMin: round5(row.avgMin),
+    avgMax: round5(row.avgMax),
+  };
+}
+
 export async function getOperatorById(db: AppDb, id: string) {
   return (
     (await db.query.operators.findFirst({

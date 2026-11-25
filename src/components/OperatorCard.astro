@@ -45,7 +45,9 @@ const priceLabel =
     </div>
     <div class="text-right">
       <p class="font-mono text-lg font-bold text-brand-600">{priceLabel}</p>
-      <p class="font-mono text-[10px] uppercase tracking-widest text-muted">Typical range</p>
+      <p class="font-mono text-[10px] uppercase tracking-widest text-muted">
+        {op.pricingMin != null && op.pricingMax != null ? 'Published price' : 'Prices not published'}
+      </p>
     </div>
   </div>
 
