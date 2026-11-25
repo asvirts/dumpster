@@ -96,8 +96,9 @@ export function leadSuspicionReasons(lead: SuspicionInput): string[] {
 
 /** First 5-digit ZIP found in a free-text address. */
 export function extractZip(addressOrZip: string | null | undefined): string | null {
-  const m = (addressOrZip ?? '').match(/\b(\d{5})(?:-\d{4})?\b/);
-  return m ? m[1] : null;
+  // The ZIP comes last in a US address; a leading 5-digit number is usually the street number.
+  const matches = [...(addressOrZip ?? '').matchAll(/\b(\d{5})(?:-\d{4})?\b/g)];
+  return matches.length ? matches[matches.length - 1][1] : null;
 }
 
 export type CandidateFacts = {

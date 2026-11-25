@@ -47,6 +47,7 @@ describe('extractZip', () => {
   test('finds a ZIP in an address', () => {
     expect(extractZip('123 Main St, Austin, TX 78701-1234')).toBe('78701');
     expect(extractZip('78701')).toBe('78701');
+    expect(extractZip('17322 Canby Rd, Leesburg, VA 20175, EE. UU.')).toBe('20175');
     expect(extractZip('Austin TX')).toBeNull();
     expect(extractZip(null)).toBeNull();
   });
