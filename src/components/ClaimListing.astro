@@ -18,7 +18,7 @@ const result = Astro.getActionResult(actions.claimListing);
 const canClaim = claimStatus === 'unclaimed' || claimStatus === 'rejected';
 ---
 
-<div class="card p-5">
+<div class="card p-5" id="claim">
   <p class="font-mono text-xs font-bold uppercase tracking-widest text-ink">Own this listing?</p>
   {
     claimStatus === 'approved' && (
@@ -39,8 +39,9 @@ const canClaim = claimStatus === 'unclaimed' || claimStatus === 'rejected';
     canClaim && (
       <>
         <p class="mt-2 text-sm text-charcoal-700">
-          Claim {operatorName} with your company account to unlock leads and update your profile after
-          we approve.
+          Claim {operatorName} with your company account to unlock leads and update your profile.
+          Signing in with the listing’s email (or an email on its website domain) approves the claim
+          instantly.
         </p>
         <Show when="signed-out">
           <div class="mt-4 flex flex-wrap gap-2">
@@ -61,9 +62,15 @@ const canClaim = claimStatus === 'unclaimed' || claimStatus === 'rejected';
                 {result.error.message}
               </p>
             )}
-            {result?.data?.ok ? (
+            {result?.data?.ok && result.data.autoApproved ? (
               <p class="border-2 border-brand-600 bg-brand-50 px-3 py-2 text-sm text-brand-800">
-                Claim submitted — we’ll email you when it’s reviewed.
+                Claim approved — your verified email matches this listing.{' '}
+                <a href="/portal/leads">Open your leads</a>
+              </p>
+            ) : result?.data?.ok ? (
+              <p class="border-2 border-brand-600 bg-brand-50 px-3 py-2 text-sm text-brand-800">
+                Claim submitted — we’ll email you when it’s reviewed. Tip: claims approve instantly
+                when you sign in with the listing’s email or an email on its website domain.
               </p>
             ) : (
               <form method="POST" action={actions.claimListing} class="space-y-3">

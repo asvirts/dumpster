@@ -1,6 +1,6 @@
 # Lead generation
 
-Held-lead system: seekers submit quotes, rows persist immediately, **operators are not emailed until an admin routes the lead**.
+Autopilot lead system: seekers submit quotes, rows persist immediately, and **autopilot routes and sells each lead with no admin step** (`src/lib/autopilot.ts`). Admin routing still works for anything you want to handle by hand.
 
 ## Capture
 
@@ -13,10 +13,8 @@ Multi-step in the browser (project → contact). Without JS both steps show. Pho
 
 On success:
 
-1. Insert `leads` (`status=new`)
-2. Email admin (`ADMIN_NOTIFY_EMAIL`)
-3. Email seeker confirmation
-4. Record `quote_submit` / `quote_submit_match` in `events`
+1. Insert `leads` (`status=new`) and record `quote_submit` / `quote_submit_match` in `events`
+2. After the response (`waitUntil`): autopilot routes the lead, then emails the seeker confirmation (and the admin, only if `ADMIN_LEAD_ALERTS=1`)
 
 Operators never see `new` leads in `/portal`. Portal lists `offered`, `unlocked`, and `closed` only.
 
@@ -26,12 +24,30 @@ Operators never see `new` leads in `/portal`. Portal lists `offered`, `unlocked`
 
 Terminal without unlock: `spam`, `invalid`, `closed`.
 
-## Routing (admin-held)
+## Routing (autopilot)
 
-- **Direct:** one row, `operatorId` set at submit. Admin offers paid or passes complimentary (may reassign).
-- **Match:** `operatorId` starts null. Admin offers to up to **3** operators. Extra operators get **cloned** rows sharing `groupId`. Shared, not exclusive — each offered operator can unlock independently.
+- **Junk filter:** leads with a non-10-digit or placeholder phone, a disposable email domain, or link spam stay `new` with an `Autopilot held:` note. They are never sold and close as `spam` after 10 days.
+- **Direct:** offered to the requested operator at the **exclusive** price (`LEAD_PRICE_EXCLUSIVE_CENTS`, default $40). If that operator cannot take leads (no email, unsubscribed, broker, unpublished) the lead becomes a match request.
+- **Match:** offered to up to **3** operators at the **shared** price (`LEAD_PRICE_CENTS`, default $25). Extra operators get **cloned** rows sharing `groupId`; each can unlock independently.
+- **Who gets it:** published, non-demo, non-broker, not opted out, reachable (claimed or has an email). Candidates come from service areas (city or ZIP), else HQ within 50 miles; direct leads without a city use the requested operator's area. Ranked: auto-buy operators → claimed → unclaimed; then verified, quality score, distance.
+- **Auto-buy:** an operator on auto-buy is charged off-session on their saved card (weekly cap) and gets full contact details instantly. Otherwise they get a "lead waiting" email. Unclaimed operators' emails double as a claim invite.
 
-Monetization: **1 complimentary unlock per operator**, then Stripe Checkout (`LEAD_PRICE_CENTS`, default $25). Price is frozen on the lead at offer time (`price_cents`).
+Cron (`src/worker.ts`, `wrangler.jsonc` `triggers.crons`):
+
+| Schedule | Job |
+|---|---|
+| every 15 min | Route `new` leads missed at submit (errors, or no operator yet) · one reminder after 20h · after 24h unbought, offer to more operators (exclusive leads become shared) · close leads unsold after 10 days |
+| 14:00 UTC daily | Admin digest: revenue 24h/7d/30d, unsold leads by area, pending claims. Skipped on quiet days. |
+
+Run either by hand from `/admin/autopilot`. Locally: `curl "http://localhost:4321/cdn-cgi/handler/scheduled?cron=*/15+*+*+*+*"`.
+
+Monetization: **1 complimentary unlock per operator**, then Stripe Checkout or auto-buy. Price is frozen on the lead at offer time (`price_cents`); widening an exclusive lead lowers it to the shared price and expires any open Checkout Session.
+
+Checkout saves the card (`setup_future_usage=off_session`) so the operator can turn on auto-buy in `/portal/leads`. A declined auto-buy charge pauses auto-buy and emails the operator; the lead stays offered.
+
+Claims approve instantly when the claimant's verified Clerk email equals the listing email or is on the listing website's domain (free-mail domains excluded). Other claims wait in `/admin/claims`.
+
+Every operator email carries a signed unsubscribe link (`/api/unsubscribe`); opted-out operators are never offered leads.
 
 Paid unlock fulfills in two places (idempotent):
 
@@ -84,9 +100,11 @@ First-party: `events` rows for search, submit, and duplicates.
 
 | Name | Purpose |
 |---|---|
-| `RESEND_API_KEY` | Send mail |
-| `ADMIN_NOTIFY_EMAIL` | New-lead alert |
+| `RESEND_API_KEY` | Send mail (**required** — without it no operator is ever offered a lead) |
+| `ADMIN_NOTIFY_EMAIL` | Daily digest (and per-lead alerts if `ADMIN_LEAD_ALERTS=1`) |
 | `LEAD_FROM_EMAIL` | From header |
-| `LEAD_PRICE_CENTS` | Default PPL price |
+| `LEAD_PRICE_CENTS` | Shared (match) price, default 2500 |
+| `LEAD_PRICE_EXCLUSIVE_CENTS` | Exclusive (direct) price, default 4000 |
+| `LINK_SIGNING_SECRET` | Optional unsubscribe-link key (falls back to `CLERK_SECRET_KEY`) |
 | `LEAD_IP_SALT` | Optional IP hash salt |
 | `PUBLIC_TURNSTILE_SITE_KEY` / `TURNSTILE_SECRET` | Optional captcha |

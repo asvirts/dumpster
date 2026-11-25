@@ -41,5 +41,13 @@ An operator asserting ownership of a listing through a Clerk organization. Requi
 _Avoid_: unlock, verify
 
 **Route**:
-Admin choosing which operator(s) receive a held lead.
-_Avoid_: auto-match, distribute (until matching is automated)
+Choosing which operator(s) receive a lead — done by autopilot on submit, or by an admin by hand.
+_Avoid_: distribute, dispatch
+
+**Autopilot**:
+The cron + submit-time logic that routes, widens, reminds, expires, and reports on leads without an admin.
+_Avoid_: bot, automation (too vague)
+
+**Auto-buy**:
+An operator's opt-in to be charged their saved card and receive each offered lead unlocked, up to a weekly cap.
+_Avoid_: subscription, auto-pay

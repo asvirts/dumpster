@@ -3,9 +3,17 @@ import PortalLayout from '../../layouts/PortalLayout.astro';
 import { getDb } from '../../lib/db';
 import { getOperatorForOrg } from '../../lib/portal';
 import { and, desc, eq, inArray } from 'drizzle-orm';
-import { leads } from '../../lib/schema';
+import { leads, operators } from '../../lib/schema';
 import { formatDate } from '../../lib/geo';
-import { leadPriceCents, priceForLead, unlockLeadComplimentary } from '../../lib/leads';
+import {
+  exclusiveLeadPriceCents,
+  leadPriceCents,
+  priceForLead,
+  unlockLeadComplimentary,
+} from '../../lib/leads';
+import { autoBuysThisWeek } from '../../lib/auto-unlock';
+import { clampWeeklyCap } from '../../lib/autopilot-rules';
+import { logAudit } from '../../lib/admin';
 import { createLeadUnlockCheckout, fulfillCheckoutSessionById } from '../../lib/lead-checkout';
 import { formatUsdFromCents } from '../../lib/paid-unlock';
 import { labelForContact, labelForMaterial } from '../../lib/lead-fields';
@@ -37,6 +45,32 @@ if (Astro.request.method === 'POST' && operator) {
   const form = await Astro.request.formData();
   const leadId = form.get('leadId')?.toString();
   const intent = form.get('intent')?.toString();
+
+  if (intent === 'autobuy') {
+    const enable = form.get('enabled')?.toString() === '1';
+    if (enable && !operator.stripePaymentMethodId) {
+      return Astro.redirect('/portal/leads?err=Buy+one+lead+with+a+card+first+to+save+it+for+auto-buy');
+    }
+    const cap = clampWeeklyCap(form.get('cap') ?? operator.autoUnlockWeeklyCap);
+    await db
+      .update(operators)
+      .set({
+        autoUnlockEnabled: enable,
+        autoUnlockWeeklyCap: cap,
+        // Turning auto-buy on means they want lead emails again.
+        ...(enable ? { leadEmailsOptOut: false } : {}),
+        updatedAt: new Date().toISOString(),
+      })
+      .where(eq(operators.id, operator.id));
+    await logAudit(db, {
+      action: enable ? 'auto_buy_enabled' : 'auto_buy_disabled',
+      entityType: 'operator',
+      entityId: operator.id,
+      actor: userId,
+      notes: `weekly cap ${cap}`,
+    });
+    return Astro.redirect(`/portal/leads?ok=${enable ? 'autobuy_on' : 'autobuy_off'}`);
+  }
 
   if (leadId && intent === 'complimentary') {
     const result = await unlockLeadComplimentary(db, {
@@ -87,6 +121,8 @@ const rows = operator
   : [];
 
 const defaultPriceLabel = formatUsdFromCents(leadPriceCents());
+const exclusivePriceLabel = formatUsdFromCents(exclusiveLeadPriceCents());
+const autoBoughtThisWeek = operator ? await autoBuysThisWeek(db, operator.id) : 0;
 const ok = Astro.url.searchParams.get('ok');
 const err = Astro.url.searchParams.get('err');
 const canceled = Astro.url.searchParams.get('canceled');
@@ -105,11 +141,68 @@ const canceled = Astro.url.searchParams.get('canceled');
           Offered leads hide contact details until unlocked. You have{' '}
           <strong>{operator.complimentaryLeadsRemaining}</strong> complimentary unlock
           {operator.complimentaryLeadsRemaining === 1 ? '' : 's'} left; after that unlocks cost
-          the price shown on each lead (default {defaultPriceLabel}).
+          the price shown on each lead: {exclusivePriceLabel} when the customer asked for you
+          directly (exclusive), {defaultPriceLabel} when shared with up to 2 other operators.
         </p>
+        <section class="card mb-6 p-5" aria-labelledby="autobuy-heading">
+          <h2 id="autobuy-heading" class="font-bold text-ink">Auto-buy</h2>
+          <p class="mt-1 text-sm text-muted">
+            Get new leads with full contact details the moment they come in. We charge your saved
+            card the price shown on each lead, up to your weekly limit. Turn it off any time.
+          </p>
+          {operator.stripePaymentMethodId ? (
+            <form method="POST" class="mt-4 flex flex-wrap items-end gap-3">
+              <input type="hidden" name="intent" value="autobuy" />
+              <div>
+                <label class="label" for="autobuy-cap">Max leads per week</label>
+                <input
+                  class="input w-28"
+                  id="autobuy-cap"
+                  name="cap"
+                  type="number"
+                  min="1"
+                  max="100"
+                  value={operator.autoUnlockWeeklyCap}
+                />
+              </div>
+              {operator.autoUnlockEnabled ? (
+                <>
+                  <button type="submit" name="enabled" value="1" class="btn-secondary text-xs">
+                    Save limit
+                  </button>
+                  <button type="submit" name="enabled" value="0" class="btn-secondary text-xs">
+                    Turn off auto-buy
+                  </button>
+                </>
+              ) : (
+                <button type="submit" name="enabled" value="1" class="btn-primary text-xs">
+                  Turn on auto-buy
+                </button>
+              )}
+              <p class="w-full text-xs text-muted">
+                {operator.autoUnlockEnabled ? 'On' : 'Off'} · card {operator.stripePaymentMethodLabel ?? 'on file'} ·{' '}
+                {autoBoughtThisWeek} bought in the last 7 days
+              </p>
+            </form>
+          ) : (
+            <p class="mt-3 text-sm text-muted">
+              Buy one lead with a card below and it is saved for auto-buy.
+            </p>
+          )}
+        </section>
         {ok === 'unlocked' && (
           <p class="mb-4 border-2 border-brand-600 bg-brand-50 px-3 py-2 text-sm text-brand-800">
             Lead unlocked.
+          </p>
+        )}
+        {ok === 'autobuy_on' && (
+          <p class="mb-4 border-2 border-brand-600 bg-brand-50 px-3 py-2 text-sm text-brand-800">
+            Auto-buy is on. New leads will arrive unlocked.
+          </p>
+        )}
+        {ok === 'autobuy_off' && (
+          <p class="mb-4 border-2 border-brand-600 bg-brand-50 px-3 py-2 text-sm text-brand-800">
+            Auto-buy is off.
           </p>
         )}
         {ok === 'processing' && (

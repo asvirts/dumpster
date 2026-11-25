@@ -11,6 +11,11 @@ import {
 } from '../lib/leads';
 import { createLeadUnlockCheckout } from '../lib/lead-checkout';
 import { verifyTurnstile } from '../lib/turnstile';
+import { processNewLead } from '../lib/autopilot';
+import { claimAutoApprovable } from '../lib/autopilot-rules';
+import { logAudit } from '../lib/admin';
+import { sendClaimDecision } from '../lib/email';
+import { siteUrl } from '../lib/leads';
 
 export const server = {
   submitQuote: defineAction({
@@ -32,7 +37,8 @@ export const server = {
       }
 
       const mode = input.mode === 'match' ? 'match' : 'direct';
-      const result = await createHeldLead(getDb(), {
+      const db = getDb();
+      const result = await createHeldLead(db, {
         mode,
         operatorId: input.operatorId,
         seekerName: input.seekerName,
@@ -62,6 +68,16 @@ export const server = {
           code: result.code,
           message: result.error,
         });
+      }
+
+      if (!result.duplicate) {
+        // Route + email after the response; the cron retries anything this misses.
+        const work = processNewLead(db, result.leadId).catch((err) =>
+          console.error('[autopilot] processNewLead failed', result.leadId, err),
+        );
+        const waitUntil = context.locals.cfContext?.waitUntil?.bind(context.locals.cfContext);
+        if (waitUntil) waitUntil(work);
+        else await work;
       }
 
       return { ok: true as const, leadId: result.leadId };
@@ -148,7 +164,48 @@ export const server = {
         });
       }
 
-      return { ok: true as const };
+      // Instant approval when a verified Clerk email proves control of the listing.
+      let verifiedEmails: string[] = [];
+      try {
+        const user = await context.locals.currentUser?.();
+        verifiedEmails =
+          user?.emailAddresses
+            .filter((e) => e.verification?.status === 'verified')
+            .map((e) => e.emailAddress) ?? [];
+      } catch (err) {
+        console.warn('[claim] could not load Clerk user for auto-approval', err);
+      }
+      if (claimAutoApprovable(op, verifiedEmails)) {
+        const approved = await db
+          .update(operators)
+          .set({ claimStatus: 'approved', updatedAt: new Date().toISOString() })
+          .where(
+            and(
+              eq(operators.id, op.id),
+              eq(operators.claimStatus, 'pending'),
+              eq(operators.clerkOrgId, orgId),
+            ),
+          )
+          .returning({ id: operators.id });
+        if (approved.length > 0) {
+          await sendClaimDecision({
+            operatorName: op.name,
+            operatorEmail: op.email,
+            approved: true,
+            portalUrl: `${siteUrl()}/portal`,
+          });
+          await logAudit(db, {
+            action: 'claim_auto_approve',
+            entityType: 'operator',
+            entityId: op.id,
+            actor: userId,
+            notes: `org ${orgId}; verified email matched listing`,
+          });
+          return { ok: true as const, autoApproved: true };
+        }
+      }
+
+      return { ok: true as const, autoApproved: false };
     },
   }),
 

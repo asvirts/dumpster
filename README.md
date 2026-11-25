@@ -42,13 +42,19 @@ Local admin bypass: `.dev.vars` with `ADMIN_BYPASS=1` works only under `astro de
    - Clerk: `PUBLIC_CLERK_PUBLISHABLE_KEY` (var) + `bunx wrangler secret put CLERK_SECRET_KEY`
    - Stripe: `bunx wrangler secret put STRIPE_SECRET_KEY` and `bunx wrangler secret put STRIPE_WEBHOOK_SECRET`
    - Access: `bunx wrangler secret put CF_ACCESS_TEAM_DOMAIN` (e.g. `myteam.cloudflareaccess.com`) and `bunx wrangler secret put CF_ACCESS_AUD` (Access app AUD)
-   - Optional: `LEAD_PRICE_CENTS` (default `2500`)
+   - Optional: `LEAD_PRICE_CENTS` (shared, default `2500`), `LEAD_PRICE_EXCLUSIVE_CENTS` (exclusive, default `4000`)
 6. Deploy: `bun run deploy`
 7. **Cloudflare Access:** protect path `/admin*` with an Access application (email allowlist). The Worker verifies the Access JWT — do not rely on headers alone.
 8. **Clerk:** enable Organizations; point production instance at your domain
 9. **Stripe webhook:** endpoint `https://findadumpster.net/api/stripe/webhook` for `checkout.session.completed`, `checkout.session.async_payment_succeeded`, and `checkout.session.async_payment_failed`. Paid unlock also fulfills when the operator returns to `/portal/leads?session_id=…`.
 
 Update `PUBLIC_SITE_URL` / `site` in `astro.config.mjs` for your domain.
+
+## Autopilot
+
+Leads route and sell themselves; see `docs/leads.md`. Cron triggers are in `wrangler.jsonc` and handled by `src/worker.ts`. `/admin/autopilot` shows the daily digest and can run a cycle by hand.
+
+Production needs `RESEND_API_KEY` (verified sending domain) and `ADMIN_NOTIFY_EMAIL` for any of it to reach operators. Optional: `LEAD_PRICE_EXCLUSIVE_CENTS` (default 4000), `ADMIN_LEAD_ALERTS=1`, `LINK_SIGNING_SECRET`.
 
 ## Product surface
 
@@ -64,6 +70,8 @@ Update `PUBLIC_SITE_URL` / `site` in `astro.config.mjs` for your domain.
 | `/admin/*` | Verification, claims, lead routing, CRUD, CSV import, city notes |
 | `/admin/leads` | Lead inbox (filters, CSV, route, notes) — see `docs/leads.md` |
 | `/api/stripe/webhook` | Stripe Checkout completion → unlock lead |
+| `/api/unsubscribe` | Signed operator opt-out from lead emails |
+| `/admin/autopilot` | Autopilot digest + manual run |
 
 ## Quality model
 

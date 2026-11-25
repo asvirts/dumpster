@@ -17,6 +17,9 @@ CLERK_SECRET_KEY=
 STRIPE_SECRET_KEY=
 STRIPE_WEBHOOK_SECRET=
 LEAD_PRICE_CENTS=2500
+LEAD_PRICE_EXCLUSIVE_CENTS=4000
+# 1 = email the admin about every lead (default: daily digest only)
+# ADMIN_LEAD_ALERTS=1
 
 # Transactional email from-address (verify the domain on Resend; later Cloudflare Email)
 LEAD_FROM_EMAIL=Find A Dumpster <leads@findadumpster.net>

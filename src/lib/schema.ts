@@ -84,6 +84,14 @@ export const operators = sqliteTable(
     complimentaryLeadsRemaining: integer('complimentary_leads_remaining')
       .notNull()
       .default(1),
+    /** Operator asked to stop lead-offer emails (signed unsubscribe link). */
+    leadEmailsOptOut: integer('lead_emails_opt_out', { mode: 'boolean' }).notNull().default(false),
+    /** Auto-buy: charge the saved card off-session when a lead is offered. */
+    autoUnlockEnabled: integer('auto_unlock_enabled', { mode: 'boolean' }).notNull().default(false),
+    autoUnlockWeeklyCap: integer('auto_unlock_weekly_cap').notNull().default(10),
+    stripePaymentMethodId: text('stripe_payment_method_id'),
+    /** e.g. "Visa •••• 4242" for the portal. */
+    stripePaymentMethodLabel: text('stripe_payment_method_label'),
     createdAt: text('created_at')
       .notNull()
       .default(sql`(datetime('now'))`),
@@ -201,6 +209,11 @@ export const leads = sqliteTable(
     duplicateOfLeadId: text('duplicate_of_lead_id'),
     /** Frozen PPL price at offer time. */
     priceCents: integer('price_cents'),
+    /** Off-session auto-buy charge. */
+    stripePaymentIntentId: text('stripe_payment_intent_id'),
+    reminderSentAt: text('reminder_sent_at'),
+    /** When autopilot widened an unbought lead to alternate operators. */
+    expandedAt: text('expanded_at'),
   },
   (t) => [
     index('leads_operator_idx').on(t.operatorId),
@@ -212,6 +225,7 @@ export const leads = sqliteTable(
     index('leads_created_idx').on(t.createdAt),
     index('leads_ip_hash_idx').on(t.seekerIpHash),
     index('leads_city_idx').on(t.sourceCityId),
+    index('leads_offered_at_idx').on(t.offeredAt),
   ],
 );
 

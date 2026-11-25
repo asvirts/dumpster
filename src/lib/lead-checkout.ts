@@ -2,6 +2,7 @@ import { eq } from 'drizzle-orm';
 import type Stripe from 'stripe';
 import type { AppDb } from './db';
 import { priceForLead, siteUrl, unlockLeadPaid } from './leads';
+import { saveCardFromCheckout } from './auto-unlock';
 import { leads, type Lead, type Operator } from './schema';
 import {
   checkoutIntegrationIdentifier,
@@ -68,6 +69,15 @@ export async function createLeadUnlockCheckout(
     mode: 'payment',
     customer: operator.stripeCustomerId || undefined,
     customer_email: operator.stripeCustomerId ? undefined : operator.email || undefined,
+    // A Customer + saved card lets the operator switch on auto-buy afterwards.
+    customer_creation: operator.stripeCustomerId ? undefined : 'always',
+    payment_intent_data: { setup_future_usage: 'off_session' },
+    custom_text: {
+      submit: {
+        message:
+          'Your card is saved to your account so you can turn on auto-buy for future leads. Auto-buy stays off unless you enable it in the portal.',
+      },
+    },
     client_reference_id: lead.id,
     integration_identifier: checkoutIntegrationIdentifier(),
     line_items: [
@@ -104,6 +114,7 @@ export async function createLeadUnlockCheckout(
         ...params,
         customer: undefined,
         customer_email: operator.email || undefined,
+        customer_creation: 'always',
       });
     } else {
       console.error('[stripe] checkout create failed', err);
@@ -158,6 +169,7 @@ export async function fulfillPaidCheckoutSession(
   });
 
   if (!result.ok) return result;
+  await saveCardFromCheckout(db, session, result.operator.id);
   return { ok: true };
 }
 

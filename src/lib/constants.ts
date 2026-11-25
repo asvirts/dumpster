@@ -71,6 +71,13 @@ export type ClaimStatus = (typeof CLAIM_STATUSES)[number];
 
 export const DEFAULT_LEAD_PRICE_CENTS = 2500;
 
+/**
+ * Google AdSense publisher (matches public/ads.txt). Auto ads load on guide pages only:
+ * city/operator/search pages earn more from quote requests, and AdSense there would
+ * show competitor dumpster ads to visitors who are about to request a quote.
+ */
+export const ADSENSE_CLIENT = 'ca-pub-3116077540216024';
+
 export const SIZE_GUIDE: Record<number, string> = {
   10: 'Small cleanouts, garage junk, bathroom remodel',
   15: 'Kitchen remodel, flooring, moderate cleanouts',

@@ -6,7 +6,7 @@ Documented during Find A Dumpster MVP build (PRD v1.0, Cloudflare deploy), updat
 2. **Stack deviation from PRD:** Astro 7 + Cloudflare Workers + D1 + Drizzle instead of Next.js + Vercel + Postgres. Chosen for the existing scaffold and Cloudflare deployment requirement.
 3. **Geo:** City/ZIP matching via service-area tables + optional haversine distance from city center to operator HQ. No PostGIS.
 4. **Seeded operators:** Historical seed placeholders used 555 numbers / example.com and are marked `is_demo = 1`, unpublished. Production priority metros use web-researched real operators (`seed/real-operators-priority-metros-2026-08-11.sql`) with public phone/website; verification notes say phone call for insurance/license is still recommended. Admin `createOperator` / `updateOperator` refuse to publish 555 / example.com / SEED PLACEHOLDER contacts. Public search and sitemap exclude `is_demo`.
-5. **Quotes / leads:** Seekers submit quotes on operator pages (direct) or city/search (match). Leads are **held** (`status: new`) and emailed to admin + seeker confirmation. Admin routes every lead — no auto-offer. Direct stays 1:1 (reassign allowed). Match requests may be offered to up to 3 operators via cloned rows sharing `groupId` (shared, not exclusive). Complimentary unlock (one free teaser per operator) or paid offer ($25 default). See `docs/leads.md`.
+5. **Quotes / leads:** Seekers submit quotes on operator pages (direct) or city/search (match). Leads are **held** (`status: new`) and emailed to admin + seeker confirmation. Autopilot routes every lead on submit (admin can still route by hand). Direct stays 1:1 (reassign allowed). Match requests may be offered to up to 3 operators via cloned rows sharing `groupId` (shared, not exclusive). Complimentary unlock (one free teaser per operator) or paid offer ($25 default). See `docs/leads.md`.
 6. **Pricing (directory):** Typical min–max ranges and notes, not live inventory or booking.
 7. **Brokers:** Schema flag + hidden by default in search (`excludeBrokers` default true).
 8. **Maps:** MapLibre GL + OpenFreeMap tiles (no Mapbox/Google key for MVP).
@@ -15,6 +15,8 @@ Documented during Find A Dumpster MVP build (PRD v1.0, Cloudflare deploy), updat
 11. **Paid leads:** Stripe Checkout pay-per-lead (`LEAD_PRICE_CENTS`, default $25). First unlock per operator can be complimentary. Unlock fulfills from `/api/stripe/webhook` (`checkout.session.completed` + `checkout.session.async_payment_succeeded`) and from `/portal/leads?session_id=…` after Checkout.
 12. **Email:** Resend optional (`RESEND_API_KEY`). Lead rows always persist; email is best-effort.
 13. **Coverage:** Seeded 10 priority metros (TX/FL/CA/AZ/GA/CO). Not national on day one.
-14. **Reviews / subscriptions / Connect payouts:** Still out of scope (one-time lead unlock only).
+14. **Reviews / subscriptions / Connect payouts:** Still out of scope. Pay-per-lead only: one-time Checkout or opt-in auto-buy (saved card, weekly cap).
 15. **Guides:** Markdown content collections (not DB) for evergreen education.
 16. **City intelligence:** Editable in admin (`/admin/cities`) without code deploys.
+17. **Autopilot:** Exclusive direct leads $40, shared match leads $25 (env-configurable). Junk is held by simple heuristics, never sold. Unbought leads widen to more operators after 24h and close after 10 days. Claims auto-approve only on verified email match with the listing email/website domain.
+18. **Ads:** AdSense auto ads on `/guides` only. Money pages (city, operator, search) stay ad-free to protect quote conversions.

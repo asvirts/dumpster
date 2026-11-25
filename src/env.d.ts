@@ -1,4 +1,4 @@
-type Runtime = import('@astrojs/cloudflare').Runtime<Env>;
+type Runtime = import('@astrojs/cloudflare').Runtime;
 
 declare namespace App {
   interface Locals extends Runtime {
@@ -22,8 +22,14 @@ interface Env {
   CF_ACCESS_AUD?: string;
   STRIPE_SECRET_KEY?: string;
   STRIPE_WEBHOOK_SECRET?: string;
-  /** Pay-per-lead price in cents (default 2500) */
+  /** Shared (match) pay-per-lead price in cents (default 2500) */
   LEAD_PRICE_CENTS?: string;
+  /** Exclusive (direct quote) price in cents (default 4000) */
+  LEAD_PRICE_EXCLUSIVE_CENTS?: string;
+  /** "1" = email the admin about every lead (default off; daily digest instead) */
+  ADMIN_LEAD_ALERTS?: string;
+  /** HMAC key for unsubscribe links (falls back to CLERK_SECRET_KEY / STRIPE_WEBHOOK_SECRET) */
+  LINK_SIGNING_SECRET?: string;
   /** From address, e.g. Find A Dumpster <leads@findadumpster.net> */
   LEAD_FROM_EMAIL?: string;
   LEAD_IP_SALT?: string;

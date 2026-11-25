@@ -1,7 +1,12 @@
 {
   "$schema": "node_modules/wrangler/config-schema.json",
   "name": "findadumpster",
-  "main": "@astrojs/cloudflare/entrypoints/server",
+  // Custom entry = Astro fetch handler + scheduled() for the lead autopilot.
+  "main": "./src/worker.ts",
+  "triggers": {
+    // Every 15 min: route/expand/remind/expire leads. 14:00 UTC daily: revenue digest.
+    "crons": ["*/15 * * * *", "0 14 * * *"]
+  },
   "compatibility_date": "2025-10-01",
   // global_fetch_strictly_public: required so env.ASSETS.fetch() works on workers.dev
   // (error 1042 without it — Worker-to-assets same-zone fetch)

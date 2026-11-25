@@ -4,15 +4,28 @@ import { nanoid } from 'nanoid';
 import type { AppDb } from './db';
 import { events, leads, operators, type Lead, type NewLead, type Operator } from './schema';
 import { logAudit } from './admin';
-import { sendAdminLeadAlert, sendLeadOffer, sendLeadUnlocked, sendSeekerConfirmation } from './email';
+import { sendLeadOffer, sendLeadUnlocked } from './email';
 import { DEFAULT_LEAD_PRICE_CENTS, MAX_MATCH_OFFERS } from './constants';
 import { emptyToNull, qualificationFromInput } from './lead-fields';
 import { decidePaidUnlock } from './paid-unlock';
+import { DEFAULT_EXCLUSIVE_LEAD_PRICE_CENTS, hoursAgoSqlite } from './autopilot-rules';
+import { unsubscribeUrlFor } from './unsubscribe';
 
 export function leadPriceCents(): number {
   const raw = (env as { LEAD_PRICE_CENTS?: string }).LEAD_PRICE_CENTS;
   const n = raw ? Number(raw) : DEFAULT_LEAD_PRICE_CENTS;
   return Number.isFinite(n) && n > 0 ? Math.round(n) : DEFAULT_LEAD_PRICE_CENTS;
+}
+
+/** Exclusive (direct, one operator) leads sell for more than shared match leads. */
+export function exclusiveLeadPriceCents(): number {
+  const raw = (env as { LEAD_PRICE_EXCLUSIVE_CENTS?: string }).LEAD_PRICE_EXCLUSIVE_CENTS;
+  const n = raw ? Number(raw) : DEFAULT_EXCLUSIVE_LEAD_PRICE_CENTS;
+  return Number.isFinite(n) && n > 0 ? Math.round(n) : DEFAULT_EXCLUSIVE_LEAD_PRICE_CENTS;
+}
+
+export function leadPriceForMode(mode: 'direct' | 'match'): number {
+  return mode === 'direct' ? exclusiveLeadPriceCents() : leadPriceCents();
 }
 
 export function priceForLead(lead: Pick<Lead, 'priceCents'>): number {
@@ -56,7 +69,7 @@ export function leadPayloadFromRow(lead: Lead): LeadPayload {
 
 const RATE_EMAIL_PER_HOUR = 5;
 const RATE_IP_PER_HOUR = 8;
-const DUPLICATE_WINDOW_MS = 24 * 60 * 60 * 1000;
+const DUPLICATE_WINDOW_HOURS = 24;
 
 export async function hashSeekerIp(ip: string | null | undefined): Promise<string | null> {
   if (!ip || ip === 'unknown') return null;
@@ -118,16 +131,12 @@ export type CreateHeldLeadResult =
   | { ok: true; leadId: string; duplicate: boolean }
   | { ok: false; error: string; code: 'NOT_FOUND' | 'TOO_MANY_REQUESTS' | 'BAD_REQUEST' };
 
-function hoursAgoIso(hours: number): string {
-  return new Date(Date.now() - hours * 60 * 60 * 1000).toISOString();
-}
-
 async function isRateLimited(
   db: AppDb,
   email: string,
   ipHash: string | null,
 ): Promise<boolean> {
-  const since = hoursAgoIso(1);
+  const since = hoursAgoSqlite(1);
   const [emailRow] = await db
     .select({ c: sql<number>`count(*)` })
     .from(leads)
@@ -148,7 +157,7 @@ async function findDuplicate(
   db: AppDb,
   input: CreateHeldLeadInput,
 ): Promise<Lead | null> {
-  const since = new Date(Date.now() - DUPLICATE_WINDOW_MS).toISOString();
+  const since = hoursAgoSqlite(DUPLICATE_WINDOW_HOURS);
   const email = input.seekerEmail.toLowerCase();
 
   if (input.mode === 'direct' && input.operatorId) {
@@ -179,7 +188,8 @@ async function findDuplicate(
 }
 
 /**
- * Store a held lead. Operators are never emailed here — admin routes later.
+ * Store a new lead. No email is sent here: `processNewLead` (autopilot) routes it and
+ * sends the admin + seeker emails, from `waitUntil` on submit or from the cron.
  * Duplicate submissions within 24h return the existing row as success.
  */
 export async function createHeldLead(
@@ -256,21 +266,6 @@ export async function createHeldLead(
 
   await db.insert(leads).values(values);
 
-  const payload = leadPayloadFromRow(values as Lead);
-  await sendAdminLeadAlert({
-    ...payload,
-    operatorName: operator?.name ?? 'Match request (unassigned)',
-    leadId,
-    adminUrl: `${siteUrl()}/admin/leads/${leadId}`,
-    mode: input.mode,
-  });
-  await sendSeekerConfirmation({
-    seekerName: name,
-    seekerEmail: email,
-    operatorName: operator?.name ?? null,
-    mode: input.mode,
-  });
-
   await recordEvent(db, input.mode === 'match' ? 'quote_submit_match' : 'quote_submit', input.sourcePath ?? null, {
     leadId,
     operatorId: operator?.id ?? null,
@@ -328,6 +323,8 @@ export async function routeLeadToOperator(
     operatorId: string;
     action: 'offer' | 'complimentary';
     actor?: string | null;
+    /** false = caller sends the offer email itself (autopilot tries auto-buy first). */
+    notify?: boolean;
   },
 ): Promise<{ ok: true; leadId: string } | { ok: false; error: string }> {
   const lead = await db.query.leads.findFirst({ where: eq(leads.id, opts.leadId) });
@@ -379,6 +376,7 @@ export async function routeLeadToOperator(
     leadId: targetId,
     operatorId: opts.operatorId,
     actor: opts.actor,
+    notify: opts.notify,
   });
   if (!result.ok) return result;
   return { ok: true, leadId: targetId };
@@ -508,6 +506,7 @@ export async function offerLead(
     leadId: string;
     operatorId: string;
     actor?: string | null;
+    notify?: boolean;
   },
 ): Promise<{ ok: true } | { ok: false; error: string }> {
   const lead = await db.query.leads.findFirst({ where: eq(leads.id, opts.leadId) });
@@ -549,20 +548,9 @@ export async function offerLead(
     return { ok: false, error: 'Lead is not available to offer' };
   }
 
-  const portalUrl = `${siteUrl()}/portal/leads`;
-  const claimUrl = `${siteUrl()}/operator/${op.slug}`;
-  await sendLeadOffer({
-    operatorName: op.name,
-    operatorEmail: op.email,
-    seekerName: lead.seekerName,
-    projectSize: lead.projectSize,
-    material: lead.material,
-    addressOrZip: lead.addressOrZip,
-    portalUrl,
-    claimUrl: op.claimStatus === 'approved' ? portalUrl : claimUrl,
-    isClaimed: op.claimStatus === 'approved',
-    priceCents: price,
-  });
+  if (opts.notify !== false) {
+    await notifyLeadOffer(op, { ...lead, priceCents: price });
+  }
 
   await logAudit(db, {
     action: 'lead_offer',
@@ -573,6 +561,29 @@ export async function offerLead(
   });
 
   return { ok: true };
+}
+
+/** "Lead waiting" email. Skipped for operators who unsubscribed. */
+export async function notifyLeadOffer(
+  op: Operator,
+  lead: Pick<Lead, 'seekerName' | 'projectSize' | 'material' | 'addressOrZip' | 'priceCents'>,
+): Promise<boolean> {
+  if (op.leadEmailsOptOut) return false;
+  const portalUrl = `${siteUrl()}/portal/leads`;
+  const claimUrl = `${siteUrl()}/operator/${op.slug}#claim`;
+  return sendLeadOffer({
+    operatorName: op.name,
+    operatorEmail: op.email,
+    seekerName: lead.seekerName,
+    projectSize: lead.projectSize,
+    material: lead.material,
+    addressOrZip: lead.addressOrZip,
+    portalUrl,
+    claimUrl: op.claimStatus === 'approved' ? portalUrl : claimUrl,
+    isClaimed: op.claimStatus === 'approved',
+    priceCents: priceForLead(lead),
+    unsubscribeUrl: await unsubscribeUrlFor(op.id),
+  });
 }
 
 export async function resendLeadOffer(
