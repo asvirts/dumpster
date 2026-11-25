@@ -12,7 +12,7 @@ import {
 import { createLeadUnlockCheckout } from '../lib/lead-checkout';
 import { verifyTurnstile } from '../lib/turnstile';
 import { processNewLead } from '../lib/autopilot';
-import { claimAutoApprovable } from '../lib/autopilot-rules';
+import { claimProofEmail } from '../lib/autopilot-rules';
 import { logAudit } from '../lib/admin';
 import { sendClaimDecision } from '../lib/email';
 import { siteUrl } from '../lib/leads';
@@ -137,6 +137,22 @@ export const server = {
         });
       }
 
+      // Verified emails prove control of the listing (instant approval) and give us
+      // the claimant's address for lead emails once the claim is approved.
+      let verifiedEmails: string[] = [];
+      let primaryEmail: string | null = null;
+      try {
+        const user = await context.locals.currentUser?.();
+        const verified = user?.emailAddresses.filter((e) => e.verification?.status === 'verified') ?? [];
+        verifiedEmails = verified.map((e) => e.emailAddress);
+        primaryEmail = verified.find((e) => e.id === user?.primaryEmailAddressId)?.emailAddress ?? null;
+      } catch (err) {
+        console.warn('[claim] could not load Clerk user for auto-approval', err);
+      }
+      const proofEmail = claimProofEmail(op, verifiedEmails);
+      const claimantEmail =
+        (proofEmail ?? primaryEmail ?? verifiedEmails[0])?.trim().toLowerCase() || null;
+
       const now = new Date().toISOString();
       // CAS: only transition from unclaimed/rejected → pending
       const claimed = await db
@@ -146,6 +162,7 @@ export const server = {
           claimStatus: 'pending',
           claimRequestedAt: now,
           claimRequestedByUserId: userId,
+          claimRequestedByEmail: claimantEmail,
           claimMessage: input.message || null,
           updatedAt: now,
         })
@@ -165,20 +182,14 @@ export const server = {
       }
 
       // Instant approval when a verified Clerk email proves control of the listing.
-      let verifiedEmails: string[] = [];
-      try {
-        const user = await context.locals.currentUser?.();
-        verifiedEmails =
-          user?.emailAddresses
-            .filter((e) => e.verification?.status === 'verified')
-            .map((e) => e.emailAddress) ?? [];
-      } catch (err) {
-        console.warn('[claim] could not load Clerk user for auto-approval', err);
-      }
-      if (claimAutoApprovable(op, verifiedEmails)) {
+      if (proofEmail) {
         const approved = await db
           .update(operators)
-          .set({ claimStatus: 'approved', updatedAt: new Date().toISOString() })
+          .set({
+            claimStatus: 'approved',
+            leadNotifyEmail: proofEmail,
+            updatedAt: new Date().toISOString(),
+          })
           .where(
             and(
               eq(operators.id, op.id),
@@ -190,7 +201,7 @@ export const server = {
         if (approved.length > 0) {
           await sendClaimDecision({
             operatorName: op.name,
-            operatorEmail: op.email,
+            operatorEmail: proofEmail,
             approved: true,
             portalUrl: `${siteUrl()}/portal`,
             refs: { operatorId: op.id },

@@ -9,7 +9,7 @@ import { leadTagId } from './email-tags';
 import { DEFAULT_LEAD_PRICE_CENTS, MAX_MATCH_OFFERS } from './constants';
 import { emptyToNull, qualificationFromInput } from './lead-fields';
 import { decidePaidUnlock } from './paid-unlock';
-import { DEFAULT_EXCLUSIVE_LEAD_PRICE_CENTS, hoursAgoSqlite } from './autopilot-rules';
+import { DEFAULT_EXCLUSIVE_LEAD_PRICE_CENTS, hoursAgoSqlite, operatorNotifyEmail } from './autopilot-rules';
 import { unsubscribeUrlFor } from './unsubscribe';
 
 export function leadPriceCents(): number {
@@ -485,7 +485,7 @@ export async function unlockLeadComplimentary(
 
   await sendLeadUnlocked({
     operatorName: op.name,
-    operatorEmail: op.email,
+    operatorEmail: operatorNotifyEmail(op),
     ...leadPayloadFromRow(lead),
     unlockMethod: 'complimentary',
     refs: { leadId: leadTagId(lead), operatorId: op.id },
@@ -575,7 +575,7 @@ export async function notifyLeadOffer(
   const claimUrl = `${siteUrl()}/operator/${op.slug}#claim`;
   return sendLeadOffer({
     operatorName: op.name,
-    operatorEmail: op.email,
+    operatorEmail: operatorNotifyEmail(op),
     seekerName: lead.seekerName,
     projectSize: lead.projectSize,
     material: lead.material,
@@ -687,7 +687,7 @@ export async function unlockLeadPaid(
 
   await sendLeadUnlocked({
     operatorName: op.name,
-    operatorEmail: op.email,
+    operatorEmail: operatorNotifyEmail(op),
     ...leadPayloadFromRow(refreshed),
     unlockMethod: 'paid',
     refs: { leadId: leadTagId(refreshed), operatorId: op.id },

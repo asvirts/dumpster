@@ -80,7 +80,7 @@ export async function handleReceivedEmail(db: AppDb, data: ReceivedEventData): P
   const [operator] = await db
     .select({ id: operators.id, name: operators.name })
     .from(operators)
-    .where(sql`lower(${operators.email}) = ${fromEmail}`)
+    .where(sql`lower(${operators.email}) = ${fromEmail} OR lower(${operators.leadNotifyEmail}) = ${fromEmail}`)
     .limit(1);
 
   let outcome: InboundOutcome = 'needs_answer';

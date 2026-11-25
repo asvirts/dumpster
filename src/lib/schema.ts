@@ -80,6 +80,10 @@ export const operators = sqliteTable(
     claimRequestedAt: text('claim_requested_at'),
     claimRequestedByUserId: text('claim_requested_by_user_id'),
     claimMessage: text('claim_message'),
+    /** Verified Clerk email of the claimant; becomes leadNotifyEmail on approval. */
+    claimRequestedByEmail: text('claim_requested_by_email'),
+    /** Where lead emails go; falls back to the public listing email (see operatorNotifyEmail). */
+    leadNotifyEmail: text('lead_notify_email'),
     stripeCustomerId: text('stripe_customer_id'),
     complimentaryLeadsRemaining: integer('complimentary_leads_remaining')
       .notNull()

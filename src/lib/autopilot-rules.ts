@@ -148,26 +148,52 @@ function hostOf(website: string | null | undefined): string | null {
 }
 
 /**
- * Approve a listing claim without review when the claimant has a verified email that
- * is the listing's own email, or is on the listing website's domain (not free mail).
+ * The claimant's verified email that proves control of the listing: the listing's own
+ * email, or one on the listing website's domain (not free mail). Null when none does.
  */
+export function claimProofEmail(
+  operator: { email: string | null; website: string | null },
+  verifiedEmails: string[],
+): string | null {
+  const emails = verifiedEmails.map((e) => e.trim().toLowerCase()).filter(Boolean);
+  if (emails.length === 0) return null;
+
+  const listingEmail = operator.email?.trim().toLowerCase();
+  if (listingEmail && emails.includes(listingEmail)) return listingEmail;
+
+  const host = hostOf(operator.website);
+  if (!host) return null;
+  return (
+    emails.find((email) => {
+      const domain = email.split('@')[1];
+      if (!domain || FREE_MAIL_DOMAINS.has(domain)) return false;
+      return domain === host || host.endsWith(`.${domain}`) || domain.endsWith(`.${host}`);
+    }) ?? null
+  );
+}
+
+/** Approve a listing claim without review when a verified email proves control (see claimProofEmail). */
 export function claimAutoApprovable(
   operator: { email: string | null; website: string | null },
   verifiedEmails: string[],
 ): boolean {
-  const emails = verifiedEmails.map((e) => e.trim().toLowerCase()).filter(Boolean);
-  if (emails.length === 0) return false;
+  return claimProofEmail(operator, verifiedEmails) !== null;
+}
 
-  const listingEmail = operator.email?.trim().toLowerCase();
-  if (listingEmail && emails.includes(listingEmail)) return true;
+/** Address for lead offers, unlocks and auto-buy notices: the claimant's choice, else the listing email. */
+export function operatorNotifyEmail(op: {
+  leadNotifyEmail?: string | null;
+  email: string | null;
+}): string | null {
+  return op.leadNotifyEmail?.trim() || op.email?.trim() || null;
+}
 
-  const host = hostOf(operator.website);
-  if (!host) return false;
-  return emails.some((email) => {
-    const domain = email.split('@')[1];
-    if (!domain || FREE_MAIL_DOMAINS.has(domain)) return false;
-    return domain === host || host.endsWith(`.${domain}`) || domain.endsWith(`.${host}`);
-  });
+/** Normalize a submitted notification email; '' clears it, anything malformed is rejected. */
+export function parseNotifyEmail(raw: unknown): { ok: true; value: string | null } | { ok: false } {
+  const value = String(raw ?? '').trim().toLowerCase();
+  if (!value) return { ok: true, value: null };
+  if (value.length > 254 || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) return { ok: false };
+  return { ok: true, value };
 }
 
 export function clampWeeklyCap(raw: unknown): number {

@@ -8,7 +8,7 @@ import { sendAutoBuyPaused, sendLeadUnlocked } from './email';
 import { leadTagId } from './email-tags';
 import { leadPayloadFromRow, priceForLead, siteUrl } from './leads';
 import { expireCheckoutSession, getStripe } from './stripe';
-import { hoursAgoIso } from './autopilot-rules';
+import { hoursAgoIso, operatorNotifyEmail } from './autopilot-rules';
 
 export const AUTO_BUY_ACTOR = 'auto-buy';
 
@@ -51,7 +51,7 @@ async function pauseAutoBuy(db: AppDb, op: Operator, reason: string, lead: Lead)
     .where(eq(operators.id, op.id));
   await sendAutoBuyPaused({
     operatorName: op.name,
-    operatorEmail: op.email,
+    operatorEmail: operatorNotifyEmail(op),
     reason,
     portalUrl: `${siteUrl()}/portal/leads`,
     refs: { leadId: leadTagId(lead), operatorId: op.id },
@@ -159,7 +159,7 @@ export async function tryAutoUnlock(db: AppDb, leadId: string): Promise<AutoUnlo
 
   await sendLeadUnlocked({
     operatorName: op.name,
-    operatorEmail: op.email,
+    operatorEmail: operatorNotifyEmail(op),
     ...leadPayloadFromRow(unlocked[0]),
     unlockMethod: 'paid',
     refs: { leadId: leadTagId(unlocked[0]), operatorId: op.id },

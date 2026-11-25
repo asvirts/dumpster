@@ -26,12 +26,14 @@ if (Astro.request.method === 'POST') {
           .update(operators)
           .set({
             claimStatus: 'approved',
+            // Lead emails go to the person who claimed it (falls back to the listing email).
+            leadNotifyEmail: op.claimRequestedByEmail || op.leadNotifyEmail,
             updatedAt: now,
           })
           .where(eq(operators.id, id));
         await sendClaimDecision({
           operatorName: op.name,
-          operatorEmail: op.email,
+          operatorEmail: op.claimRequestedByEmail || op.email,
           approved: true,
           portalUrl: `${siteUrl()}/portal`,
           refs: { operatorId: op.id },
@@ -104,6 +106,7 @@ const pendingClaims = await db
                 </p>
                 <p class="mt-1 text-xs text-muted">
                   Requested {op.claimRequestedAt ? formatDate(op.claimRequestedAt) : '—'}
+                  {op.claimRequestedByEmail && <> · by {op.claimRequestedByEmail}</>}
                   {op.claimRequestedByUserId && <> · user {op.claimRequestedByUserId}</>}
                 </p>
                 {op.clerkOrgId && (

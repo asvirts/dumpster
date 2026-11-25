@@ -4,6 +4,7 @@ import type { AppDb } from './db';
 import { priceForLead, siteUrl, unlockLeadPaid } from './leads';
 import { saveCardFromCheckout } from './auto-unlock';
 import { leads, type Lead, type Operator } from './schema';
+import { operatorNotifyEmail } from './autopilot-rules';
 import {
   checkoutIntegrationIdentifier,
   expireCheckoutSession,
@@ -68,7 +69,7 @@ export async function createLeadUnlockCheckout(
   const params: Stripe.Checkout.SessionCreateParams = {
     mode: 'payment',
     customer: operator.stripeCustomerId || undefined,
-    customer_email: operator.stripeCustomerId ? undefined : operator.email || undefined,
+    customer_email: operator.stripeCustomerId ? undefined : operatorNotifyEmail(operator) || undefined,
     // A Customer + saved card lets the operator switch on auto-buy afterwards.
     customer_creation: operator.stripeCustomerId ? undefined : 'always',
     payment_intent_data: { setup_future_usage: 'off_session' },
@@ -113,7 +114,7 @@ export async function createLeadUnlockCheckout(
       session = await stripe.checkout.sessions.create({
         ...params,
         customer: undefined,
-        customer_email: operator.email || undefined,
+        customer_email: operatorNotifyEmail(operator) || undefined,
         customer_creation: 'always',
       });
     } else {

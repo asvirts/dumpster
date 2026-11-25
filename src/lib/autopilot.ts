@@ -29,6 +29,7 @@ import {
   hoursAgoIso,
   hoursAgoSqlite,
   leadSuspicionReasons,
+  operatorNotifyEmail,
   rankCandidates,
 } from './autopilot-rules';
 
@@ -434,7 +435,7 @@ async function sendReminders(db: AppDb, stats: AutopilotRunStats): Promise<void>
         : `${siteUrl()}/operator/${op.slug}#claim`;
     await sendLeadReminder({
       operatorName: op.name,
-      operatorEmail: op.email,
+      operatorEmail: operatorNotifyEmail(op),
       projectSize: lead.projectSize,
       addressOrZip: lead.addressOrZip,
       priceCents: priceForLead(lead),

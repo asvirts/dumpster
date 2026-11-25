@@ -2,10 +2,13 @@ import { describe, expect, test } from 'bun:test';
 import {
   candidateTier,
   claimAutoApprovable,
+  claimProofEmail,
   clampWeeklyCap,
   extractZip,
   hoursAgoSqlite,
   leadSuspicionReasons,
+  operatorNotifyEmail,
+  parseNotifyEmail,
   rankCandidates,
   signLinkValue,
   verifyLinkValue,
@@ -116,6 +119,54 @@ describe('claimAutoApprovable', () => {
 
   test('gmail listing email still matches exactly', () => {
     expect(claimAutoApprovable({ email: 'acme@gmail.com', website: null }, ['acme@gmail.com'])).toBe(true);
+  });
+});
+
+describe('claimProofEmail', () => {
+  const op = { email: 'info@acme-dumpsters.com', website: 'https://www.acme-dumpsters.com' };
+
+  test('returns the matching listing email', () => {
+    expect(claimProofEmail(op, ['me@gmail.com', 'Info@Acme-Dumpsters.com'])).toBe('info@acme-dumpsters.com');
+  });
+
+  test('returns the claimant address on the website domain, not the listing email', () => {
+    expect(claimProofEmail(op, ['me@gmail.com', 'Owner@acme-dumpsters.com'])).toBe('owner@acme-dumpsters.com');
+  });
+
+  test('null when nothing proves control', () => {
+    expect(claimProofEmail(op, ['me@gmail.com'])).toBeNull();
+    expect(claimProofEmail({ email: null, website: null }, ['owner@acme-dumpsters.com'])).toBeNull();
+  });
+});
+
+describe('operatorNotifyEmail', () => {
+  test('prefers the lead notification email', () => {
+    expect(operatorNotifyEmail({ leadNotifyEmail: 'owner@acme.com', email: 'info@acme.com' })).toBe('owner@acme.com');
+  });
+
+  test('falls back to the listing email', () => {
+    expect(operatorNotifyEmail({ leadNotifyEmail: '  ', email: 'info@acme.com' })).toBe('info@acme.com');
+    expect(operatorNotifyEmail({ email: 'info@acme.com' })).toBe('info@acme.com');
+  });
+
+  test('null when neither is set', () => {
+    expect(operatorNotifyEmail({ leadNotifyEmail: null, email: '' })).toBeNull();
+  });
+});
+
+describe('parseNotifyEmail', () => {
+  test('blank clears', () => {
+    expect(parseNotifyEmail('  ')).toEqual({ ok: true, value: null });
+    expect(parseNotifyEmail(null)).toEqual({ ok: true, value: null });
+  });
+
+  test('normalizes a valid address', () => {
+    expect(parseNotifyEmail(' Owner@Acme.com ')).toEqual({ ok: true, value: 'owner@acme.com' });
+  });
+
+  test('rejects malformed input', () => {
+    expect(parseNotifyEmail('owner@acme')).toEqual({ ok: false });
+    expect(parseNotifyEmail('two words@acme.com')).toEqual({ ok: false });
   });
 });
 
