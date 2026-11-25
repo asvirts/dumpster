@@ -255,6 +255,35 @@ export const adminAudit = sqliteTable('admin_audit', {
     .default(sql`(datetime('now'))`),
 });
 
+/** Replies to lead emails, received through Resend Inbound. */
+export const inboundEmails = sqliteTable(
+  'inbound_emails',
+  {
+    id: text('id').primaryKey(),
+    resendEmailId: text('resend_email_id').notNull(),
+    fromEmail: text('from_email').notNull(),
+    fromHeader: text('from_header'),
+    subject: text('subject'),
+    /** RFC 5322 Message-ID, for threading our answer. */
+    messageId: text('message_id'),
+    /** New text only (quoted thread stripped). */
+    replyText: text('reply_text'),
+    fullText: text('full_text'),
+    operatorId: text('operator_id').references(() => operators.id, { onDelete: 'set null' }),
+    /** 'unsubscribed' | 'auto_reply' when handled without a human. */
+    autoAction: text('auto_action'),
+    handledAt: text('handled_at'),
+    answeredAt: text('answered_at'),
+    createdAt: text('created_at')
+      .notNull()
+      .default(sql`(datetime('now'))`),
+  },
+  (t) => [
+    uniqueIndex('inbound_emails_resend_id_idx').on(t.resendEmailId),
+    index('inbound_emails_created_idx').on(t.createdAt),
+  ],
+);
+
 export const citiesRelations = relations(cities, ({ many }) => ({
   serviceAreas: many(operatorServiceAreas),
   leads: many(leads),

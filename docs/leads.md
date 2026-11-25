@@ -84,6 +84,18 @@ To use Cloudflare Email Sending later (needs the Workers Paid plan; on Free it c
 2. Add `"send_email": [{ "name": "EMAIL" }]` to `wrangler.jsonc`
 3. Switch `src/lib/email.ts` to `env.EMAIL.send()` with `from: { email: "leads@findadumpster.net", name: "Find A Dumpster" }`
 
+### Replies
+
+Every email sets `reply_to` to `LEAD_REPLY_TO` (`leads@reply.findadumpster.net`). The root domain's MX stays on iCloud; only `reply.findadumpster.net` has Resend's receiving MX.
+
+Resend posts `email.received` to `/api/resend/inbound` (Svix signature checked with `RESEND_WEBHOOK_SECRET`). The handler fetches the text with `RESEND_RECEIVING_API_KEY` (full access; the send-only key can't read received mail), then:
+
+- Out-of-office / auto-submitted replies: stored, ignored.
+- Short opt-out replies ("stop", "remove me", "unsubscribe"…) from a listed operator's email: operator opted out of lead emails and auto-buy, audit `operator_unsubscribe` by `email-reply`.
+- Anything else: stored, admin emailed, listed under **Needs an answer** at `/admin/replies` and in the daily digest. Answers sent from that page go out from `leads@findadumpster.net`, threaded with `In-Reply-To`.
+
+Handling is idempotent on Resend's `email_id`; a non-2xx response makes Resend retry.
+
 ## Analytics
 
 GA4 events (when `gtag` is present): `lead_form_view`, `lead_form_start`, `lead_form_submit`, `lead_form_success`.
@@ -106,5 +118,8 @@ First-party: `events` rows for search, submit, and duplicates.
 | `LEAD_PRICE_CENTS` | Shared (match) price, default 2500 |
 | `LEAD_PRICE_EXCLUSIVE_CENTS` | Exclusive (direct) price, default 4000 |
 | `LINK_SIGNING_SECRET` | Optional unsubscribe-link key (falls back to `CLERK_SECRET_KEY`) |
+| `LEAD_REPLY_TO` | Reply-To on every email (var; `leads@reply.findadumpster.net`). Unset → replies go to the From address |
+| `RESEND_WEBHOOK_SECRET` | Signing secret of the Resend `email.received` webhook |
+| `RESEND_RECEIVING_API_KEY` | Full-access Resend key, only used to read reply text |
 | `LEAD_IP_SALT` | Optional IP hash salt |
 | `PUBLIC_TURNSTILE_SITE_KEY` / `TURNSTILE_SECRET` | Optional captcha |

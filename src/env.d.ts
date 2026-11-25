@@ -30,6 +30,12 @@ interface Env {
   ADMIN_LEAD_ALERTS?: string;
   /** HMAC key for unsubscribe links (falls back to CLERK_SECRET_KEY / STRIPE_WEBHOOK_SECRET) */
   LINK_SIGNING_SECRET?: string;
+  /** Reply-To on every email; an address on the Resend Inbound subdomain. */
+  LEAD_REPLY_TO?: string;
+  /** Signing secret of the Resend `email.received` webhook (whsec_…). */
+  RESEND_WEBHOOK_SECRET?: string;
+  /** Full-access Resend key, used only to read received replies. */
+  RESEND_RECEIVING_API_KEY?: string;
   /** From address, e.g. Find A Dumpster <leads@findadumpster.net> */
   LEAD_FROM_EMAIL?: string;
   LEAD_IP_SALT?: string;

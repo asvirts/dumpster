@@ -29,7 +29,17 @@ type SendOpts = {
   text: string;
   /** Adds a List-Unsubscribe header (mail clients show an unsubscribe button). */
   unsubscribeUrl?: string | null;
+  /** Extra headers, e.g. In-Reply-To / References when answering a reply. */
+  headers?: Record<string, string>;
 };
+
+/**
+ * Where replies go. LEAD_REPLY_TO is an address on the Resend Inbound subdomain
+ * (e.g. leads@reply.findadumpster.net); unset means replies go to the From address.
+ */
+function replyToAddress(): string | null {
+  return (env as { LEAD_REPLY_TO?: string }).LEAD_REPLY_TO?.trim() || null;
+}
 
 async function postResend(from: string, opts: SendOpts): Promise<{ ok: boolean; status: number; body: string }> {
   const apiKey = (env as { RESEND_API_KEY?: string }).RESEND_API_KEY;
@@ -51,8 +61,14 @@ async function postResend(from: string, opts: SendOpts): Promise<{ ok: boolean; 
         to,
         subject: opts.subject,
         text: opts.text,
-        ...(opts.unsubscribeUrl
-          ? { headers: { 'List-Unsubscribe': `<${opts.unsubscribeUrl}>` } }
+        ...(replyToAddress() ? { reply_to: replyToAddress() } : {}),
+        ...(opts.unsubscribeUrl || opts.headers
+          ? {
+              headers: {
+                ...(opts.headers ?? {}),
+                ...(opts.unsubscribeUrl ? { 'List-Unsubscribe': `<${opts.unsubscribeUrl}>` } : {}),
+              },
+            }
           : {}),
       }),
     });
@@ -383,5 +399,44 @@ export async function sendLeadNotification(payload: {
       '',
       `— ${BRAND.name}`,
     ].join('\n'),
+  });
+}
+
+/** Admin alert for a human reply to one of our emails. */
+export async function sendAdminReplyAlert(payload: {
+  fromHeader: string;
+  subject: string;
+  replyText: string;
+  operatorName: string | null;
+  adminUrl: string;
+}): Promise<boolean> {
+  const to = adminEmail();
+  if (!to) return false;
+  return sendResend({
+    to: [to],
+    subject: `Reply from ${payload.operatorName ?? payload.fromHeader}: ${payload.subject}`,
+    text: [
+      `${payload.fromHeader}${payload.operatorName ? ` (${payload.operatorName})` : ''} replied:`,
+      '',
+      payload.replyText || '(no text)',
+      '',
+      `Answer from leads@findadumpster.net (keeps your own address private): ${payload.adminUrl}`,
+    ].join('\n'),
+  });
+}
+
+/** Our answer to a reply, sent from the lead address and threaded with the original. */
+export async function sendReplyAnswer(payload: {
+  to: string;
+  subject: string;
+  text: string;
+  inReplyTo: string | null;
+}): Promise<boolean> {
+  const subject = /^re:/i.test(payload.subject) ? payload.subject : `Re: ${payload.subject}`;
+  return sendResend({
+    to: [payload.to],
+    subject,
+    text: payload.text,
+    headers: payload.inReplyTo ? { 'In-Reply-To': payload.inReplyTo, References: payload.inReplyTo } : undefined,
   });
 }

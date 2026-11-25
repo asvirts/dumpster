@@ -49,8 +49,8 @@ const portalClerk = clerkMiddleware((auth, context, next) => {
 });
 
 const clerkAuth = defineMiddleware(async (context, next) => {
-  // Stripe must be able to POST here even if Clerk keys are missing or Clerk is down.
-  if (context.url.pathname === '/api/stripe/webhook') {
+  // Webhooks must be able to POST here even if Clerk keys are missing or Clerk is down.
+  if (context.url.pathname === '/api/stripe/webhook' || context.url.pathname === '/api/resend/inbound') {
     return next();
   }
   return portalClerk(context, next);

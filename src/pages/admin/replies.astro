@@ -1,0 +1,129 @@
+---
+import AdminLayout from '../../layouts/AdminLayout.astro';
+import { desc, eq } from 'drizzle-orm';
+import { getDb } from '../../lib/db';
+import { inboundEmails, operators } from '../../lib/schema';
+import { logAudit } from '../../lib/admin';
+import { sendReplyAnswer } from '../../lib/email';
+
+const db = getDb();
+const actor = Astro.locals.adminEmail ?? 'admin';
+let flash: string | null = null;
+
+if (Astro.request.method === 'POST') {
+  const form = await Astro.request.formData();
+  const id = form.get('id')?.toString() ?? '';
+  const intent = form.get('intent')?.toString();
+  const [row] = await db.select().from(inboundEmails).where(eq(inboundEmails.id, id)).limit(1);
+  if (!row) {
+    flash = 'Reply not found.';
+  } else if (intent === 'answer') {
+    const text = form.get('text')?.toString().trim() ?? '';
+    if (!text) {
+      flash = 'Write an answer first.';
+    } else {
+      const sent = await sendReplyAnswer({
+        to: row.fromEmail,
+        subject: row.subject ?? 'Your message',
+        text,
+        inReplyTo: row.messageId,
+      });
+      if (sent) {
+        const now = new Date().toISOString();
+        await db.update(inboundEmails).set({ answeredAt: now, handledAt: now }).where(eq(inboundEmails.id, id));
+        await logAudit(db, { action: 'reply_answered', entityType: 'inbound_email', entityId: id, actor, notes: text.slice(0, 500) });
+        flash = `Answer sent to ${row.fromEmail}.`;
+      } else {
+        flash = 'Sending failed — check RESEND_API_KEY.';
+      }
+    }
+  } else if (intent === 'done') {
+    await db.update(inboundEmails).set({ handledAt: new Date().toISOString() }).where(eq(inboundEmails.id, id));
+    flash = 'Marked done.';
+  } else if (intent === 'reopen') {
+    await db.update(inboundEmails).set({ handledAt: null }).where(eq(inboundEmails.id, id));
+    flash = 'Reopened.';
+  }
+}
+
+const rows = await db
+  .select({
+    reply: inboundEmails,
+    operatorName: operators.name,
+    operatorSlug: operators.slug,
+  })
+  .from(inboundEmails)
+  .leftJoin(operators, eq(inboundEmails.operatorId, operators.id))
+  .orderBy(desc(inboundEmails.createdAt))
+  .limit(100);
+const open = rows.filter((r) => !r.reply.handledAt);
+const done = rows.filter((r) => r.reply.handledAt);
+
+const label: Record<string, string> = {
+  unsubscribed: 'Unsubscribed automatically',
+  auto_reply: 'Auto-reply (ignored)',
+};
+---
+
+<AdminLayout title="Replies">
+  <p class="mb-6 text-sm text-muted">
+    Replies to lead emails arrive here (reply-to <code>leads@reply.findadumpster.net</code>). Opt-out
+    requests and out-of-office replies are handled automatically. Answers go out from
+    <code>leads@findadumpster.net</code> in the same thread.
+  </p>
+
+  {flash && <p class="mb-6 border-2 border-brand-600 bg-brand-50 px-3 py-2 text-sm text-brand-800">{flash}</p>}
+
+  <h2 class="mb-3 font-bold text-ink">Needs an answer ({open.length})</h2>
+  {open.length === 0 && <p class="mb-8 text-sm text-muted">Nothing waiting.</p>}
+  <div class="mb-10 space-y-4">
+    {
+      open.map(({ reply, operatorName, operatorSlug }) => (
+        <section id={reply.id} class="card p-5">
+          <div class="flex flex-wrap items-baseline justify-between gap-2">
+            <h3 class="font-bold text-ink">{reply.subject}</h3>
+            <span class="text-xs text-muted">{reply.createdAt.slice(0, 16).replace('T', ' ')} UTC</span>
+          </div>
+          <p class="mt-1 text-sm">
+            {reply.fromHeader ?? reply.fromEmail}
+            {operatorName && (
+              <>
+                {' '}· <a href={`/operator/${operatorSlug}`}>{operatorName}</a>
+              </>
+            )}
+          </p>
+          <pre class="mt-3 whitespace-pre-wrap font-sans text-sm">{reply.replyText ?? '(Reply text unavailable — set RESEND_RECEIVING_API_KEY.)'}</pre>
+          <form method="POST" class="mt-4 space-y-2">
+            <input type="hidden" name="id" value={reply.id} />
+            <textarea name="text" rows="4" class="input w-full" placeholder="Your answer (sent from leads@findadumpster.net)" />
+            <div class="flex gap-2">
+              <button type="submit" name="intent" value="answer" class="btn-primary text-xs">Send answer</button>
+              <button type="submit" name="intent" value="done" class="btn-secondary text-xs">Mark done without answering</button>
+            </div>
+          </form>
+        </section>
+      ))
+    }
+  </div>
+
+  <h2 class="mb-3 font-bold text-ink">Handled</h2>
+  {done.length === 0 && <p class="text-sm text-muted">None yet.</p>}
+  <ul class="space-y-2">
+    {
+      done.map(({ reply, operatorName }) => (
+        <li class="card flex flex-wrap items-center justify-between gap-2 p-3 text-sm">
+          <span>
+            <strong>{operatorName ?? reply.fromEmail}</strong> — {reply.subject}{' '}
+            <span class="text-muted">
+              · {reply.autoAction ? label[reply.autoAction] ?? reply.autoAction : reply.answeredAt ? 'Answered' : 'Done'}
+            </span>
+          </span>
+          <form method="POST">
+            <input type="hidden" name="id" value={reply.id} />
+            <button type="submit" name="intent" value="reopen" class="btn-secondary px-2 py-1 text-xs">Reopen</button>
+          </form>
+        </li>
+      ))
+    }
+  </ul>
+</AdminLayout>

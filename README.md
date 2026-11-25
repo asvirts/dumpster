@@ -54,7 +54,7 @@ Update `PUBLIC_SITE_URL` / `site` in `astro.config.mjs` for your domain.
 
 Leads route and sell themselves; see `docs/leads.md`. Cron triggers are in `wrangler.jsonc` and handled by `src/worker.ts`. `/admin/autopilot` shows the daily digest and can run a cycle by hand.
 
-Production needs `RESEND_API_KEY` (verified sending domain) and `ADMIN_NOTIFY_EMAIL` for any of it to reach operators. Optional: `LEAD_PRICE_EXCLUSIVE_CENTS` (default 4000), `ADMIN_LEAD_ALERTS=1`, `LINK_SIGNING_SECRET`.
+Production needs `RESEND_API_KEY` (verified sending domain) and `ADMIN_NOTIFY_EMAIL` for any of it to reach operators. Optional: `LEAD_PRICE_EXCLUSIVE_CENTS` (default 4000), `ADMIN_LEAD_ALERTS=1`, `LINK_SIGNING_SECRET`. Replies: `RESEND_WEBHOOK_SECRET` + `RESEND_RECEIVING_API_KEY` secrets and the `LEAD_REPLY_TO` var (see docs/leads.md → Replies; answer at `/admin/replies`).
 
 ## Product surface
 

@@ -1,6 +1,6 @@
 import { and, desc, eq, gte, inArray, isNull, lt, ne, or, sql } from 'drizzle-orm';
 import type { AppDb } from './db';
-import { cities, leads, operatorServiceAreas, operators, type Lead, type Operator } from './schema';
+import { cities, inboundEmails, leads, operatorServiceAreas, operators, type Lead, type Operator } from './schema';
 import { MAX_MATCH_OFFERS } from './constants';
 import { logAudit } from './admin';
 import { sendAdminDigest, sendAdminLeadAlert, sendLeadReminder, sendSeekerConfirmation } from './email';
@@ -551,6 +551,17 @@ export async function buildDigest(db: AppDb): Promise<{ subject: string; text: s
     .select({ c: sql<number>`count(*)` })
     .from(operators)
     .where(eq(operators.autoUnlockEnabled, true));
+  const openReplies = await db
+    .select({ from: inboundEmails.fromEmail, subject: inboundEmails.subject, operatorName: operators.name })
+    .from(inboundEmails)
+    .leftJoin(operators, eq(inboundEmails.operatorId, operators.id))
+    .where(isNull(inboundEmails.handledAt))
+    .orderBy(desc(inboundEmails.createdAt))
+    .limit(20);
+  const [autoUnsubs] = await db
+    .select({ c: sql<number>`count(*)` })
+    .from(inboundEmails)
+    .where(and(eq(inboundEmails.autoAction, 'unsubscribed'), gte(inboundEmails.createdAt, hoursAgoSqlite(24))));
 
   const lines = [
     `Lead revenue (paid unlocks, gross before Stripe fees)`,
@@ -575,6 +586,16 @@ export async function buildDigest(db: AppDb): Promise<{ subject: string; text: s
       '',
     );
   }
+  if (openReplies.length) {
+    lines.push(
+      `Replies waiting for an answer (${openReplies.length}): ${siteUrl()}/admin/replies`,
+      ...openReplies.slice(0, 10).map((r) => `  ${r.operatorName ?? r.from}: ${r.subject ?? '(no subject)'}`),
+      '',
+    );
+  }
+  if ((autoUnsubs?.c ?? 0) > 0) {
+    lines.push(`Operators who replied to opt out (24h, handled automatically): ${autoUnsubs?.c}`, '');
+  }
   if ((pendingClaims?.c ?? 0) > 0) {
     lines.push(
       `Listing claims that could not be auto-verified (${pendingClaims?.c}): ${siteUrl()}/admin/claims`,
@@ -584,7 +605,13 @@ export async function buildDigest(db: AppDb): Promise<{ subject: string; text: s
   }
   lines.push(`— Find A Dumpster autopilot`);
 
-  const quiet = day.count === 0 && (newLeads?.c ?? 0) === 0 && unmatched.length === 0 && held.length === 0 && (pendingClaims?.c ?? 0) === 0;
+  const quiet =
+    day.count === 0 &&
+    (newLeads?.c ?? 0) === 0 &&
+    unmatched.length === 0 &&
+    held.length === 0 &&
+    (pendingClaims?.c ?? 0) === 0 &&
+    openReplies.length === 0;
   return {
     subject: `Find A Dumpster: ${formatUsdFromCents(day.cents)} yesterday · ${formatUsdFromCents(month.cents)} last 30 days`,
     text: lines.join('\n'),
