@@ -11,7 +11,7 @@ INSERT OR IGNORE INTO operators (
 ) VALUES (
   'op-fc15-okc-enviro', 'Enviro Dispose', 'enviro-dispose', '405-213-4593', 'dustin@envirodispose.com', 'https://envirodispose.com/',
   'Locally owned Oklahoma City roll-off hauler with same-day service and 10–40 yard open-top boxes. Yard at 7220 NW 63rd Street in Bethany.', 'Oklahoma City', 'OK', 35.4676, -97.5164,
-  350, 700, NULL, NULL, NULL,
+  375, 575, NULL, NULL, NULL,
   0, NULL, 1, 0,
   'verified', datetime('now'), 'firecrawl-2026-08-15', 'Firecrawl web research 2026-08-15: public phone/website from company site. Local hauler (not a national broker). Phone call for insurance/license still recommended before paid ads.',
   0, NULL, 88, 1, 0, 'unclaimed', 1
@@ -37,7 +37,7 @@ INSERT OR IGNORE INTO operators (
 ) VALUES (
   'op-fc15-okc-cubic', 'Cubic Waste Solutions', 'cubic-waste-solutions', '405-261-9105', NULL, 'https://cubicwaste.com/',
   'Family-owned Oklahoma City roll-off contractor with 10–40 yard dumpsters, same-day delivery, and driveway-friendly smaller boxes.', 'Oklahoma City', 'OK', 35.4676, -97.5164,
-  350, 750, NULL, NULL, NULL,
+  NULL, NULL, NULL, NULL, NULL,
   1, NULL, 1, 0,
   'verified', datetime('now'), 'firecrawl-2026-08-15', 'Firecrawl web research 2026-08-15: public phone/website from company site. Local hauler (not a national broker). Phone call for insurance/license still recommended before paid ads.',
   0, NULL, 87, 1, 0, 'unclaimed', 1
@@ -62,7 +62,7 @@ INSERT OR IGNORE INTO operators (
 ) VALUES (
   'op-fc15-okc-ready', 'Ready to Roll Off', 'ready-to-roll-off', '405-919-2814', 'ready2rolloff@gmail.com', 'https://ready2rolloff.com/',
   'Family-run OKC roll-off rental with a published $435 20-yard / 10-day package (2 tons included) and same-day delivery across Edmond, Yukon, and Mustang.', 'Oklahoma City', 'OK', 35.4676, -97.5164,
-  435, 550, NULL, NULL, NULL,
+  435, 435, NULL, NULL, NULL,
   1, NULL, 1, 0,
   'verified', datetime('now'), 'firecrawl-2026-08-15', 'Firecrawl web research 2026-08-15: public phone/website from company site. Local hauler (not a national broker). Phone call for insurance/license still recommended before paid ads.',
   0, NULL, 86, 1, 0, 'unclaimed', 1
@@ -82,7 +82,7 @@ INSERT OR IGNORE INTO operators (
 ) VALUES (
   'op-fc15-okc-junkfrog', 'Junk Frog', 'junk-frog', '405-444-5865', NULL, 'https://junkfrog.com/',
   'Oklahoma City roll-off dumpster rental plus junk removal and storage with flat-rate pricing.', 'Oklahoma City', 'OK', 35.4676, -97.5164,
-  325, 650, NULL, NULL, NULL,
+  375, 595, NULL, NULL, NULL,
   0, NULL, 0, 0,
   'verified', datetime('now'), 'firecrawl-2026-08-15', 'Firecrawl web research 2026-08-15: public phone/website from company site. Local hauler (not a national broker). Phone call for insurance/license still recommended before paid ads.',
   0, NULL, 80, 1, 0, 'unclaimed', 1
@@ -105,7 +105,7 @@ INSERT OR IGNORE INTO operators (
 ) VALUES (
   'op-fc15-okc-payneless', 'Payne-Less Junk Removal', 'payne-less-junk-removal', '405-788-1689', NULL, 'https://www.okcjunkhauling.com/',
   'OKC dumpster rental and junk removal with first-ton included packages and same- or next-day service.', 'Oklahoma City', 'OK', 35.4676, -97.5164,
-  300, 600, NULL, NULL, NULL,
+  NULL, NULL, NULL, NULL, NULL,
   0, NULL, 1, 0,
   'verified', datetime('now'), 'firecrawl-2026-08-15', 'Firecrawl web research 2026-08-15: public phone/website from company site. Local hauler (not a national broker). Phone call for insurance/license still recommended before paid ads.',
   0, NULL, 79, 1, 0, 'unclaimed', 1
@@ -126,7 +126,7 @@ INSERT OR IGNORE INTO operators (
 ) VALUES (
   'op-fc15-okc-btdt', 'Bin There Dump That Oklahoma City', 'bin-there-dump-that-oklahoma-city', '405-640-4345', NULL, 'https://www.okcdumpsterrental.com/',
   'Driveway-safe trailer-style dumpsters from local franchisees Jason and Heather. Flat-rate 10-day rentals in 6–20 yard sizes.', 'Oklahoma City', 'OK', 35.4676, -97.5164,
-  350, 700, NULL, NULL, NULL,
+  375, 475, NULL, NULL, NULL,
   1, NULL, 1, 0,
   'verified', datetime('now'), 'firecrawl-2026-08-15', 'Firecrawl web research 2026-08-15: public phone/website from company site. Local hauler (not a national broker). Phone call for insurance/license still recommended before paid ads.',
   0, NULL, 76, 1, 0, 'unclaimed', 1
@@ -171,7 +171,7 @@ INSERT OR IGNORE INTO operators (
 ) VALUES (
   'op-fc15-tul-atob', 'A to B Hauling', 'a-to-b-hauling', '918-900-4285', NULL, 'https://atobhauling.com/',
   'Owner-operated Tulsa roll-off rentals since 2014 with 15–30 yard boxes and same-day delivery when booked before 2 p.m.', 'Tulsa', 'OK', 36.154, -95.9928,
-  350, 700, NULL, NULL, NULL,
+  NULL, NULL, NULL, NULL, NULL,
   1, NULL, 1, 0,
   'verified', datetime('now'), 'firecrawl-2026-08-15', 'Firecrawl web research 2026-08-15: public phone/website from company site. Local hauler (not a national broker). Phone call for insurance/license still recommended before paid ads.',
   0, NULL, 86, 1, 0, 'unclaimed', 1
@@ -194,7 +194,7 @@ INSERT OR IGNORE INTO operators (
 ) VALUES (
   'op-fc15-tul-awc', 'American Waste Control', 'american-waste-control', '918-446-0023', NULL, 'https://www.americanwastecontrol.com/',
   'Tulsa waste, recycling, and roll-off company serving homes and businesses since 1970.', 'Tulsa', 'OK', 36.154, -95.9928,
-  350, 750, NULL, NULL, NULL,
+  425, 495, NULL, NULL, NULL,
   0, NULL, 0, 0,
   'verified', datetime('now'), 'firecrawl-2026-08-15', 'Firecrawl web research 2026-08-15: public phone/website from company site. Local hauler (not a national broker). Phone call for insurance/license still recommended before paid ads.',
   0, NULL, 84, 1, 0, 'unclaimed', 1
@@ -217,7 +217,7 @@ INSERT OR IGNORE INTO operators (
 ) VALUES (
   'op-fc15-tul-oncall', 'On Call Services and Rentals', 'on-call-services-rentals', '918-397-7787', NULL, 'https://oncallservicesandrentals.com/roll-off-dumpsters/',
   'Tulsa-based roll-off, porta-potty, and fencing company with 15–30 yard dumpsters and published tonnage packages.', 'Tulsa', 'OK', 36.154, -95.9928,
-  325, 650, NULL, NULL, NULL,
+  NULL, NULL, NULL, NULL, NULL,
   1, NULL, 1, 0,
   'verified', datetime('now'), 'firecrawl-2026-08-15', 'Firecrawl web research 2026-08-15: public phone/website from company site. Local hauler (not a national broker). Phone call for insurance/license still recommended before paid ads.',
   0, NULL, 83, 1, 0, 'unclaimed', 1
@@ -241,7 +241,7 @@ INSERT OR IGNORE INTO operators (
 ) VALUES (
   'op-fc15-tul-btdt', 'Bin There Dump That Tulsa West', 'bin-there-dump-that-tulsa-west', '918-246-7199', NULL, 'https://www.bintheredumpthat.com/tulsa-west-dumpster-rentals/',
   'Locally operated Tulsa West franchise with driveway-friendly trailer dumpsters for residential jobs.', 'Tulsa', 'OK', 36.154, -95.9928,
-  350, 680, NULL, NULL, NULL,
+  260, 335, NULL, NULL, NULL,
   1, NULL, 0, 0,
   'verified', datetime('now'), 'firecrawl-2026-08-15', 'Firecrawl web research 2026-08-15: public phone/website from company site. Local hauler (not a national broker). Phone call for insurance/license still recommended before paid ads.',
   0, NULL, 75, 1, 0, 'unclaimed', 1
@@ -263,7 +263,7 @@ INSERT OR IGNORE INTO operators (
 ) VALUES (
   'op-fc15-chi-brackenbox', 'Brackenbox', 'brackenbox', '708-339-4100', NULL, 'https://brackenbox.com/',
   'Chicagoland and northwest Indiana residential and commercial roll-off with 10–30 yard boxes. Hours Mon–Fri 6–4, Sat 7–2.', 'Chicago', 'IL', 41.8781, -87.6298,
-  375, 750, NULL, NULL, NULL,
+  395, 495, NULL, NULL, NULL,
   0, NULL, 1, 0,
   'verified', datetime('now'), 'firecrawl-2026-08-15', 'Firecrawl web research 2026-08-15: public phone/website from company site. Local hauler (not a national broker). Phone call for insurance/license still recommended before paid ads.',
   0, NULL, 86, 1, 0, 'unclaimed', 1
@@ -288,7 +288,7 @@ INSERT OR IGNORE INTO operators (
 ) VALUES (
   'op-fc15-chi-r2r', 'Ready 2 Roll Hauling', 'ready-2-roll-hauling', '312-520-3619', 'info@ready2rollhauling.com', 'https://www.ready2rollhauling.com/',
   'Chicago south-suburbs junk removal and roll-off from about $370, with same-day service often available.', 'Chicago', 'IL', 41.8781, -87.6298,
-  370, 550, NULL, NULL, NULL,
+  370, 450, NULL, NULL, NULL,
   1, NULL, 1, 0,
   'verified', datetime('now'), 'firecrawl-2026-08-15', 'Firecrawl web research 2026-08-15: public phone/website from company site. Local hauler (not a national broker). Phone call for insurance/license still recommended before paid ads.',
   0, NULL, 84, 1, 0, 'unclaimed', 1
@@ -311,7 +311,7 @@ INSERT OR IGNORE INTO operators (
 ) VALUES (
   'op-fc15-chi-sbc', 'SBC Waste Solutions', 'sbc-waste-solutions', '312-522-1115', NULL, 'https://www.sbcwastesolutions.com/',
   'Locally owned Chicago-area hauler offering roll-off, front-load, and recycling across the southwest and west suburbs.', 'Chicago', 'IL', 41.8781, -87.6298,
-  375, 800, NULL, NULL, NULL,
+  NULL, NULL, NULL, NULL, NULL,
   0, NULL, 0, 0,
   'verified', datetime('now'), 'firecrawl-2026-08-15', 'Firecrawl web research 2026-08-15: public phone/website from company site. Local hauler (not a national broker). Phone call for insurance/license still recommended before paid ads.',
   0, NULL, 83, 1, 0, 'unclaimed', 1
@@ -335,7 +335,7 @@ INSERT OR IGNORE INTO operators (
 ) VALUES (
   'op-fc15-chi-mobile', 'Mobiledumps Chicagoland', 'mobiledumps-chicagoland', '262-202-4507', NULL, 'https://mobiledumps.com/locations/il/chicagoland/',
   'Locally owned 14-yard trailer dumpsters for Greater Chicago suburbs with express delivery windows.', 'Chicago', 'IL', 41.8781, -87.6298,
-  350, 550, NULL, NULL, NULL,
+  409, 449, NULL, NULL, NULL,
   1, NULL, 1, 0,
   'verified', datetime('now'), 'firecrawl-2026-08-15', 'Firecrawl web research 2026-08-15: public phone/website from company site. Local hauler (not a national broker). Phone call for insurance/license still recommended before paid ads.',
   0, NULL, 78, 1, 0, 'unclaimed', 1
@@ -355,7 +355,7 @@ INSERT OR IGNORE INTO operators (
 ) VALUES (
   'op-fc15-nyc-guma', 'Guma Containers', 'guma-containers', '718-928-3024', 'sales@gumacontainers.com', 'https://www.gumacontainers.com/',
   'Minority-owned, family-run NYC roll-off and packer-truck service with 10–30 yard containers.', 'New York', 'NY', 40.7128, -74.006,
-  450, 1200, NULL, NULL, NULL,
+  NULL, NULL, NULL, NULL, NULL,
   0, NULL, 1, 0,
   'verified', datetime('now'), 'firecrawl-2026-08-15', 'Firecrawl web research 2026-08-15: public phone/website from company site. Local hauler (not a national broker). Phone call for insurance/license still recommended before paid ads.',
   0, NULL, 85, 1, 0, 'unclaimed', 1
@@ -379,7 +379,7 @@ INSERT OR IGNORE INTO operators (
 ) VALUES (
   'op-fc15-nyc-bestway', 'Bestway Carting', 'bestway-carting', '800-216-1284', NULL, 'https://www.bestwaycarting.com/',
   'Brooklyn, Queens, and NYC carting company with 30+ years of container rentals and construction debris service. HQ in Little Neck.', 'New York', 'NY', 40.7128, -74.006,
-  500, 1300, NULL, NULL, NULL,
+  635, 1085, NULL, NULL, NULL,
   0, NULL, 0, 0,
   'verified', datetime('now'), 'firecrawl-2026-08-15', 'Firecrawl web research 2026-08-15: public phone/website from company site. Local hauler (not a national broker). Phone call for insurance/license still recommended before paid ads.',
   0, NULL, 80, 1, 0, 'unclaimed', 1
@@ -402,7 +402,7 @@ INSERT OR IGNORE INTO operators (
 ) VALUES (
   'op-fc15-nyc-action', 'Action Carting', 'action-carting', '866-270-9900', NULL, 'https://actioncarting.com/',
   'Licensed NYC commercial waste zone hauler offering roll-off dumpsters across the five boroughs.', 'New York', 'NY', 40.7128, -74.006,
-  500, 1400, NULL, NULL, NULL,
+  NULL, NULL, NULL, NULL, NULL,
   0, NULL, 0, 0,
   'verified', datetime('now'), 'firecrawl-2026-08-15', 'Firecrawl web research 2026-08-15: public phone/website from company site. Local hauler (not a national broker). Phone call for insurance/license still recommended before paid ads.',
   0, NULL, 79, 1, 0, 'unclaimed', 1
@@ -425,7 +425,7 @@ INSERT OR IGNORE INTO operators (
 ) VALUES (
   'op-fc15-phl-geppert', 'Geppert Recycling', 'geppert-recycling', '215-842-0122', NULL, 'https://geppertrecycling.com/',
   '30+ year Philadelphia waste station and roll-off company serving the city plus Bucks, Chester, Delaware, and Montgomery counties.', 'Philadelphia', 'PA', 39.9526, -75.1652,
-  375, 800, NULL, NULL, NULL,
+  415, 1300, NULL, NULL, NULL,
   1, NULL, 1, 0,
   'verified', datetime('now'), 'firecrawl-2026-08-15', 'Firecrawl web research 2026-08-15: public phone/website from company site. Local hauler (not a national broker). Phone call for insurance/license still recommended before paid ads.',
   0, NULL, 86, 1, 0, 'unclaimed', 1
@@ -449,7 +449,7 @@ INSERT OR IGNORE INTO operators (
 ) VALUES (
   'op-fc15-phl-tswaste', 'Tri-State Waste', 'tri-state-waste', '215-423-5200', 'info@tswaste.com', 'https://tswaste.com/',
   'Philadelphia and South Jersey roll-off hauler with 10–40 yard dumpsters and local dispatch.', 'Philadelphia', 'PA', 39.9526, -75.1652,
-  375, 850, NULL, NULL, NULL,
+  NULL, NULL, NULL, NULL, NULL,
   1, NULL, 1, 0,
   'verified', datetime('now'), 'firecrawl-2026-08-15', 'Firecrawl web research 2026-08-15: public phone/website from company site. Local hauler (not a national broker). Phone call for insurance/license still recommended before paid ads.',
   0, NULL, 84, 1, 0, 'unclaimed', 1
@@ -474,7 +474,7 @@ INSERT OR IGNORE INTO operators (
 ) VALUES (
   'op-fc15-phl-reams', 'Reams Disposal', 'reams-disposal', '484-722-8247', NULL, 'https://reamsdisposal.com/dumpster-rental-philadelphia-pa/',
   'Philadelphia County dumpster rental for remodels, additions, and cleanouts.', 'Philadelphia', 'PA', 39.9526, -75.1652,
-  350, 750, NULL, NULL, NULL,
+  NULL, NULL, NULL, NULL, NULL,
   0, NULL, 0, 0,
   'verified', datetime('now'), 'firecrawl-2026-08-15', 'Firecrawl web research 2026-08-15: public phone/website from company site. Local hauler (not a national broker). Phone call for insurance/license still recommended before paid ads.',
   0, NULL, 80, 1, 0, 'unclaimed', 1
@@ -497,7 +497,7 @@ INSERT OR IGNORE INTO operators (
 ) VALUES (
   'op-fc15-sea-nw', 'NW Dumpsters', 'nw-dumpsters', '206-866-0688', 'hello@nwdumpsters.com', 'https://nwdumpsters.com/',
   'Locally owned Seattle MBE/DBE roll-off company with 300+ containers and same- or next-day delivery.', 'Seattle', 'WA', 47.6062, -122.3321,
-  450, 900, NULL, NULL, NULL,
+  NULL, NULL, NULL, NULL, NULL,
   0, NULL, 1, 0,
   'verified', datetime('now'), 'firecrawl-2026-08-15', 'Firecrawl web research 2026-08-15: public phone/website from company site. Local hauler (not a national broker). Phone call for insurance/license still recommended before paid ads.',
   0, NULL, 88, 1, 0, 'unclaimed', 1
@@ -542,7 +542,7 @@ INSERT OR IGNORE INTO operators (
 ) VALUES (
   'op-fc15-clt-a1', 'A1 Dumpster Rentals', 'a1-dumpster-rentals', '704-391-7030', NULL, 'https://www.a1dumpsterrentals.com/',
   'Locally owned Charlotte dumpster and demolition company with 30+ years in North and South Carolina.', 'Charlotte', 'NC', 35.2271, -80.8431,
-  350, 700, NULL, NULL, NULL,
+  375, 575, NULL, NULL, NULL,
   0, NULL, 1, 0,
   'verified', datetime('now'), 'firecrawl-2026-08-15', 'Firecrawl web research 2026-08-15: public phone/website from company site. Local hauler (not a national broker). Phone call for insurance/license still recommended before paid ads.',
   0, NULL, 86, 1, 0, 'unclaimed', 1
@@ -565,7 +565,7 @@ INSERT OR IGNORE INTO operators (
 ) VALUES (
   'op-fc15-clt-regency', 'Regency Hauling', 'regency-hauling', '704-593-6378', 'info@regencyhauling.com', 'https://regencyhauling.com/',
   'Charlotte dumpster rental and hauling from WT Harris Blvd with 10–40 yard roll-offs and Monday–Saturday service.', 'Charlotte', 'NC', 35.2271, -80.8431,
-  365, 550, NULL, NULL, NULL,
+  330, 550, NULL, NULL, NULL,
   0, NULL, 0, 0,
   'verified', datetime('now'), 'firecrawl-2026-08-15', 'Firecrawl web research 2026-08-15: public phone/website from company site. Local hauler (not a national broker). Phone call for insurance/license still recommended before paid ads.',
   0, NULL, 85, 1, 0, 'unclaimed', 1
@@ -590,7 +590,7 @@ INSERT OR IGNORE INTO operators (
 ) VALUES (
   'op-fc15-clt-masters', 'Roll Off Masters', 'roll-off-masters', '980-346-3810', NULL, 'https://rolloffmastersllc.com/',
   'Charlotte residential and construction roll-off company with driveway-safe delivery and 15/20/30 yard boxes.', 'Charlotte', 'NC', 35.2271, -80.8431,
-  350, 700, NULL, NULL, NULL,
+  NULL, NULL, NULL, NULL, NULL,
   1, NULL, 0, 0,
   'verified', datetime('now'), 'firecrawl-2026-08-15', 'Firecrawl web research 2026-08-15: public phone/website from company site. Local hauler (not a national broker). Phone call for insurance/license still recommended before paid ads.',
   0, NULL, 84, 1, 0, 'unclaimed', 1
@@ -612,7 +612,7 @@ INSERT OR IGNORE INTO operators (
 ) VALUES (
   'op-fc15-nsh-tnro', 'Tennessee Rolloff', 'tennessee-rolloff', '615-784-4076', NULL, 'https://tnrolloff.com/',
   'Metro Nashville licensed roll-off and portable toilet company with same-day delivery and 15–30 yard boxes.', 'Nashville', 'TN', 36.1627, -86.7816,
-  350, 700, NULL, NULL, NULL,
+  NULL, NULL, NULL, NULL, NULL,
   1, NULL, 1, 0,
   'verified', datetime('now'), 'firecrawl-2026-08-15', 'Firecrawl web research 2026-08-15: public phone/website from company site. Local hauler (not a national broker). Phone call for insurance/license still recommended before paid ads.',
   0, NULL, 85, 1, 0, 'unclaimed', 1
@@ -634,7 +634,7 @@ INSERT OR IGNORE INTO operators (
 ) VALUES (
   'op-fc15-nsh-jandj', 'J and J Services', 'j-and-j-services', '615-599-7778', NULL, 'https://www.jandjservices.com/services/commercial/roll-off-dumpster-rental',
   'Nashville-area commercial and residential roll-off rentals in 10–40 yard sizes.', 'Nashville', 'TN', 36.1627, -86.7816,
-  350, 750, NULL, NULL, NULL,
+  NULL, NULL, NULL, NULL, NULL,
   0, NULL, 0, 0,
   'verified', datetime('now'), 'firecrawl-2026-08-15', 'Firecrawl web research 2026-08-15: public phone/website from company site. Local hauler (not a national broker). Phone call for insurance/license still recommended before paid ads.',
   0, NULL, 82, 1, 0, 'unclaimed', 1
@@ -681,7 +681,7 @@ INSERT OR IGNORE INTO operators (
 ) VALUES (
   'op-fc15-bos-homestead', 'Homestead Disposal', 'homestead-disposal', '781-320-0516', 'eric@homestead-disposal.com', 'https://www.homestead-disposal.com/',
   'Westwood-based Greater Boston roll-off specialist with 25+ years, driveway-safe 7/10/15 yard boxes, and next-day delivery.', 'Boston', 'MA', 42.3601, -71.0589,
-  450, 750, NULL, NULL, NULL,
+  525, 725, NULL, NULL, NULL,
   1, NULL, 1, 0,
   'verified', datetime('now'), 'firecrawl-2026-08-15', 'Firecrawl web research 2026-08-15: public phone/website from company site. Local hauler (not a national broker). Phone call for insurance/license still recommended before paid ads.',
   0, NULL, 88, 1, 0, 'unclaimed', 1
@@ -706,7 +706,7 @@ INSERT OR IGNORE INTO operators (
 ) VALUES (
   'op-fc15-bos-viking', 'Viking Disposal', 'viking-disposal', '781-716-7400', NULL, 'https://vikingdisposalserv.com/services/roll-off-dumpster/',
   'Greater Boston roll-off and recycling with 10–30 yard dumpsters and same-day service when inventory allows.', 'Boston', 'MA', 42.3601, -71.0589,
-  400, 800, NULL, NULL, NULL,
+  NULL, NULL, NULL, NULL, NULL,
   0, NULL, 1, 0,
   'verified', datetime('now'), 'firecrawl-2026-08-15', 'Firecrawl web research 2026-08-15: public phone/website from company site. Local hauler (not a national broker). Phone call for insurance/license still recommended before paid ads.',
   0, NULL, 80, 1, 0, 'unclaimed', 1
@@ -729,7 +729,7 @@ INSERT OR IGNORE INTO operators (
 ) VALUES (
   'op-fc15-cmh-affordable', 'Affordable Dumpsters', 'affordable-dumpsters-columbus', '614-476-3626', NULL, 'https://www.affordabledumping.com/',
   'Franklin County roll-off and trailer dumpsters since 1995. Published rates from $225 with same-day delivery.', 'Columbus', 'OH', 39.9612, -82.9988,
-  225, 400, NULL, NULL, NULL,
+  275, 375, NULL, NULL, NULL,
   1, NULL, 1, 0,
   'verified', datetime('now'), 'firecrawl-2026-08-15', 'Firecrawl web research 2026-08-15: public phone/website from company site. Local hauler (not a national broker). Phone call for insurance/license still recommended before paid ads.',
   0, NULL, 87, 1, 0, 'unclaimed', 1
@@ -752,7 +752,7 @@ INSERT OR IGNORE INTO operators (
 ) VALUES (
   'op-fc15-cmh-midohio', 'Mid-Ohio Dumpsters', 'mid-ohio-dumpsters', '614-721-7777', 'sales@midohiodumpsters.com', 'https://www.midohiodumpsters.com/',
   'Family-owned Columbus dumpster, demolition, and junk company with 10–30 yard roll-offs.', 'Columbus', 'OH', 39.9612, -82.9988,
-  325, 650, NULL, NULL, NULL,
+  350, 700, NULL, NULL, NULL,
   0, NULL, 0, 0,
   'verified', datetime('now'), 'firecrawl-2026-08-15', 'Firecrawl web research 2026-08-15: public phone/website from company site. Local hauler (not a national broker). Phone call for insurance/license still recommended before paid ads.',
   0, NULL, 86, 1, 0, 'unclaimed', 1
@@ -775,7 +775,7 @@ INSERT OR IGNORE INTO operators (
 ) VALUES (
   'op-fc15-cmh-frog', 'Frog Hauling', 'frog-hauling', '614-258-3764', NULL, 'https://froghauling.com/',
   'Columbus flat-rate dumpster rental with same-day delivery when ordered before 1 p.m. Serves Dublin, Westerville, and Upper Arlington.', 'Columbus', 'OH', 39.9612, -82.9988,
-  305, 425, NULL, NULL, NULL,
+  308, 579, NULL, NULL, NULL,
   1, NULL, 1, 0,
   'verified', datetime('now'), 'firecrawl-2026-08-15', 'Firecrawl web research 2026-08-15: public phone/website from company site. Local hauler (not a national broker). Phone call for insurance/license still recommended before paid ads.',
   0, NULL, 85, 1, 0, 'unclaimed', 1
@@ -798,7 +798,7 @@ INSERT OR IGNORE INTO operators (
 ) VALUES (
   'op-fc15-indy-aa', 'A and A Roll Offs', 'a-and-a-roll-offs', '317-680-3867', NULL, 'https://www.aarolloffs.com/',
   'Central Indiana roll-off company with published 12–30 yard rates from $325 and same-day delivery.', 'Indianapolis', 'IN', 39.7684, -86.1581,
-  325, 525, NULL, NULL, NULL,
+  350, 550, NULL, NULL, NULL,
   0, NULL, 1, 0,
   'verified', datetime('now'), 'firecrawl-2026-08-15', 'Firecrawl web research 2026-08-15: public phone/website from company site. Local hauler (not a national broker). Phone call for insurance/license still recommended before paid ads.',
   0, NULL, 86, 1, 0, 'unclaimed', 1
@@ -822,7 +822,7 @@ INSERT OR IGNORE INTO operators (
 ) VALUES (
   'op-fc15-indy-hoosier', 'Hoosier Hauler', 'hoosier-hauler', '317-838-8302', NULL, 'https://hoosierhauler.com/',
   'Indianapolis dumpster rental for 25+ years with 10–40 yard roll-offs and portable restrooms.', 'Indianapolis', 'IN', 39.7684, -86.1581,
-  325, 700, NULL, NULL, NULL,
+  NULL, NULL, NULL, NULL, NULL,
   1, NULL, 0, 0,
   'verified', datetime('now'), 'firecrawl-2026-08-15', 'Firecrawl web research 2026-08-15: public phone/website from company site. Local hauler (not a national broker). Phone call for insurance/license still recommended before paid ads.',
   0, NULL, 85, 1, 0, 'unclaimed', 1
@@ -846,7 +846,7 @@ INSERT OR IGNORE INTO operators (
 ) VALUES (
   'op-fc15-indy-greenway', 'Greenway Dumpsters', 'greenway-dumpsters', '317-617-9464', NULL, 'https://greenwaydumpsters.com/',
   'Indianapolis 10–30 yard roll-off rentals for homes and contractors.', 'Indianapolis', 'IN', 39.7684, -86.1581,
-  325, 650, NULL, NULL, NULL,
+  NULL, NULL, NULL, NULL, NULL,
   0, NULL, 0, 0,
   'verified', datetime('now'), 'firecrawl-2026-08-15', 'Firecrawl web research 2026-08-15: public phone/website from company site. Local hauler (not a national broker). Phone call for insurance/license still recommended before paid ads.',
   0, NULL, 83, 1, 0, 'unclaimed', 1
@@ -892,7 +892,7 @@ INSERT OR IGNORE INTO operators (
 ) VALUES (
   'op-fc15-det-dd', 'Detroit Dumpsters', 'detroit-dumpsters', '313-246-8878', NULL, 'https://www.detroitdumpsters.com/',
   'Detroit roll-off rentals in 10–40 yard sizes serving Dearborn, Grosse Pointe, and Ann Arbor with same-day when available.', 'Detroit', 'MI', 42.3314, -83.0458,
-  250, 800, NULL, NULL, NULL,
+  NULL, NULL, NULL, NULL, NULL,
   1, NULL, 1, 0,
   'verified', datetime('now'), 'firecrawl-2026-08-15', 'Firecrawl web research 2026-08-15: public phone/website from company site. Local hauler (not a national broker). Phone call for insurance/license still recommended before paid ads.',
   0, NULL, 80, 1, 0, 'unclaimed', 1
@@ -940,7 +940,7 @@ INSERT OR IGNORE INTO operators (
 ) VALUES (
   'op-fc15-msp-nordic', 'Nordic Waste', 'nordic-waste', '612-816-8500', NULL, 'https://nordic-waste.com/',
   'Minneapolis–St. Paul roll-off hauler with flat-rate pricing and live local dispatch.', 'Minneapolis', 'MN', 44.9778, -93.265,
-  375, 700, NULL, NULL, NULL,
+  350, 615, NULL, NULL, NULL,
   1, NULL, 0, 0,
   'verified', datetime('now'), 'firecrawl-2026-08-15', 'Firecrawl web research 2026-08-15: public phone/website from company site. Local hauler (not a national broker). Phone call for insurance/license still recommended before paid ads.',
   0, NULL, 84, 1, 0, 'unclaimed', 1
@@ -964,7 +964,7 @@ INSERT OR IGNORE INTO operators (
 ) VALUES (
   'op-fc15-msp-american', 'American Dumpster Rental and Recycling', 'american-dumpster-rental-mn', '651-442-8960', NULL, 'https://www.americandumpstermn.com/',
   'Twin Cities dumpster rental and recycling for residential and contractor jobs.', 'Minneapolis', 'MN', 44.9778, -93.265,
-  375, 700, NULL, NULL, NULL,
+  395, 675, NULL, NULL, NULL,
   0, NULL, 0, 0,
   'verified', datetime('now'), 'firecrawl-2026-08-15', 'Firecrawl web research 2026-08-15: public phone/website from company site. Local hauler (not a national broker). Phone call for insurance/license still recommended before paid ads.',
   0, NULL, 81, 1, 0, 'unclaimed', 1
@@ -987,7 +987,7 @@ INSERT OR IGNORE INTO operators (
 ) VALUES (
   'op-fc15-msp-haulit', 'Haul It A Day', 'haul-it-a-day', '651-615-4423', NULL, 'https://www.haulitaday.com/',
   'Twin Cities dumpster service with 10/15/20 yard roll-offs.', 'Minneapolis', 'MN', 44.9778, -93.265,
-  350, 650, NULL, NULL, NULL,
+  429, 529, NULL, NULL, NULL,
   0, NULL, 0, 0,
   'verified', datetime('now'), 'firecrawl-2026-08-15', 'Firecrawl web research 2026-08-15: public phone/website from company site. Local hauler (not a national broker). Phone call for insurance/license still recommended before paid ads.',
   0, NULL, 80, 1, 0, 'unclaimed', 1
@@ -1009,7 +1009,7 @@ INSERT OR IGNORE INTO operators (
 ) VALUES (
   'op-fc15-kc-uloadit', 'U-LOAD-IT Dumpsters', 'u-load-it-dumpsters', '816-537-5623', NULL, 'https://uloaditkc.com/',
   'Locally owned Kansas City dumpster rental since 1997 with same-day service and 1,000+ five-star reviews.', 'Kansas City', 'MO', 39.0997, -94.5786,
-  325, 700, NULL, NULL, NULL,
+  300, 550, NULL, NULL, NULL,
   0, NULL, 1, 0,
   'verified', datetime('now'), 'firecrawl-2026-08-15', 'Firecrawl web research 2026-08-15: public phone/website from company site. Local hauler (not a national broker). Phone call for insurance/license still recommended before paid ads.',
   0, NULL, 87, 1, 0, 'unclaimed', 1
@@ -1033,7 +1033,7 @@ INSERT OR IGNORE INTO operators (
 ) VALUES (
   'op-fc15-kc-trashbox', 'The Trash Box', 'the-trash-box', '816-875-0028', NULL, 'https://thetrashboxkc.com/',
   'Kansas City roll-off company with published 12–20 yard rates from $299 and same-day claims.', 'Kansas City', 'MO', 39.0997, -94.5786,
-  299, 399, NULL, NULL, NULL,
+  299, 539, NULL, NULL, NULL,
   0, NULL, 1, 0,
   'verified', datetime('now'), 'firecrawl-2026-08-15', 'Firecrawl web research 2026-08-15: public phone/website from company site. Local hauler (not a national broker). Phone call for insurance/license still recommended before paid ads.',
   0, NULL, 84, 1, 0, 'unclaimed', 1
@@ -1055,7 +1055,7 @@ INSERT OR IGNORE INTO operators (
 ) VALUES (
   'op-fc15-kc-disposal', 'KC Disposal', 'kc-disposal', '816-388-9739', 'kcdisposal@gmail.com', 'https://kansascitydisposal.com/',
   'Kansas City dumpster rentals for residential and contractor jobs.', 'Kansas City', 'MO', 39.0997, -94.5786,
-  325, 650, NULL, NULL, NULL,
+  NULL, NULL, NULL, NULL, NULL,
   0, NULL, 0, 0,
   'verified', datetime('now'), 'firecrawl-2026-08-15', 'Firecrawl web research 2026-08-15: public phone/website from company site. Local hauler (not a national broker). Phone call for insurance/license still recommended before paid ads.',
   0, NULL, 82, 1, 0, 'unclaimed', 1
@@ -1078,7 +1078,7 @@ INSERT OR IGNORE INTO operators (
 ) VALUES (
   'op-fc15-las-western', 'Western Elite', 'western-elite', '702-605-0655', NULL, 'https://westernelite.com/',
   'Las Vegas, Henderson, and Summerlin dumpster rental with a same-day delivery guarantee on 15–40 yard boxes.', 'Las Vegas', 'NV', 36.1699, -115.1398,
-  350, 800, NULL, NULL, NULL,
+  NULL, NULL, NULL, NULL, NULL,
   1, NULL, 1, 0,
   'verified', datetime('now'), 'firecrawl-2026-08-15', 'Firecrawl web research 2026-08-15: public phone/website from company site. Local hauler (not a national broker). Phone call for insurance/license still recommended before paid ads.',
   0, NULL, 84, 1, 0, 'unclaimed', 1
@@ -1100,7 +1100,7 @@ INSERT OR IGNORE INTO operators (
 ) VALUES (
   'op-fc15-las-grizzly', 'Grizzly Hauling and Junk', 'grizzly-hauling-and-junk', '702-628-7929', NULL, 'https://www.grizzlyhaulingandjunk.com/',
   'Las Vegas local hauling and roll-off with 10–40 yard dumpsters and driveway-friendly options.', 'Las Vegas', 'NV', 36.1699, -115.1398,
-  325, 750, NULL, NULL, NULL,
+  NULL, NULL, NULL, NULL, NULL,
   1, NULL, 1, 0,
   'verified', datetime('now'), 'firecrawl-2026-08-15', 'Firecrawl web research 2026-08-15: public phone/website from company site. Local hauler (not a national broker). Phone call for insurance/license still recommended before paid ads.',
   0, NULL, 83, 1, 0, 'unclaimed', 1
@@ -1124,7 +1124,7 @@ INSERT OR IGNORE INTO operators (
 ) VALUES (
   'op-fc15-pdx-oregonrec', 'Oregon Recycling', 'oregon-recycling', '503-720-2281', 'sales@oregon-recycling.com', 'https://oregon-recycling.com/',
   'Portland dumpster rental and junk removal with 15–25 yard roll-offs and published package pricing.', 'Portland', 'OR', 45.5152, -122.6784,
-  275, 475, NULL, NULL, NULL,
+  425, 475, NULL, NULL, NULL,
   1, NULL, 1, 0,
   'verified', datetime('now'), 'firecrawl-2026-08-15', 'Firecrawl web research 2026-08-15: public phone/website from company site. Local hauler (not a national broker). Phone call for insurance/license still recommended before paid ads.',
   0, NULL, 82, 1, 0, 'unclaimed', 1
@@ -1146,7 +1146,7 @@ INSERT OR IGNORE INTO operators (
 ) VALUES (
   'op-fc15-pdx-bc', 'BC Haulers', 'bc-haulers', '971-301-5033', NULL, 'https://www.bchaulers.com/',
   'Portland and Salem junk removal, demolition, and roll-off dumpsters with a published 21-yard package.', 'Portland', 'OR', 45.5152, -122.6784,
-  325, 550, NULL, NULL, NULL,
+  275, 475, NULL, NULL, NULL,
   0, NULL, 0, 0,
   'verified', datetime('now'), 'firecrawl-2026-08-15', 'Firecrawl web research 2026-08-15: public phone/website from company site. Local hauler (not a national broker). Phone call for insurance/license still recommended before paid ads.',
   0, NULL, 80, 1, 0, 'unclaimed', 1
@@ -1167,7 +1167,7 @@ INSERT OR IGNORE INTO operators (
 ) VALUES (
   'op-fc15-sat-southtx', 'South Texas Dumpsters', 'south-texas-dumpsters', '210-372-8666', NULL, 'https://southtexasdumpsters.com/',
   'San Antonio roll-off company with 20–40 yard dumpsters for homes and construction sites.', 'San Antonio', 'TX', 29.4241, -98.4936,
-  350, 750, NULL, NULL, NULL,
+  NULL, NULL, NULL, NULL, NULL,
   0, NULL, 0, 0,
   'verified', datetime('now'), 'firecrawl-2026-08-15', 'Firecrawl web research 2026-08-15: public phone/website from company site. Local hauler (not a national broker). Phone call for insurance/license still recommended before paid ads.',
   0, NULL, 83, 1, 0, 'unclaimed', 1
@@ -1189,7 +1189,7 @@ INSERT OR IGNORE INTO operators (
 ) VALUES (
   'op-fc15-sat-txro', 'TX Roll Offs', 'tx-roll-offs', '210-903-3333', NULL, 'https://txrolloffs.com/',
   'San Antonio dumpster rental and roll-off service with 20–40 yard containers.', 'San Antonio', 'TX', 29.4241, -98.4936,
-  350, 750, NULL, NULL, NULL,
+  NULL, NULL, NULL, NULL, NULL,
   0, NULL, 0, 0,
   'verified', datetime('now'), 'firecrawl-2026-08-15', 'Firecrawl web research 2026-08-15: public phone/website from company site. Local hauler (not a national broker). Phone call for insurance/license still recommended before paid ads.',
   0, NULL, 81, 1, 0, 'unclaimed', 1
@@ -1211,7 +1211,7 @@ INSERT OR IGNORE INTO operators (
 ) VALUES (
   'op-fc15-jax-american', 'American Rolloffs', 'american-rolloffs', '904-605-1600', NULL, 'https://american-rolloffs.com/',
   'Northeast Florida same- or next-day roll-off delivery with 10–40 yard dumpsters and 14-day rentals.', 'Jacksonville', 'FL', 30.3322, -81.6557,
-  350, 750, NULL, NULL, NULL,
+  395, 620, NULL, NULL, NULL,
   0, NULL, 1, 0,
   'verified', datetime('now'), 'firecrawl-2026-08-15', 'Firecrawl web research 2026-08-15: public phone/website from company site. Local hauler (not a national broker). Phone call for insurance/license still recommended before paid ads.',
   0, NULL, 85, 1, 0, 'unclaimed', 1
@@ -1235,7 +1235,7 @@ INSERT OR IGNORE INTO operators (
 ) VALUES (
   'op-fc15-jax-904', '904 Dumpster', '904-dumpster', '904-240-5598', NULL, 'https://www.904dumpster.com/',
   'Jacksonville dumpster rental starting at $299 with delivery, pickup, and disposal included on 10/15/20 yard boxes.', 'Jacksonville', 'FL', 30.3322, -81.6557,
-  299, 550, NULL, NULL, NULL,
+  299, 549, NULL, NULL, NULL,
   0, NULL, 1, 0,
   'verified', datetime('now'), 'firecrawl-2026-08-15', 'Firecrawl web research 2026-08-15: public phone/website from company site. Local hauler (not a national broker). Phone call for insurance/license still recommended before paid ads.',
   0, NULL, 83, 1, 0, 'unclaimed', 1
@@ -1257,7 +1257,7 @@ INSERT OR IGNORE INTO operators (
 ) VALUES (
   'op-fc15-jax-shapells', 'Shapell''s Inc', 'shapells-inc', '904-786-5503', NULL, 'https://www.shapells.com/',
   'Jacksonville waste-management company offering roll-off dumpster rentals for homes and contractors.', 'Jacksonville', 'FL', 30.3322, -81.6557,
-  350, 750, NULL, NULL, NULL,
+  325, 425, NULL, NULL, NULL,
   0, NULL, 0, 0,
   'verified', datetime('now'), 'firecrawl-2026-08-15', 'Firecrawl web research 2026-08-15: public phone/website from company site. Local hauler (not a national broker). Phone call for insurance/license still recommended before paid ads.',
   0, NULL, 80, 1, 0, 'unclaimed', 1
@@ -1280,7 +1280,7 @@ INSERT OR IGNORE INTO operators (
 ) VALUES (
   'op-fc15-sf-citywide', 'Citywide Debris Box and Recycling', 'citywide-debris-box', '415-822-3688', NULL, 'https://www.citywidedebrisbox.com/',
   'San Francisco Bay Area debris-box hauler specializing in construction and demolition material.', 'San Francisco', 'CA', 37.7749, -122.4194,
-  500, 1100, NULL, NULL, NULL,
+  NULL, NULL, NULL, NULL, NULL,
   0, NULL, 0, 0,
   'verified', datetime('now'), 'firecrawl-2026-08-15', 'Firecrawl web research 2026-08-15: public phone/website from company site. Local hauler (not a national broker). Phone call for insurance/license still recommended before paid ads.',
   0, NULL, 82, 1, 0, 'unclaimed', 1
@@ -1303,7 +1303,7 @@ INSERT OR IGNORE INTO operators (
 ) VALUES (
   'op-fc15-dc-eai', 'EAI Roll Off', 'eai-roll-off', '301-428-0822', NULL, 'https://eairolloff.com/',
   'Dumpster and roll-off service for Washington DC, Maryland, and Northern Virginia with 10–30 yard boxes.', 'Washington', 'DC', 38.9072, -77.0369,
-  400, 850, NULL, NULL, NULL,
+  NULL, NULL, NULL, NULL, NULL,
   0, NULL, 0, 0,
   'verified', datetime('now'), 'firecrawl-2026-08-15', 'Firecrawl web research 2026-08-15: public phone/website from company site. Local hauler (not a national broker). Phone call for insurance/license still recommended before paid ads.',
   0, NULL, 82, 1, 0, 'unclaimed', 1
@@ -1326,7 +1326,7 @@ INSERT OR IGNORE INTO operators (
 ) VALUES (
   'op-fc15-dc-sel', 'SEL Hauling', 'sel-hauling', '301-330-0983', NULL, 'https://www.selhauling.com/roll-off-dumpster/',
   'Roll-off dumpsters within about 25 miles of DC, including 20- and 30-yard open containers.', 'Washington', 'DC', 38.9072, -77.0369,
-  400, 800, NULL, NULL, NULL,
+  NULL, NULL, NULL, NULL, NULL,
   0, NULL, 0, 0,
   'verified', datetime('now'), 'firecrawl-2026-08-15', 'Firecrawl web research 2026-08-15: public phone/website from company site. Local hauler (not a national broker). Phone call for insurance/license still recommended before paid ads.',
   0, NULL, 78, 1, 0, 'unclaimed', 1
@@ -1346,7 +1346,7 @@ INSERT OR IGNORE INTO operators (
 ) VALUES (
   'op-fc15-phx-aros', 'Arizona Roll-Off Services', 'arizona-roll-off-services', '480-725-7240', NULL, 'https://www.arizonarolloffservices.com/',
   'Phoenix front-load and roll-off dumpster rental company serving the East Valley.', 'Phoenix', 'AZ', 33.4484, -112.074,
-  325, 650, NULL, NULL, NULL,
+  NULL, NULL, NULL, NULL, NULL,
   0, NULL, 0, 0,
   'verified', datetime('now'), 'firecrawl-2026-08-15', 'Firecrawl web research 2026-08-15: public phone/website from company site. Local hauler (not a national broker). Phone call for insurance/license still recommended before paid ads.',
   0, NULL, 82, 1, 0, 'unclaimed', 1
@@ -1369,7 +1369,7 @@ INSERT OR IGNORE INTO operators (
 ) VALUES (
   'op-fc15-bal-ace', 'ACE Roll Off', 'ace-roll-off', '410-288-3867', 'acerolloff@288dump.com', 'https://www.acerolloff.com/',
   'Locally owned Baltimore dumpster rental with 10–40 yard roll-offs and same-day options.', 'Baltimore', 'MD', 39.2904, -76.6122,
-  350, 750, NULL, NULL, NULL,
+  NULL, NULL, NULL, NULL, NULL,
   1, NULL, 1, 0,
   'verified', datetime('now'), 'firecrawl-2026-08-15', 'Firecrawl web research 2026-08-15: public phone/website from company site. Local hauler (not a national broker). Phone call for insurance/license still recommended before paid ads.',
   0, NULL, 85, 1, 0, 'unclaimed', 1
@@ -1393,7 +1393,7 @@ INSERT OR IGNORE INTO operators (
 ) VALUES (
   'op-fc15-bal-86', '86 Dumpster', '86-dumpster', '443-671-1850', 'info@86dumpsters.com', 'https://86dumpster.com/',
   'White Marsh, Maryland roll-off company serving Baltimore with 10–30 yard dumpsters and published rates from $409.', 'Baltimore', 'MD', 39.2904, -76.6122,
-  409, 597, NULL, NULL, NULL,
+  409, 589, NULL, NULL, NULL,
   0, NULL, 0, 0,
   'verified', datetime('now'), 'firecrawl-2026-08-15', 'Firecrawl web research 2026-08-15: public phone/website from company site. Local hauler (not a national broker). Phone call for insurance/license still recommended before paid ads.',
   0, NULL, 82, 1, 0, 'unclaimed', 1
@@ -1417,7 +1417,7 @@ INSERT OR IGNORE INTO operators (
 ) VALUES (
   'op-fc15-bhm-daddy', 'Dumpster Daddy', 'dumpster-daddy', '205-447-8044', NULL, 'https://www.dumpsterdaddyal.com/',
   'Locally owned Birmingham roll-off hauler with 15–40 yard dumpsters and same-day service.', 'Birmingham', 'AL', 33.5186, -86.8104,
-  325, 700, NULL, NULL, NULL,
+  NULL, NULL, NULL, NULL, NULL,
   0, NULL, 1, 0,
   'verified', datetime('now'), 'firecrawl-2026-08-15', 'Firecrawl web research 2026-08-15: public phone/website from company site. Local hauler (not a national broker). Phone call for insurance/license still recommended before paid ads.',
   0, NULL, 85, 1, 0, 'unclaimed', 1
@@ -1442,7 +1442,7 @@ INSERT OR IGNORE INTO operators (
 ) VALUES (
   'op-fc15-lou-wastenow', 'Waste Now', 'waste-now', '502-969-7684', NULL, 'https://www.wastenow.com/',
   'Local Louisville dumpster and porta-potty company for residential and construction jobs.', 'Louisville', 'KY', 38.2527, -85.7585,
-  325, 650, NULL, NULL, NULL,
+  285, 500, NULL, NULL, NULL,
   1, NULL, 0, 0,
   'verified', datetime('now'), 'firecrawl-2026-08-15', 'Firecrawl web research 2026-08-15: public phone/website from company site. Local hauler (not a national broker). Phone call for insurance/license still recommended before paid ads.',
   0, NULL, 83, 1, 0, 'unclaimed', 1
@@ -1465,7 +1465,7 @@ INSERT OR IGNORE INTO operators (
 ) VALUES (
   'op-fc15-msy-engulf', 'EnGulf Waste', 'engulf-waste', '504-429-3867', 'admin@engulfwaste.com', 'https://engulfwaste.com/',
   'New Orleans dumpster rental claiming same-day delivery for homes and construction sites.', 'New Orleans', 'LA', 29.9511, -90.0715,
-  350, 700, NULL, NULL, NULL,
+  NULL, NULL, NULL, NULL, NULL,
   0, NULL, 1, 0,
   'verified', datetime('now'), 'firecrawl-2026-08-15', 'Firecrawl web research 2026-08-15: public phone/website from company site. Local hauler (not a national broker). Phone call for insurance/license still recommended before paid ads.',
   0, NULL, 82, 1, 0, 'unclaimed', 1
@@ -1488,7 +1488,7 @@ INSERT OR IGNORE INTO operators (
 ) VALUES (
   'op-fc15-pvd-rhody', 'Rhody Disposal', 'rhody-disposal', '401-633-4465', 'info@rhodydisposal.com', 'https://www.rhodydisposal.com/',
   'Rhode Island roll-off and junk removal serving Providence and the surrounding cities.', 'Providence', 'RI', 41.8236, -71.4222,
-  350, 700, NULL, NULL, NULL,
+  450, 550, NULL, NULL, NULL,
   0, NULL, 0, 0,
   'verified', datetime('now'), 'firecrawl-2026-08-15', 'Firecrawl web research 2026-08-15: public phone/website from company site. Local hauler (not a national broker). Phone call for insurance/license still recommended before paid ads.',
   0, NULL, 82, 1, 0, 'unclaimed', 1
@@ -1511,7 +1511,7 @@ INSERT OR IGNORE INTO operators (
 ) VALUES (
   'op-fc15-hfd-talkin', 'Talkin Trash CT', 'talkin-trash-ct', '860-604-1941', NULL, 'https://www.talkintrashct.com/',
   'Greater Hartford dumpster rental with driveway-friendly 12–20 yard boxes.', 'Hartford', 'CT', 41.7658, -72.6734,
-  350, 650, NULL, NULL, NULL,
+  NULL, NULL, NULL, NULL, NULL,
   1, NULL, 0, 0,
   'verified', datetime('now'), 'firecrawl-2026-08-15', 'Firecrawl web research 2026-08-15: public phone/website from company site. Local hauler (not a national broker). Phone call for insurance/license still recommended before paid ads.',
   0, NULL, 81, 1, 0, 'unclaimed', 1
@@ -1533,7 +1533,7 @@ INSERT OR IGNORE INTO operators (
 ) VALUES (
   'op-fc15-hfd-hippo', 'Hippo Hartford Dumpster Rental', 'hippo-hartford-dumpster-rental', '860-502-2519', NULL, 'https://hippodumpsterct.com/',
   'Hartford-area 10/15/20 yard dumpster rentals with same-day options.', 'Hartford', 'CT', 41.7658, -72.6734,
-  325, 600, NULL, NULL, NULL,
+  499, 650, NULL, NULL, NULL,
   1, NULL, 1, 0,
   'verified', datetime('now'), 'firecrawl-2026-08-15', 'Firecrawl web research 2026-08-15: public phone/website from company site. Local hauler (not a national broker). Phone call for insurance/license still recommended before paid ads.',
   0, NULL, 79, 1, 0, 'unclaimed', 1
@@ -1555,7 +1555,7 @@ INSERT OR IGNORE INTO operators (
 ) VALUES (
   'op-fc15-fsd-605', '605 Hauling', '605-hauling', '605-553-0711', '605hauling@gmail.com', 'https://www.605hauling.com/',
   'Sioux Falls driveway-safe dumpsters in 12–20 yard sizes.', 'Sioux Falls', 'SD', 43.5446, -96.7311,
-  325, 600, NULL, NULL, NULL,
+  NULL, NULL, NULL, NULL, NULL,
   1, NULL, 0, 0,
   'verified', datetime('now'), 'firecrawl-2026-08-15', 'Firecrawl web research 2026-08-15: public phone/website from company site. Local hauler (not a national broker). Phone call for insurance/license still recommended before paid ads.',
   0, NULL, 82, 1, 0, 'unclaimed', 1
@@ -1577,7 +1577,7 @@ INSERT OR IGNORE INTO operators (
 ) VALUES (
   'op-fc15-mht-ktown', 'K-Town Disposal', 'k-town-disposal', '603-386-0386', 'info@ktowndisposal.com', 'https://www.ktowndisposal.com/dumpster-rentals/manchester/',
   'Manchester, New Hampshire dumpster rentals for homes and job sites.', 'Manchester', 'NH', 42.9956, -71.4548,
-  350, 700, NULL, NULL, NULL,
+  NULL, NULL, NULL, NULL, NULL,
   0, NULL, 0, 0,
   'verified', datetime('now'), 'firecrawl-2026-08-15', 'Firecrawl web research 2026-08-15: public phone/website from company site. Local hauler (not a national broker). Phone call for insurance/license still recommended before paid ads.',
   0, NULL, 80, 1, 0, 'unclaimed', 1

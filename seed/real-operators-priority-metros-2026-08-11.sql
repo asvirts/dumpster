@@ -9,7 +9,7 @@ INSERT OR REPLACE INTO operators (
 ) VALUES (
   'op-real-htx-parada', 'Parada Waste', 'parada-waste', '281-741-3847', NULL, 'https://paradawaste.com/',
   'Houston same-day roll-off dumpster rental for residential and construction. Local team with Spanish-language support.', 'Houston', 'TX', 29.7604, -95.3698,
-  350, 650, NULL, NULL, NULL,
+  NULL, NULL, NULL, NULL, NULL,
   1, NULL, 1, 0,
   'verified', datetime('now'), 'web-research-2026-08-11', 'Web research 2026-08-11: public phone/website from company site. Phone call for insurance/license still recommended before heavy marketing.',
   0, NULL, 82, 1, 0, 'unclaimed', 1
@@ -32,7 +32,7 @@ INSERT OR REPLACE INTO operators (
 ) VALUES (
   'op-real-htx-btdt', 'Bin There Dump That Houston', 'bin-there-dump-that-houston', '281-209-0552', NULL, 'https://www.bintheredumpthat.com/houston-dumpster-rentals/',
   'Houston franchise specializing in driveway-friendly trailer-style dumpsters for residential projects.', 'Houston', 'TX', 29.78, -95.42,
-  360, 680, NULL, NULL, NULL,
+  NULL, NULL, NULL, NULL, NULL,
   1, NULL, 0, 0,
   'verified', datetime('now'), 'web-research-2026-08-11', 'Web research 2026-08-11: public phone/website from company site. Phone call for insurance/license still recommended before heavy marketing.',
   0, NULL, 78, 1, 0, 'unclaimed', 1
@@ -53,7 +53,7 @@ INSERT OR REPLACE INTO operators (
 ) VALUES (
   'op-real-dfw-ironman', 'Iron Man Roll Offs', 'iron-man-roll-offs', '469-314-0248', NULL, 'https://ironmanrolloffs.com/',
   'Veteran-owned DFW dumpster rental, junk removal, and light demolition serving Dallas, Rockwall, Plano, and North Texas.', 'Dallas', 'TX', 32.93, -96.46,
-  340, 620, NULL, NULL, NULL,
+  NULL, NULL, NULL, NULL, NULL,
   1, NULL, 1, 0,
   'verified', datetime('now'), 'web-research-2026-08-11', 'Web research 2026-08-11: public phone/website from company site. Phone call for insurance/license still recommended before heavy marketing.',
   0, NULL, 84, 1, 0, 'unclaimed', 1
@@ -76,7 +76,7 @@ INSERT OR REPLACE INTO operators (
 ) VALUES (
   'op-real-dfw-rentals', 'DFW Dumpster Rentals', 'dfw-dumpster-rentals', '817-523-1722', NULL, 'https://dfw-dumpsterrentals.com/',
   'Roll-off dumpster rental across Dallas–Fort Worth with clear size packages for residential and commercial jobs.', 'Dallas', 'TX', 32.78, -96.8,
-  450, 600, NULL, NULL, NULL,
+  500, 775, NULL, NULL, NULL,
   1, NULL, 0, 0,
   'verified', datetime('now'), 'web-research-2026-08-11', 'Web research 2026-08-11: public phone/website from company site. Phone call for insurance/license still recommended before heavy marketing.',
   0, NULL, 80, 1, 0, 'unclaimed', 1
@@ -97,7 +97,7 @@ INSERT OR REPLACE INTO operators (
 ) VALUES (
   'op-real-atx-dumpo', 'Dumposaurus Dumpsters', 'dumposaurus-dumpsters', '512-774-5666', NULL, 'https://www.dumposaurus.com/',
   'Family-owned dumpster rental serving Austin and nearby Central Texas communities with honest pricing and fast delivery.', 'Austin', 'TX', 30.27, -97.74,
-  375, 700, NULL, NULL, NULL,
+  415, 625, NULL, NULL, NULL,
   1, NULL, 1, 0,
   'verified', datetime('now'), 'web-research-2026-08-11', 'Web research 2026-08-11: public phone/website from company site. Phone call for insurance/license still recommended before heavy marketing.',
   0, NULL, 86, 1, 0, 'unclaimed', 1
@@ -120,7 +120,7 @@ INSERT OR REPLACE INTO operators (
 ) VALUES (
   'op-real-atx-redbox', 'redbox+ Dumpsters of Greater Austin', 'redbox-plus-greater-austin', '512-957-9701', NULL, 'https://www.redboxplus.com/greater-austin/',
   'Residential roll-off dumpster rental in Greater Austin with clean containers and online booking options.', 'Austin', 'TX', 30.3, -97.75,
-  380, 720, NULL, NULL, NULL,
+  375, 750, NULL, NULL, NULL,
   1, NULL, 0, 0,
   'verified', datetime('now'), 'web-research-2026-08-11', 'Web research 2026-08-11: public phone/website from company site. Phone call for insurance/license still recommended before heavy marketing.',
   0, NULL, 79, 1, 0, 'unclaimed', 1
@@ -142,7 +142,7 @@ INSERT OR REPLACE INTO operators (
 ) VALUES (
   'op-real-den-trashdaddy', 'Trash Daddy Dumpsters', 'trash-daddy-dumpsters-denver', '888-970-2144', NULL, 'https://trashdaddydumpsters.com/dumpster-rentals-colorado/denver/',
   'Locally operated roll-off dumpsters for Denver and the Front Range. Flat-rate packages with same-day delivery options.', 'Denver', 'CO', 39.74, -104.99,
-  480, 750, NULL, NULL, NULL,
+  395, 875, NULL, NULL, NULL,
   1, NULL, 1, 0,
   'verified', datetime('now'), 'web-research-2026-08-11', 'Web research 2026-08-11: public phone/website from company site. Phone call for insurance/license still recommended before heavy marketing.',
   0, NULL, 83, 1, 0, 'unclaimed', 1
@@ -167,7 +167,7 @@ INSERT OR REPLACE INTO operators (
 ) VALUES (
   'op-real-phx-az', 'AZ Dumpsters', 'az-dumpsters', '602-344-0093', NULL, 'https://azdumpsters.com/',
   'Phoenix metro roll-off dumpster rentals with transparent online pricing for residential and commercial debris.', 'Phoenix', 'AZ', 33.45, -112.07,
-  300, 550, NULL, NULL, NULL,
+  NULL, NULL, NULL, NULL, NULL,
   1, NULL, 1, 0,
   'verified', datetime('now'), 'web-research-2026-08-11', 'Web research 2026-08-11: public phone/website from company site. Phone call for insurance/license still recommended before heavy marketing.',
   0, NULL, 85, 1, 0, 'unclaimed', 1
@@ -191,7 +191,7 @@ INSERT OR REPLACE INTO operators (
 ) VALUES (
   'op-real-phx-vavia', 'VaVia Dumpster Rental Phoenix', 'vavia-dumpster-rental-phoenix', '602-529-1217', NULL, 'https://govavia.com/phoenix-az-dumpster-rental/',
   'Phoenix dumpster rental for home renovations, remodels, and small construction projects.', 'Phoenix', 'AZ', 33.46, -112.08,
-  320, 580, NULL, NULL, NULL,
+  NULL, NULL, NULL, NULL, NULL,
   1, NULL, 0, 0,
   'verified', datetime('now'), 'web-research-2026-08-11', 'Web research 2026-08-11: public phone/website from company site. Phone call for insurance/license still recommended before heavy marketing.',
   0, NULL, 77, 1, 0, 'unclaimed', 1
@@ -212,7 +212,7 @@ INSERT OR REPLACE INTO operators (
 ) VALUES (
   'op-real-mia-heroes', 'Dumpster Rental Miami Heroes', 'dumpster-rental-miami-heroes', '786-321-9718', NULL, 'https://dumpsterrentalmiamiheroes.net/',
   'Roll-off dumpster rentals for residential and commercial projects throughout Miami-Dade County.', 'Miami', 'FL', 25.76, -80.19,
-  400, 750, NULL, NULL, NULL,
+  NULL, NULL, NULL, NULL, NULL,
   1, NULL, 1, 0,
   'verified', datetime('now'), 'web-research-2026-08-11', 'Web research 2026-08-11: public phone/website from company site. Phone call for insurance/license still recommended before heavy marketing.',
   0, NULL, 80, 1, 0, 'unclaimed', 1
@@ -234,7 +234,7 @@ INSERT OR REPLACE INTO operators (
 ) VALUES (
   'op-real-mia-redbox', 'redbox+ Dumpsters of North Miami', 'redbox-plus-north-miami', '786-422-1755', NULL, 'https://www.redboxplus.com/north-miami/local-dumpster-rental-in-the-miami-fl-area/',
   'North Miami roll-off dumpster rentals with clean, well-maintained containers for homes and jobsites.', 'Miami', 'FL', 25.89, -80.19,
-  420, 780, NULL, NULL, NULL,
+  NULL, NULL, NULL, NULL, NULL,
   1, NULL, 0, 0,
   'verified', datetime('now'), 'web-research-2026-08-11', 'Web research 2026-08-11: public phone/website from company site. Phone call for insurance/license still recommended before heavy marketing.',
   0, NULL, 78, 1, 0, 'unclaimed', 1
@@ -256,7 +256,7 @@ INSERT OR REPLACE INTO operators (
 ) VALUES (
   'op-real-orl-today', 'Dumpster Today Orlando', 'dumpster-today-orlando', '407-801-3867', NULL, 'https://dumpstertoday.com/locations/orlando/',
   'Same-day roll-off dumpster rentals for Greater Orlando residential and contractor projects.', 'Orlando', 'FL', 28.54, -81.38,
-  350, 650, NULL, NULL, NULL,
+  299, 399, NULL, NULL, NULL,
   1, NULL, 1, 0,
   'verified', datetime('now'), 'web-research-2026-08-11', 'Web research 2026-08-11: public phone/website from company site. Phone call for insurance/license still recommended before heavy marketing.',
   0, NULL, 81, 1, 0, 'unclaimed', 1
@@ -279,7 +279,7 @@ INSERT OR REPLACE INTO operators (
 ) VALUES (
   'op-real-orl-ej', 'EJ Dumpster Services', 'ej-dumpster-services', '407-460-2324', NULL, 'https://www.yelp.com/biz/ej-dumpster-services-orlando',
   'Orlando dumpster rentals and junk removal for homes and construction sites.', 'Orlando', 'FL', 28.5, -81.4,
-  340, 620, NULL, NULL, NULL,
+  NULL, NULL, NULL, NULL, NULL,
   1, NULL, 0, 0,
   'verified', datetime('now'), 'web-research-2026-08-11', 'Web research 2026-08-11: public phone/website from company site. Phone call for insurance/license still recommended before heavy marketing.',
   0, NULL, 75, 1, 0, 'unclaimed', 1
@@ -301,7 +301,7 @@ INSERT OR REPLACE INTO operators (
 ) VALUES (
   'op-real-tpa-deboer', 'DeBoer Bros. Disposal', 'deboer-bros-disposal', '813-931-3300', NULL, 'https://www.deboerbros.com/',
   'Locally owned Tampa Bay roll-off dumpster business with fast delivery for residential and commercial customers.', 'Tampa', 'FL', 27.97, -82.45,
-  340, 620, NULL, NULL, NULL,
+  NULL, NULL, NULL, NULL, NULL,
   1, NULL, 1, 0,
   'verified', datetime('now'), 'web-research-2026-08-11', 'Web research 2026-08-11: public phone/website from company site. Phone call for insurance/license still recommended before heavy marketing.',
   0, NULL, 84, 1, 0, 'unclaimed', 1
@@ -323,7 +323,7 @@ INSERT OR REPLACE INTO operators (
 ) VALUES (
   'op-real-tpa-smiley', 'Smiley''s Dumpster Rental', 'smileys-dumpster-rental', '813-575-5865', NULL, 'https://smileys-dumpsters.com/dumpster-rental-in-tampa',
   'Driveway-safe dumpster rentals in Tampa with friendly local service for cleanouts and remodels.', 'Tampa', 'FL', 27.95, -82.46,
-  335, 600, NULL, NULL, NULL,
+  NULL, NULL, NULL, NULL, NULL,
   1, NULL, 1, 0,
   'verified', datetime('now'), 'web-research-2026-08-11', 'Web research 2026-08-11: public phone/website from company site. Phone call for insurance/license still recommended before heavy marketing.',
   0, NULL, 80, 1, 0, 'unclaimed', 1
@@ -344,7 +344,7 @@ INSERT OR REPLACE INTO operators (
 ) VALUES (
   'op-real-la-calwaste', 'Roll Off Dumpster Rental Inc (Cal Waste Bins)', 'cal-waste-bins', '818-509-1352', NULL, 'https://calwastebins.com/',
   'Family-owned roll-off dumpster rental in Los Angeles and the San Fernando Valley. Same-day delivery, no hidden fees.', 'Los Angeles', 'CA', 34.18, -118.44,
-  450, 900, NULL, NULL, NULL,
+  575, 950, NULL, NULL, NULL,
   1, NULL, 1, 0,
   'verified', datetime('now'), 'web-research-2026-08-11', 'Web research 2026-08-11: public phone/website from company site. Phone call for insurance/license still recommended before heavy marketing.',
   0, NULL, 87, 1, 0, 'unclaimed', 1
@@ -368,7 +368,7 @@ INSERT OR REPLACE INTO operators (
 ) VALUES (
   'op-real-la-metro', 'Metropolis Disposal', 'metropolis-disposal', '800-650-6165', NULL, 'https://www.metropolis-disposal.com/',
   'Family-owned Los Angeles dumpster rental since 1998 serving the San Fernando Valley and Greater LA with high recycling rates.', 'Los Angeles', 'CA', 34.19, -118.45,
-  480, 950, NULL, NULL, NULL,
+  NULL, NULL, NULL, NULL, NULL,
   1, NULL, 1, 0,
   'verified', datetime('now'), 'web-research-2026-08-11', 'Web research 2026-08-11: public phone/website from company site. Phone call for insurance/license still recommended before heavy marketing.',
   0, NULL, 85, 1, 0, 'unclaimed', 1
@@ -391,7 +391,7 @@ INSERT OR REPLACE INTO operators (
 ) VALUES (
   'op-real-atl-br', 'BR Roll Offs', 'br-roll-offs', '404-661-9021', NULL, 'https://br-rolloffs.com/',
   'Family-owned Atlanta metro dumpster rental with same-day delivery on clean 10–30 yard roll-offs. Based in Woodstock, GA.', 'Atlanta', 'GA', 34.1, -84.52,
-  400, 700, NULL, NULL, NULL,
+  NULL, NULL, NULL, NULL, NULL,
   1, NULL, 1, 0,
   'verified', datetime('now'), 'web-research-2026-08-11', 'Web research 2026-08-11: public phone/website from company site. Phone call for insurance/license still recommended before heavy marketing.',
   0, NULL, 86, 1, 0, 'unclaimed', 1
