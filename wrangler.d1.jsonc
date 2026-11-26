@@ -1,0 +1,15 @@
+// Only for `wrangler d1` commands (migrations, seeds, ad-hoc SQL). The Worker itself is
+// configured in void.config.ts. Keep this binding in sync with it.
+// `void db` expects db/migrations/ and its own tracking table, so migrations stay on wrangler
+// (table d1_migrations), as before the Void rewrite.
+{
+  "name": "findadumpster",
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "dumpsterlocal",
+      "database_id": "1c8dbaa7-18c4-4120-ae94-a47c97ac3717",
+      "migrations_dir": "migrations"
+    }
+  ]
+}

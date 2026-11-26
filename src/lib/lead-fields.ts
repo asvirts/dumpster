@@ -1,4 +1,4 @@
-import { z } from 'astro:schema';
+import { z } from 'zod';
 import {
   BUDGET_RANGES,
   DUMPSTER_SIZES,

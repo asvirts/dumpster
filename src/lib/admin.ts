@@ -153,7 +153,10 @@ export function looksLikePlaceholderContact(data: {
   return null;
 }
 
-function assertPublishable(data: OperatorFormData, willPublish: boolean) {
+function assertPublishable(
+  data: Parameters<typeof looksLikePlaceholderContact>[0],
+  willPublish: boolean,
+) {
   if (!willPublish) return;
   const issue = looksLikePlaceholderContact(data);
   if (issue) throw new Error(`Cannot publish: ${issue}`);
@@ -244,10 +247,10 @@ export async function updateOperator(
     (status === 'verified' ? true : status === 'rejected' ? false : existing.isPublished);
   assertPublishable(
     {
-      phone: data.phone ?? existing.phone,
-      website: data.website ?? existing.website,
-      email: data.email ?? existing.email,
-      verificationNotes: data.verificationNotes ?? existing.verificationNotes,
+      phone: data.phone ?? existing.phone ?? undefined,
+      website: data.website ?? existing.website ?? undefined,
+      email: data.email ?? existing.email ?? undefined,
+      verificationNotes: data.verificationNotes ?? existing.verificationNotes ?? undefined,
     },
     willPublish,
   );
