@@ -13,7 +13,11 @@ RESEND_API_KEY=
 PUBLIC_CLERK_PUBLISHABLE_KEY=
 CLERK_SECRET_KEY=
 
-# Stripe (required to unlock paid leads)
+# Base URL for email links and Stripe Checkout return URLs (default https://findadumpster.net).
+# Set locally, or paying in test mode returns you to the production site.
+PUBLIC_SITE_URL=http://localhost:4321
+
+# Stripe (required to unlock paid leads). Local testing: docs/payments-testing.md
 STRIPE_SECRET_KEY=
 STRIPE_WEBHOOK_SECRET=
 LEAD_PRICE_CENTS=2500

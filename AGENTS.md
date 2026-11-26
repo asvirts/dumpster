@@ -14,6 +14,8 @@ First-time local data:
 bun run db:setup:local
 ```
 
+Payments (Stripe Checkout + auto-buy) were verified end to end on 2026-11-26. Before changing payment code, read `docs/payments-testing.md` for what's covered, known gaps, and how to re-run the test locally.
+
 Admin is at `/admin`. Local bypass: `ADMIN_BYPASS=1` in `.dev.vars` **only** under `astro dev`. Production: set secrets `CF_ACCESS_TEAM_DOMAIN` + `CF_ACCESS_AUD` and put Access on `/admin*` (Worker verifies the Access JWT).
 
 ## Stack
