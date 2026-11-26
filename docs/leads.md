@@ -58,6 +58,8 @@ Paid unlock fulfills in two places (idempotent):
 
 An open Checkout Session is reused on repeat clicks. Re-routing or complimentary unlock expires the stale session so a later payment cannot attach to the wrong operator.
 
+End-to-end verification (last passed 2026-11-26), known gaps, and the local test runbook: [payments-testing.md](payments-testing.md).
+
 ## Niche fields
 
 `src/lib/lead-fields.ts` is the adapter:
@@ -117,6 +119,8 @@ First-party: `events` rows for search, submit, and duplicates.
 | `RESEND_API_KEY` | Send mail (**required** — without it no operator is ever offered a lead) |
 | `ADMIN_NOTIFY_EMAIL` | Daily digest (and per-lead alerts if `ADMIN_LEAD_ALERTS=1`) |
 | `LEAD_FROM_EMAIL` | From header |
+| `PUBLIC_SITE_URL` | Base URL for email links and Stripe Checkout return URLs. Default `https://findadumpster.net`; set `http://localhost:4321` locally |
+| `STRIPE_SECRET_KEY` / `STRIPE_WEBHOOK_SECRET` | Checkout and auto-buy charges / `/api/stripe/webhook` signature check |
 | `LEAD_PRICE_CENTS` | Shared (match) price, default 2500 |
 | `LEAD_PRICE_EXCLUSIVE_CENTS` | Exclusive (direct) price, default 4000 |
 | `LINK_SIGNING_SECRET` | Optional unsubscribe-link key (falls back to `CLERK_SECRET_KEY`) |
