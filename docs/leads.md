@@ -123,7 +123,7 @@ First-party: `events` rows for search, submit, and duplicates.
 | `STRIPE_SECRET_KEY` / `STRIPE_WEBHOOK_SECRET` | Checkout and auto-buy charges / `/api/stripe/webhook` signature check |
 | `LEAD_PRICE_CENTS` | Shared (match) price, default 2500 |
 | `LEAD_PRICE_EXCLUSIVE_CENTS` | Exclusive (direct) price, default 4000 |
-| `LINK_SIGNING_SECRET` | Optional unsubscribe-link key (falls back to `CLERK_SECRET_KEY`) |
+| `LINK_SIGNING_SECRET` | Optional unsubscribe-link key (falls back to `STRIPE_WEBHOOK_SECRET`; changing it breaks links already sent) |
 | `LEAD_REPLY_TO` | Reply-To on every email (var; `leads@eeildoiint.resend.app`). Unset → replies go to the From address |
 | `RESEND_WEBHOOK_SECRET` | Signing secret of the Resend `email.received` webhook |
 | `RESEND_RECEIVING_API_KEY` | Full-access Resend key, only used to read reply text |

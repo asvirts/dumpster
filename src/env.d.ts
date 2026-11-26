@@ -19,8 +19,6 @@ interface Env {
   WORKOS_COOKIE_PASSWORD?: string;
   /** Signing secret of the WorkOS webhook endpoint (organization.deleted). */
   WORKOS_WEBHOOK_SECRET?: string;
-  /** Legacy: still signs unsubscribe links sent before LINK_SIGNING_SECRET was set */
-  CLERK_SECRET_KEY?: string;
   RESEND_API_KEY?: string;
   ADMIN_NOTIFY_EMAIL?: string;
   /** Local DEV only (with import.meta.env.DEV): skip Access checks */
@@ -37,7 +35,7 @@ interface Env {
   LEAD_PRICE_EXCLUSIVE_CENTS?: string;
   /** "1" = email the admin about every lead (default off; daily digest instead) */
   ADMIN_LEAD_ALERTS?: string;
-  /** HMAC key for unsubscribe links (falls back to CLERK_SECRET_KEY / STRIPE_WEBHOOK_SECRET) */
+  /** HMAC key for unsubscribe links (falls back to STRIPE_WEBHOOK_SECRET) */
   LINK_SIGNING_SECRET?: string;
   /** Reply-To on every email; an address on the Resend Inbound subdomain. */
   LEAD_REPLY_TO?: string;
