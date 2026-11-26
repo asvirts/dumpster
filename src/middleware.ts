@@ -1,6 +1,6 @@
 import { defineMiddleware, sequence } from 'astro:middleware';
-import { clerkMiddleware } from '@clerk/astro/server';
 import { isLocalAdminBypass, verifyAccessJwt } from './lib/access';
+import { loadSession, loginPath } from './lib/auth';
 
 /**
  * Admin routes:
@@ -33,27 +33,34 @@ const adminGuard = defineMiddleware(async (context, next) => {
   return next();
 });
 
-const portalClerk = clerkMiddleware((auth, context, next) => {
+/** Webhooks must work even if WorkOS is unconfigured or down. */
+const NO_SESSION_PATHS = new Set(['/api/stripe/webhook', '/api/resend/inbound']);
+
+/**
+ * Operator sign-in (WorkOS AuthKit). Loads the session on every page so the header can show
+ * the signed-in state; /portal requires a user and an active company (organization).
+ */
+const operatorAuth = defineMiddleware(async (context, next) => {
   const path = context.url.pathname;
-  const isPortal = path.startsWith('/portal');
-  if (isPortal) {
-    const { userId, orgId, redirectToSignIn } = auth();
-    if (!userId) {
-      return redirectToSignIn({ returnBackUrl: context.url.href });
+  context.locals.auth = null;
+  if (NO_SESSION_PATHS.has(path)) return next();
+
+  try {
+    context.locals.auth = await loadSession(context.cookies, context.url);
+  } catch (err) {
+    console.error('[auth] could not load session', err);
+  }
+
+  if (path === '/portal' || path.startsWith('/portal/')) {
+    const auth = context.locals.auth;
+    if (!auth) {
+      return context.redirect(loginPath(context.url.pathname + context.url.search));
     }
-    if (!orgId && path !== '/portal/select-org') {
+    if (!auth.orgId && path !== '/portal/select-org') {
       return context.redirect('/portal/select-org');
     }
   }
   return next();
 });
 
-const clerkAuth = defineMiddleware(async (context, next) => {
-  // Webhooks must be able to POST here even if Clerk keys are missing or Clerk is down.
-  if (context.url.pathname === '/api/stripe/webhook' || context.url.pathname === '/api/resend/inbound') {
-    return next();
-  }
-  return portalClerk(context, next);
-});
-
-export const onRequest = sequence(adminGuard, clerkAuth);
+export const onRequest = sequence(adminGuard, operatorAuth);

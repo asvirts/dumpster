@@ -15,6 +15,8 @@ function siteBase(): string {
  * existing server secret (namespaced by PURPOSE in the HMAC) so links work without new setup.
  */
 function linkSecret(): string | null {
+  // CLERK_SECRET_KEY is legacy (Clerk is gone) but signed every link sent so far in
+  // production; keep it until LINK_SIGNING_SECRET is set to the same value.
   const e = env as {
     LINK_SIGNING_SECRET?: string;
     CLERK_SECRET_KEY?: string;

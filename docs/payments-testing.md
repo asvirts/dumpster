@@ -56,21 +56,19 @@ stripe listen --api-key "$STRIPE_SECRET_KEY" \
   --events checkout.session.completed,checkout.session.async_payment_succeeded,checkout.session.async_payment_failed
 ```
 
-### 2. Clerk (portal sign-in)
+### 2. WorkOS (portal sign-in)
 
-If `.dev.vars` has no working Clerk keys, create a throwaway keyless dev app and paste its keys in as `PUBLIC_CLERK_PUBLISHABLE_KEY` / `CLERK_SECRET_KEY`. The response also includes a `claim_url` that turns it into a real app.
+Operator sign-in is WorkOS AuthKit. Locally it uses the "Find A Dumpster" project's **Staging** environment, which already has the Redirect URI `http://localhost:4321/auth/callback`, Sign-out URI `http://localhost:4321/` and Initiate login URI `http://localhost:4321/auth/login`. Set `WORKOS_API_KEY` (Staging secret key from the dashboard), `WORKOS_CLIENT_ID` and `WORKOS_COOKIE_PASSWORD` in `.dev.vars` (see `.dev.vars.example`).
+
+Create a test user with a verified email and a password, so sign-in needs no email code:
 
 ```sh
-curl -s -X POST https://api.clerk.com/v1/accountless_applications -H 'Content-Type: application/json' -d '{}'
+curl -s https://api.workos.com/user_management/users -H "Authorization: Bearer $WORKOS_API_KEY" \
+  -H 'Content-Type: application/json' \
+  -d '{"email":"operator@example.com","password":"<test password>","email_verified":true}'
 ```
 
-Then, with `CK=$CLERK_SECRET_KEY`, use the Backend API to:
-
-1. Turn on organizations: `PATCH /v1/instance/organization_settings {"enabled":true}`.
-2. Create a user with a `+clerk_test` email, which always verifies with code `424242`.
-3. Create an organization with `created_by` set to that user.
-
-Sign in without the password and new-device prompts by minting a one-time link: `POST /v1/sign_in_tokens {"user_id":"…"}`. Open the returned `url` with `&redirect_url=http%3A%2F%2Flocalhost%3A4321%2Fportal%2Fleads` added.
+Sign in at `/auth/login`, then create the company at `/portal/select-org`. Its `org_…` ID is in `GET https://api.workos.com/organizations`.
 
 ### 3. Seed an offered lead
 
@@ -78,8 +76,8 @@ Link a listing to the test org, use up its free unlock, and offer it an exclusiv
 
 ```sh
 npx wrangler d1 execute dumpsterlocal --local --command "
-update operators set claim_status='approved', clerk_org_id='<org_id>', complimentary_leads_remaining=0,
-  lead_notify_email='<user>+clerk_test@example.com' where id='op-htx-1';
+update operators set claim_status='approved', org_id='<org_id>', complimentary_leads_remaining=0,
+  lead_notify_email='operator@example.com' where id='op-htx-1';
 insert into leads (id, operator_id, requested_operator_id, seeker_name, seeker_email, seeker_phone,
   project_size, material, address_or_zip, status, offered_at, mode, price_cents)
 values ('paytest-lead-1','op-htx-1','op-htx-1','Test Seeker One','seeker1@example.com','555-0101',
@@ -113,7 +111,7 @@ Get `evt.json` from `GET /v1/events/<evt_id>`.
 
 Delete the test leads and their `admin_audit` rows. Reset the test operator:
 - `claim_status='unclaimed'`
-- `clerk_org_id`, `lead_notify_email` and the `stripe_*` columns set to null
+- `org_id`, `lead_notify_email` and the `stripe_*` columns set to null
 - `complimentary_leads_remaining=1`
 - `auto_unlock_enabled=0`
 

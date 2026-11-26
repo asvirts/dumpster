@@ -16,6 +16,7 @@ import { claimProofEmail } from '../lib/autopilot-rules';
 import { logAudit } from '../lib/admin';
 import { sendClaimDecision } from '../lib/email';
 import { siteUrl } from '../lib/leads';
+import { workos } from '../lib/auth';
 
 export const server = {
   submitQuote: defineAction({
@@ -91,16 +92,16 @@ export const server = {
       message: z.string().max(1000).optional(),
     }),
     handler: async (input, context) => {
-      const auth = context.locals.auth?.();
+      const auth = context.locals.auth;
       const userId = auth?.userId;
       const orgId = auth?.orgId;
-      if (!userId) {
+      if (!auth || !userId) {
         throw new ActionError({ code: 'UNAUTHORIZED', message: 'Sign in to claim a listing.' });
       }
       if (!orgId) {
         throw new ActionError({
           code: 'BAD_REQUEST',
-          message: 'Create or select a company organization in Clerk before claiming.',
+          message: 'Create or select your company before claiming.',
         });
       }
 
@@ -123,7 +124,7 @@ export const server = {
 
       const orgBusy = await db.query.operators.findFirst({
         where: and(
-          eq(operators.clerkOrgId, orgId),
+          eq(operators.orgId, orgId),
           inArray(operators.claimStatus, ['approved', 'pending']),
         ),
       });
@@ -139,16 +140,15 @@ export const server = {
 
       // Verified emails prove control of the listing (instant approval) and give us
       // the claimant's address for lead emails once the claim is approved.
-      let verifiedEmails: string[] = [];
-      let primaryEmail: string | null = null;
+      // Re-read the user so a just-verified email counts (the session copy can be stale).
+      let user = auth.user;
       try {
-        const user = await context.locals.currentUser?.();
-        const verified = user?.emailAddresses.filter((e) => e.verification?.status === 'verified') ?? [];
-        verifiedEmails = verified.map((e) => e.emailAddress);
-        primaryEmail = verified.find((e) => e.id === user?.primaryEmailAddressId)?.emailAddress ?? null;
+        user = await workos().userManagement.getUser(userId);
       } catch (err) {
-        console.warn('[claim] could not load Clerk user for auto-approval', err);
+        console.warn('[claim] could not load WorkOS user; using session copy', err);
       }
+      const verifiedEmails = user.emailVerified ? [user.email] : [];
+      const primaryEmail = verifiedEmails[0] ?? null;
       const proofEmail = claimProofEmail(op, verifiedEmails);
       const claimantEmail =
         (proofEmail ?? primaryEmail ?? verifiedEmails[0])?.trim().toLowerCase() || null;
@@ -158,7 +158,7 @@ export const server = {
       const claimed = await db
         .update(operators)
         .set({
-          clerkOrgId: orgId,
+          orgId: orgId,
           claimStatus: 'pending',
           claimRequestedAt: now,
           claimRequestedByUserId: userId,
@@ -181,7 +181,7 @@ export const server = {
         });
       }
 
-      // Instant approval when a verified Clerk email proves control of the listing.
+      // Instant approval when a verified email proves control of the listing.
       if (proofEmail) {
         const approved = await db
           .update(operators)
@@ -194,7 +194,7 @@ export const server = {
             and(
               eq(operators.id, op.id),
               eq(operators.claimStatus, 'pending'),
-              eq(operators.clerkOrgId, orgId),
+              eq(operators.orgId, orgId),
             ),
           )
           .returning({ id: operators.id });
@@ -227,7 +227,7 @@ export const server = {
       leadId: z.string().min(1),
     }),
     handler: async (input, context) => {
-      const auth = context.locals.auth?.();
+      const auth = context.locals.auth;
       const orgId = auth?.orgId;
       if (!auth?.userId || !orgId) {
         throw new ActionError({ code: 'UNAUTHORIZED', message: 'Sign in required.' });
@@ -235,7 +235,7 @@ export const server = {
 
       const db = getDb();
       const op = await db.query.operators.findFirst({
-        where: and(eq(operators.clerkOrgId, orgId), eq(operators.claimStatus, 'approved')),
+        where: and(eq(operators.orgId, orgId), eq(operators.claimStatus, 'approved')),
       });
       if (!op) {
         throw new ActionError({ code: 'FORBIDDEN', message: 'No approved listing for this org.' });
@@ -264,7 +264,7 @@ export const server = {
       leadId: z.string().min(1),
     }),
     handler: async (input, context) => {
-      const auth = context.locals.auth?.();
+      const auth = context.locals.auth;
       const orgId = auth?.orgId;
       if (!auth?.userId || !orgId) {
         throw new ActionError({ code: 'UNAUTHORIZED', message: 'Sign in required.' });
@@ -272,7 +272,7 @@ export const server = {
 
       const db = getDb();
       const op = await db.query.operators.findFirst({
-        where: and(eq(operators.clerkOrgId, orgId), eq(operators.claimStatus, 'approved')),
+        where: and(eq(operators.orgId, orgId), eq(operators.claimStatus, 'approved')),
       });
       if (!op) {
         throw new ActionError({ code: 'FORBIDDEN', message: 'No approved listing for this org.' });
@@ -286,7 +286,7 @@ export const server = {
       const checkout = await createLeadUnlockCheckout(db, {
         lead,
         operator: op,
-        clerkOrgId: orgId,
+        orgId: orgId,
       });
       if (!checkout.ok) {
         throw new ActionError({ code: 'INTERNAL_SERVER_ERROR', message: checkout.error });
