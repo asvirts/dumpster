@@ -1,11 +1,12 @@
 ---
 import { actions } from 'astro:actions';
 import {
-  OrganizationSwitcher,
-  Show,
+  SignedIn,
+  SignedOut,
   SignInButton,
   SignUpButton,
-} from '@clerk/astro/components';
+} from '@workos/authkit-astro/components';
+import { getWorkOS } from '@workos/authkit-astro';
 
 interface Props {
   operatorId: string;
@@ -16,6 +17,17 @@ interface Props {
 const { operatorId, operatorName, claimStatus } = Astro.props;
 const result = Astro.getActionResult(actions.claimListing);
 const canClaim = claimStatus === 'unclaimed' || claimStatus === 'rejected';
+const claimPath = `${Astro.url.pathname}#claim`;
+const selectOrgHref = `/portal/select-org?returnTo=${encodeURIComponent(claimPath)}`;
+const activeOrgId = Astro.locals.auth?.user ? Astro.locals.auth.organizationId : null;
+let activeOrgName: string | null = null;
+if (canClaim && activeOrgId) {
+  try {
+    activeOrgName = (await getWorkOS().organizations.getOrganization(activeOrgId)).name;
+  } catch (err) {
+    console.warn('[claim] could not load organization', err);
+  }
+}
 ---
 
 <div class="card p-5" id="claim">
@@ -43,20 +55,24 @@ const canClaim = claimStatus === 'unclaimed' || claimStatus === 'rejected';
           Signing in with the listing’s email (or an email on its website domain) approves the claim
           instantly.
         </p>
-        <Show when="signed-out">
+        <SignedOut>
           <div class="mt-4 flex flex-wrap gap-2">
-            <SignInButton mode="modal" />
-            <SignUpButton mode="modal" />
+            <SignInButton returnTo={claimPath} class="btn-secondary text-xs" />
+            <SignUpButton returnTo={claimPath} class="btn-primary text-xs">Sign up</SignUpButton>
           </div>
-        </Show>
-        <Show when="signed-in">
+        </SignedOut>
+        <SignedIn>
           <div class="mt-4 space-y-3">
-            <p class="text-xs text-muted">Select or create your company organization, then submit.</p>
-            <OrganizationSwitcher
-              hidePersonal={true}
-              afterSelectOrganizationUrl={Astro.url.pathname}
-              afterCreateOrganizationUrl={Astro.url.pathname}
-            />
+            {activeOrgId ? (
+              <p class="text-xs text-muted">
+                Claiming as <strong>{activeOrgName ?? 'your active company'}</strong> ·{' '}
+                <a href={selectOrgHref}>Switch company</a>
+              </p>
+            ) : (
+              <p class="text-xs text-muted">
+                <a href={selectOrgHref}>Select or create your company organization</a>, then submit.
+              </p>
+            )}
             {result?.error && (
               <p class="border-2 border-red-600 bg-red-50 px-3 py-2 text-sm text-red-800">
                 {result.error.message}
@@ -72,7 +88,7 @@ const canClaim = claimStatus === 'unclaimed' || claimStatus === 'rejected';
                 Claim submitted — we’ll email you when it’s reviewed. Tip: claims approve instantly
                 when you sign in with the listing’s email or an email on its website domain.
               </p>
-            ) : (
+            ) : activeOrgId ? (
               <form method="POST" action={actions.claimListing} class="space-y-3">
                 <input type="hidden" name="operatorId" value={operatorId} />
                 <div>
@@ -83,9 +99,9 @@ const canClaim = claimStatus === 'unclaimed' || claimStatus === 'rejected';
                   Submit claim
                 </button>
               </form>
-            )}
+            ) : null}
           </div>
-        </Show>
+        </SignedIn>
       </>
     )
   }

@@ -1,6 +1,7 @@
 import { defineMiddleware, sequence } from 'astro:middleware';
-import { clerkMiddleware } from '@clerk/astro/server';
+import { authkitMiddleware } from '@workos/authkit-astro';
 import { isLocalAdminBypass, verifyAccessJwt } from './lib/access';
+import { ensureAuthKit } from './lib/workos';
 
 /**
  * Admin routes:
@@ -33,27 +34,36 @@ const adminGuard = defineMiddleware(async (context, next) => {
   return next();
 });
 
-const portalClerk = clerkMiddleware((auth, context, next) => {
-  const path = context.url.pathname;
-  const isPortal = path.startsWith('/portal');
-  if (isPortal) {
-    const { userId, orgId, redirectToSignIn } = auth();
-    if (!userId) {
-      return redirectToSignIn({ returnBackUrl: context.url.href });
+/**
+ * WorkOS AuthKit: populates `Astro.locals.auth` and refreshes the session.
+ * `/portal` needs a signed-in user with an active organization (operator company).
+ */
+const portalAuth = authkitMiddleware(
+  (auth, context) => {
+    const path = context.url.pathname;
+    if (path === '/portal' || path.startsWith('/portal/')) {
+      if (!auth.user) {
+        return auth.redirectToSignIn();
+      }
+      if (!auth.organizationId && path !== '/portal/select-org') {
+        return context.redirect('/portal/select-org');
+      }
     }
-    if (!orgId && path !== '/portal/select-org') {
-      return context.redirect('/portal/select-org');
-    }
-  }
-  return next();
-});
+  },
+  { signInPath: '/login' },
+);
 
-const clerkAuth = defineMiddleware(async (context, next) => {
-  // Webhooks must be able to POST here even if Clerk keys are missing or Clerk is down.
-  if (context.url.pathname === '/api/stripe/webhook' || context.url.pathname === '/api/resend/inbound') {
+/** Webhooks must be able to POST here even if WorkOS keys are missing or WorkOS is down. */
+const AUTH_EXEMPT_PATHS = new Set(['/api/stripe/webhook', '/api/resend/inbound']);
+
+const workosAuth = defineMiddleware(async (context, next) => {
+  if (AUTH_EXEMPT_PATHS.has(context.url.pathname)) {
     return next();
   }
-  return portalClerk(context, next);
+  if (!context.isPrerendered) {
+    await ensureAuthKit();
+  }
+  return (await portalAuth(context, next)) as Response;
 });
 
-export const onRequest = sequence(adminGuard, clerkAuth);
+export const onRequest = sequence(adminGuard, workosAuth);

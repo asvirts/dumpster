@@ -37,7 +37,7 @@ The one free unlock each operator starts with.
 _Avoid_: free quota (unless talking about a future monthly reset), teaser credit
 
 **Claim**:
-An operator asserting ownership of a listing through a Clerk organization. Requires admin approval.
+An operator asserting ownership of a listing through their company's WorkOS organization. Requires admin approval.
 _Avoid_: unlock, verify
 
 **Route**:

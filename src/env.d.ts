@@ -10,8 +10,11 @@ interface Env {
   DB: D1Database;
   PUBLIC_SITE_NAME: string;
   PUBLIC_SITE_URL: string;
-  PUBLIC_CLERK_PUBLISHABLE_KEY?: string;
-  CLERK_SECRET_KEY?: string;
+  /** WorkOS AuthKit (read through astro:env; see astro.config.mjs) */
+  WORKOS_CLIENT_ID?: string;
+  WORKOS_API_KEY?: string;
+  WORKOS_REDIRECT_URI?: string;
+  WORKOS_COOKIE_PASSWORD?: string;
   RESEND_API_KEY?: string;
   ADMIN_NOTIFY_EMAIL?: string;
   /** Local DEV only (with import.meta.env.DEV): skip Access checks */
@@ -28,7 +31,7 @@ interface Env {
   LEAD_PRICE_EXCLUSIVE_CENTS?: string;
   /** "1" = email the admin about every lead (default off; daily digest instead) */
   ADMIN_LEAD_ALERTS?: string;
-  /** HMAC key for unsubscribe links (falls back to CLERK_SECRET_KEY / STRIPE_WEBHOOK_SECRET) */
+  /** HMAC key for unsubscribe links (falls back to STRIPE_WEBHOOK_SECRET) */
   LINK_SIGNING_SECRET?: string;
   /** Reply-To on every email; an address on the Resend Inbound subdomain. */
   LEAD_REPLY_TO?: string;

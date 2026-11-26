@@ -45,9 +45,9 @@ Monetization: **1 complimentary unlock per operator**, then Stripe Checkout or a
 
 Checkout saves the card (`setup_future_usage=off_session`) so the operator can turn on auto-buy in `/portal/leads`. A declined auto-buy charge pauses auto-buy and emails the operator; the lead stays offered.
 
-Claims approve instantly when the claimant's verified Clerk email equals the listing email or is on the listing website's domain (free-mail domains excluded). Other claims wait in `/admin/claims`.
+Claims approve instantly when the claimant's verified account email (WorkOS) equals the listing email or is on the listing website's domain (free-mail domains excluded). Other claims wait in `/admin/claims`.
 
-Lead emails (offers, reminders, unlock receipts, auto-buy notices, Stripe receipt address) go to `lead_notify_email`, falling back to the public listing `email` (`operatorNotifyEmail`). A claim records the claimant's verified Clerk email (`claim_requested_by_email`: the one that proved control, else their primary). Approval, instant or in `/admin/claims`, copies it to `lead_notify_email` and sends the approval email there. Operators change it under **Lead emails** in `/portal/leads`; blank means use the listing email. Replies from either address are matched to the operator.
+Lead emails (offers, reminders, unlock receipts, auto-buy notices, Stripe receipt address) go to `lead_notify_email`, falling back to the public listing `email` (`operatorNotifyEmail`). A claim records the claimant's verified account email (`claim_requested_by_email`). Approval, instant or in `/admin/claims`, copies it to `lead_notify_email` and sends the approval email there. Operators change it under **Lead emails** in `/portal/leads`; blank means use the listing email. Replies from either address are matched to the operator.
 
 Every operator email carries a signed unsubscribe link (`/api/unsubscribe`); opted-out operators are never offered leads.
 
@@ -119,7 +119,7 @@ First-party: `events` rows for search, submit, and duplicates.
 | `LEAD_FROM_EMAIL` | From header |
 | `LEAD_PRICE_CENTS` | Shared (match) price, default 2500 |
 | `LEAD_PRICE_EXCLUSIVE_CENTS` | Exclusive (direct) price, default 4000 |
-| `LINK_SIGNING_SECRET` | Optional unsubscribe-link key (falls back to `CLERK_SECRET_KEY`) |
+| `LINK_SIGNING_SECRET` | Optional unsubscribe-link key (falls back to `STRIPE_WEBHOOK_SECRET`). Set it to the old `CLERK_SECRET_KEY` value so links sent before the WorkOS move keep working |
 | `LEAD_REPLY_TO` | Reply-To on every email (var; `leads@eeildoiint.resend.app`). Unset → replies go to the From address |
 | `RESEND_WEBHOOK_SECRET` | Signing secret of the Resend `email.received` webhook |
 | `RESEND_RECEIVING_API_KEY` | Full-access Resend key, only used to read reply text |

@@ -1,24 +1,104 @@
 ---
 import PortalLayout from '../../layouts/PortalLayout.astro';
-import { CreateOrganization, OrganizationList } from '@clerk/astro/components';
+import {
+  createOrganizationForUser,
+  listUserOrganizations,
+  switchActiveOrganization,
+  type UserOrganization,
+} from '../../lib/workos-orgs';
+import { safeReturnTo } from '../../lib/workos';
+
+// Middleware guarantees a signed-in user on /portal/*.
+const user = Astro.locals.auth.user!;
+const returnTo = safeReturnTo(Astro.url.searchParams.get('returnTo'), '/portal');
+let error = Astro.url.searchParams.get('err');
+
+if (Astro.request.method === 'POST') {
+  const form = await Astro.request.formData();
+  const name = form.get('name')?.toString().trim() ?? '';
+  const destination = safeReturnTo(form.get('returnTo')?.toString(), '/portal');
+  if (name.length < 2 || name.length > 120) {
+    error = 'Enter your company name (2–120 characters).';
+  } else {
+    let created = false;
+    try {
+      const org = await createOrganizationForUser(user.id, name);
+      const switched = await switchActiveOrganization(Astro, org.id);
+      created = switched.ok;
+      if (!switched.ok) error = switched.error;
+    } catch (err) {
+      console.error('[portal] create organization failed', err);
+      error = 'Could not create the organization. Try again.';
+    }
+    if (created) return Astro.redirect(destination);
+  }
+}
+
+let organizations: UserOrganization[] = [];
+try {
+  organizations = await listUserOrganizations(user.id);
+} catch (err) {
+  console.error('[portal] list organizations failed', err);
+  error ??= 'Could not load your organizations.';
+}
+
+// One company and nothing chosen yet: pick it for them.
+if (Astro.request.method === 'GET' && !error && organizations.length === 1 && !Astro.locals.auth.organizationId) {
+  const switched = await switchActiveOrganization(Astro, organizations[0].id);
+  if (switched.ok) return Astro.redirect(returnTo);
+  error = switched.error;
+}
+
+const activeId = Astro.locals.auth.organizationId;
 ---
 
 <PortalLayout title="Select organization">
   <p class="mb-6 text-sm text-muted">
     Operator accounts are company organizations. Create or select one to continue.
   </p>
+  {
+    error && (
+      <p class="mb-6 border-2 border-red-600 bg-red-50 px-3 py-2 text-sm text-red-800">{error}</p>
+    )
+  }
   <div class="grid gap-8 lg:grid-cols-2">
     <div class="card p-5">
       <h2 class="mb-4 font-bold text-ink">Your organizations</h2>
-      <OrganizationList
-        hidePersonal={true}
-        afterSelectOrganizationUrl="/portal"
-        afterCreateOrganizationUrl="/portal"
-      />
+      {
+        organizations.length === 0 ? (
+          <p class="text-sm text-muted">You’re not in a company organization yet.</p>
+        ) : (
+          <ul class="space-y-2">
+            {organizations.map((org) => (
+              <li>
+                <form method="POST" action="/api/auth/switch-org" class="flex items-center justify-between gap-3">
+                  <input type="hidden" name="organizationId" value={org.id} />
+                  <input type="hidden" name="returnTo" value={returnTo} />
+                  <span class="text-sm font-medium text-ink">{org.name}</span>
+                  {org.id === activeId ? (
+                    <span class="text-xs text-muted">Active</span>
+                  ) : (
+                    <button type="submit" class="btn-secondary px-3 py-1.5 text-xs">
+                      Select
+                    </button>
+                  )}
+                </form>
+              </li>
+            ))}
+          </ul>
+        )
+      }
     </div>
     <div class="card p-5">
       <h2 class="mb-4 font-bold text-ink">Create company</h2>
-      <CreateOrganization afterCreateOrganizationUrl="/portal" />
+      <form method="POST" class="space-y-3">
+        <input type="hidden" name="returnTo" value={returnTo} />
+        <div>
+          <label class="label" for="org-name">Company name</label>
+          <input class="input" id="org-name" name="name" required minlength="2" maxlength="120" />
+        </div>
+        <button type="submit" class="btn-primary text-xs">Create organization</button>
+      </form>
     </div>
   </div>
 </PortalLayout>

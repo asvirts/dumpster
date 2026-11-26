@@ -9,9 +9,13 @@ RESEND_API_KEY=
 # CF_ACCESS_TEAM_DOMAIN=myteam.cloudflareaccess.com
 # CF_ACCESS_AUD=<Access application AUD tag>
 
-# Clerk (optional in keyless/dev; required for production portal)
-PUBLIC_CLERK_PUBLISHABLE_KEY=
-CLERK_SECRET_KEY=
+# WorkOS AuthKit (operator sign-in + /portal). Use this site's own WorkOS project.
+# Without these the public site still works; /login answers 503.
+WORKOS_CLIENT_ID=client_...
+WORKOS_API_KEY=sk_test_...
+WORKOS_REDIRECT_URI=http://localhost:4321/callback
+# At least 32 characters: openssl rand -base64 32
+WORKOS_COOKIE_PASSWORD=
 
 # Stripe (required to unlock paid leads)
 STRIPE_SECRET_KEY=
@@ -27,6 +31,9 @@ LEAD_FROM_EMAIL=Find A Dumpster <leads@findadumpster.net>
 # Optional Cloudflare Turnstile (omit both to skip captcha)
 # PUBLIC_TURNSTILE_SITE_KEY=
 # TURNSTILE_SECRET=
+
+# Optional unsubscribe-link HMAC key (falls back to STRIPE_WEBHOOK_SECRET)
+# LINK_SIGNING_SECRET=
 
 # Replies via Resend Inbound (docs/leads.md → Replies)
 # LEAD_REPLY_TO=leads@eeildoiint.resend.app

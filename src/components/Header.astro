@@ -1,8 +1,17 @@
 ---
 import { BRAND } from '../lib/constants';
-import { Show, SignInButton, UserButton } from '@clerk/astro/components';
+import {
+  SignedIn,
+  SignedOut,
+  SignInButton,
+  SignOutButton,
+  UserButton,
+} from '@workos/authkit-astro/components';
 
 const path = Astro.url.pathname;
+// Prerendered pages (guides, 404) have no request session: the AuthKit gates
+// resolve in the browser from /api/auth/session instead.
+const prerendered = Astro.isPrerendered;
 const links = [
   { href: '/search', label: 'Search' },
   { href: '/guides', label: 'Guides' },
@@ -41,12 +50,21 @@ const links = [
         ))
       }
       <div class="ml-3 flex items-center gap-2">
-        <Show when="signed-out">
-          <SignInButton mode="modal" />
-        </Show>
-        <Show when="signed-in">
-          <UserButton afterSignOutUrl="/" />
-        </Show>
+        <SignedOut>
+          <SignInButton
+            returnTo={path}
+            class="px-3 py-2 font-mono text-xs font-semibold uppercase tracking-widest text-charcoal-200 no-underline hover:text-brand-400"
+          />
+        </SignedOut>
+        <SignedIn>
+          {
+            prerendered ? (
+              <SignOutButton class="px-3 py-2 font-mono text-xs font-semibold uppercase tracking-widest text-charcoal-200 no-underline hover:text-brand-400" />
+            ) : (
+              <UserButton showName={false} class="text-ink" />
+            )
+          }
+        </SignedIn>
         <a href="/search" class="btn-primary px-4 py-2 text-xs">Find dumpsters</a>
       </div>
     </nav>
@@ -86,6 +104,15 @@ const links = [
     </nav>
   </div>
 </header>
+
+{
+  prerendered && (
+    <script>
+      import { hydrateAuth } from '@workos/authkit-astro/client';
+      hydrateAuth('/api/auth/session');
+    </script>
+  )
+}
 
 <script>
   function initNav() {

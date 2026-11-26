@@ -71,7 +71,12 @@ export const operators = sqliteTable(
     qualityScore: real('quality_score').default(50),
     isPublished: integer('is_published', { mode: 'boolean' }).notNull().default(false),
     isDemo: integer('is_demo', { mode: 'boolean' }).notNull().default(false),
-    clerkOrgId: text('clerk_org_id'),
+    /**
+     * WorkOS organization id of the operator company that claimed the listing.
+     * The column keeps its original `clerk_org_id` name; Clerk-era ids are swapped
+     * for WorkOS ids on first sign-in (src/lib/auth-remap.ts).
+     */
+    orgId: text('clerk_org_id'),
     claimStatus: text('claim_status', {
       enum: ['unclaimed', 'pending', 'approved', 'rejected'],
     })
@@ -80,7 +85,7 @@ export const operators = sqliteTable(
     claimRequestedAt: text('claim_requested_at'),
     claimRequestedByUserId: text('claim_requested_by_user_id'),
     claimMessage: text('claim_message'),
-    /** Verified Clerk email of the claimant; becomes leadNotifyEmail on approval. */
+    /** Verified account email of the claimant; becomes leadNotifyEmail on approval. */
     claimRequestedByEmail: text('claim_requested_by_email'),
     /** Where lead emails go; falls back to the public listing email (see operatorNotifyEmail). */
     leadNotifyEmail: text('lead_notify_email'),
@@ -105,7 +110,7 @@ export const operators = sqliteTable(
   },
   (t) => [
     uniqueIndex('operators_slug_idx').on(t.slug),
-    uniqueIndex('operators_clerk_org_idx').on(t.clerkOrgId),
+    uniqueIndex('operators_clerk_org_idx').on(t.orgId),
     index('operators_status_idx').on(t.verificationStatus),
     index('operators_published_idx').on(t.isPublished),
     index('operators_broker_idx').on(t.isBroker),

@@ -18,9 +18,10 @@ import { createLeadUnlockCheckout, fulfillCheckoutSessionById } from '../../lib/
 import { formatUsdFromCents } from '../../lib/paid-unlock';
 import { labelForContact, labelForMaterial } from '../../lib/lead-fields';
 
-const auth = Astro.locals.auth();
-const orgId = auth.orgId!;
-const userId = auth.userId!;
+// Middleware guarantees a signed-in user with an active organization on /portal/*.
+const auth = Astro.locals.auth;
+const orgId = auth.organizationId!;
+const userId = auth.user!.id;
 const db = getDb();
 const operator = await getOperatorForOrg(db, orgId);
 
@@ -112,7 +113,7 @@ if (Astro.request.method === 'POST' && operator) {
       const checkout = await createLeadUnlockCheckout(db, {
         lead,
         operator,
-        clerkOrgId: orgId,
+        orgId,
       });
       if (!checkout.ok) {
         return Astro.redirect(`/portal/leads?err=${encodeURIComponent(checkout.error)}`);

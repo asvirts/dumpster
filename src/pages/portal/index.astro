@@ -5,8 +5,7 @@ import { getOperatorForOrg, getPendingClaimForOrg } from '../../lib/portal';
 import { and, eq, sql } from 'drizzle-orm';
 import { leads } from '../../lib/schema';
 
-const auth = Astro.locals.auth();
-const orgId = auth.orgId;
+const orgId = Astro.locals.auth.organizationId;
 const db = getDb();
 const operator = await getOperatorForOrg(db, orgId);
 const pending = operator ? null : await getPendingClaimForOrg(db, orgId);

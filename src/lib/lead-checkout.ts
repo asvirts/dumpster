@@ -34,10 +34,11 @@ export async function createLeadUnlockCheckout(
   opts: {
     lead: Lead;
     operator: Operator;
-    clerkOrgId: string;
+    /** WorkOS organization id of the buyer (Stripe metadata only). */
+    orgId: string;
   },
 ): Promise<CheckoutCreateResult> {
-  const { lead, operator, clerkOrgId } = opts;
+  const { lead, operator, orgId } = opts;
   if (lead.status !== 'offered' || lead.operatorId !== operator.id) {
     return { ok: false, error: 'Lead is not available to purchase.' };
   }
@@ -99,7 +100,7 @@ export async function createLeadUnlockCheckout(
     metadata: {
       leadId: lead.id,
       operatorId: operator.id,
-      clerkOrgId,
+      orgId,
       priceCents: String(price),
     },
     success_url: `${base}/portal/leads?session_id={CHECKOUT_SESSION_ID}`,

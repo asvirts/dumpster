@@ -13,14 +13,15 @@ function siteBase(): string {
 /**
  * Key for signed one-click links. Prefer a dedicated LINK_SIGNING_SECRET; fall back to an
  * existing server secret (namespaced by PURPOSE in the HMAC) so links work without new setup.
+ * Links sent before the WorkOS move were signed with CLERK_SECRET_KEY when LINK_SIGNING_SECRET
+ * was unset: set LINK_SIGNING_SECRET to that old value to keep them valid.
  */
 function linkSecret(): string | null {
   const e = env as {
     LINK_SIGNING_SECRET?: string;
-    CLERK_SECRET_KEY?: string;
     STRIPE_WEBHOOK_SECRET?: string;
   };
-  return e.LINK_SIGNING_SECRET || e.CLERK_SECRET_KEY || e.STRIPE_WEBHOOK_SECRET || null;
+  return e.LINK_SIGNING_SECRET || e.STRIPE_WEBHOOK_SECRET || null;
 }
 
 export async function unsubscribeUrlFor(operatorId: string): Promise<string | null> {

@@ -16,7 +16,7 @@ bun run dev              # http://localhost:4321
 
 Admin (local): [http://localhost:4321/admin](http://localhost:4321/admin)  
 Operator portal: [http://localhost:4321/portal](http://localhost:4321/portal)  
-Local admin bypass: `.dev.vars` with `ADMIN_BYPASS=1` works only under `astro dev`. Production admin requires Cloudflare Access JWT secrets (`CF_ACCESS_TEAM_DOMAIN`, `CF_ACCESS_AUD`). Copy `.dev.vars.example` → `.dev.vars` and fill Clerk/Stripe/Resend secrets as needed.
+Local admin bypass: `.dev.vars` with `ADMIN_BYPASS=1` works only under `astro dev`. Production admin requires Cloudflare Access JWT secrets (`CF_ACCESS_TEAM_DOMAIN`, `CF_ACCESS_AUD`). Copy `.dev.vars.example` → `.dev.vars` and fill WorkOS/Stripe/Resend secrets as needed.
 
 ## Scripts
 
@@ -41,13 +41,13 @@ Local admin bypass: `.dev.vars` with `ADMIN_BYPASS=1` works only under `astro de
 4. Optionally seed: `bun run db:seed:remote` (cities + seeded operators — verify all contact info before production marketing)
 5. Set secrets:
    - Email: `bunx wrangler secret put RESEND_API_KEY` and optional `ADMIN_NOTIFY_EMAIL`. From-address defaults to `leads@findadumpster.net` (`LEAD_FROM_EMAIL`) — verify that domain on Resend (or later Cloudflare Email Sending).
-   - Clerk: `PUBLIC_CLERK_PUBLISHABLE_KEY` (var) + `bunx wrangler secret put CLERK_SECRET_KEY`
+   - WorkOS AuthKit (this site's own WorkOS project): `bunx wrangler secret put` each of `WORKOS_CLIENT_ID`, `WORKOS_API_KEY`, `WORKOS_REDIRECT_URI` (`https://findadumpster.net/callback`), `WORKOS_COOKIE_PASSWORD` (32+ chars, `openssl rand -base64 32`)
    - Stripe: `bunx wrangler secret put STRIPE_SECRET_KEY` and `bunx wrangler secret put STRIPE_WEBHOOK_SECRET`
    - Access: `bunx wrangler secret put CF_ACCESS_TEAM_DOMAIN` (e.g. `myteam.cloudflareaccess.com`) and `bunx wrangler secret put CF_ACCESS_AUD` (Access app AUD)
    - Optional: `LEAD_PRICE_CENTS` (shared, default `2500`), `LEAD_PRICE_EXCLUSIVE_CENTS` (exclusive, default `4000`)
 6. Deploy: `bun run deploy`
 7. **Cloudflare Access:** protect path `/admin*` with an Access application (email allowlist). The Worker verifies the Access JWT — do not rely on headers alone.
-8. **Clerk:** enable Organizations; point production instance at your domain
+8. **WorkOS:** in the dashboard for this site's project, add the redirect URI `https://findadumpster.net/callback` (plus `http://localhost:4321/callback` in the staging environment), set the sign-in endpoint to `https://findadumpster.net/login` and allow the sign-out redirect `https://findadumpster.net/`. Clerk org admins import with the `admin` role (keep it, or pass `--admin-role`). See [Operator accounts](#operator-accounts-workos).
 9. **Stripe webhook:** endpoint `https://findadumpster.net/api/stripe/webhook` for `checkout.session.completed`, `checkout.session.async_payment_succeeded`, and `checkout.session.async_payment_failed`. Paid unlock also fulfills when the operator returns to `/portal/leads?session_id=…`.
 
 Update `PUBLIC_SITE_URL` / `site` in `astro.config.mjs` for your domain.
@@ -68,12 +68,29 @@ Production needs `RESEND_API_KEY` (verified sending domain) and `ADMIN_NOTIFY_EM
 | `/operator/[slug]` | Profile + multi-step quote form + claim listing |
 | `/compare?ids=` | Side-by-side (max 4) |
 | `/guides/*` | Educational content |
-| `/portal/*` | Operator leads + listing (Clerk org, after claim approval) |
+| `/portal/*` | Operator leads + listing (WorkOS organization, after claim approval) |
+| `/login` · `/signup` · `/callback` · `/logout` | WorkOS AuthKit sign-in flow |
 | `/admin/*` | Verification, claims, lead routing, CRUD, CSV import, city notes |
 | `/admin/leads` | Lead inbox (filters, CSV, route, notes) — see `docs/leads.md` |
 | `/api/stripe/webhook` | Stripe Checkout completion → unlock lead |
 | `/api/unsubscribe` | Signed operator opt-out from lead emails |
 | `/admin/autopilot` | Autopilot digest + manual run |
+
+## Operator accounts (WorkOS)
+
+Operators sign in with WorkOS AuthKit (`@workos/authkit-astro`, wired by hand in `src/middleware.ts` so the Stripe/Resend webhooks stay outside auth). An operator company is a WorkOS organization; `/portal` needs a signed-in user with an active organization, picked or created at `/portal/select-org` (`switchToOrganization`). `operators.clerk_org_id` holds the WorkOS organization id (the column kept its old name).
+
+Moving from Clerk:
+
+1. Clerk dashboard → Users → **Export users** (CSV with bcrypt `password_digest`).
+2. Dry run, then import (needs this site's `WORKOS_API_KEY`; organizations and memberships come from the Clerk Backend API via `CLERK_SECRET_KEY`, or `--orgs-json`):
+   ```sh
+   WORKOS_API_KEY=sk_live_... CLERK_SECRET_KEY=sk_live_... node scripts/import-clerk-to-workos.mjs --users clerk-users.csv --dry-run
+   WORKOS_API_KEY=sk_live_... CLERK_SECRET_KEY=sk_live_... node scripts/import-clerk-to-workos.mjs --users clerk-users.csv
+   ```
+   Users keep their password (bcrypt) and get `externalId` = Clerk user id; organizations get `externalId` = Clerk org id. Re-running skips what already exists.
+3. On each sign-in (and org switch) the callback swaps Clerk ids in D1 for WorkOS ids (`src/lib/auth-remap.ts`): `operators.clerk_org_id`, `operators.claim_requested_by_user_id`, `leads.passed_by`, `admin_audit.actor`, and org ids inside `admin_audit.notes`.
+4. Unsubscribe links already sent were signed with `CLERK_SECRET_KEY` if `LINK_SIGNING_SECRET` was unset: `bunx wrangler secret put LINK_SIGNING_SECRET` with the old Clerk secret value before deleting it.
 
 ## Quality model
 

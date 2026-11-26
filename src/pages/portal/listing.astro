@@ -15,9 +15,10 @@ import { sanitizeHttpUrl } from '../../lib/urls';
 
 const MATERIAL_IDS = new Set(MATERIALS.map((m) => m.id));
 
-const auth = Astro.locals.auth();
-const orgId = auth.orgId!;
-const userId = auth.userId!;
+// Middleware guarantees a signed-in user with an active organization on /portal/*.
+const auth = Astro.locals.auth;
+const orgId = auth.organizationId!;
+const userId = auth.user!.id;
 const db = getDb();
 let operator = await getOperatorForOrg(db, orgId);
 let saved = false;
