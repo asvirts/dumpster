@@ -17,6 +17,8 @@ interface Env {
   WORKOS_CLIENT_ID?: string;
   /** 32+ chars; encrypts the session cookie */
   WORKOS_COOKIE_PASSWORD?: string;
+  /** Signing secret of the WorkOS webhook endpoint (organization.deleted). */
+  WORKOS_WEBHOOK_SECRET?: string;
   /** Legacy: still signs unsubscribe links sent before LINK_SIGNING_SECRET was set */
   CLERK_SECRET_KEY?: string;
   RESEND_API_KEY?: string;

@@ -34,7 +34,7 @@ const adminGuard = defineMiddleware(async (context, next) => {
 });
 
 /** Webhooks must work even if WorkOS is unconfigured or down. */
-const NO_SESSION_PATHS = new Set(['/api/stripe/webhook', '/api/resend/inbound']);
+const NO_SESSION_PATHS = new Set(['/api/stripe/webhook', '/api/resend/inbound', '/api/workos/webhook']);
 
 /**
  * Operator sign-in (WorkOS AuthKit). Loads the session on every page so the header can show

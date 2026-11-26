@@ -41,7 +41,7 @@ Local admin bypass: `.dev.vars` with `ADMIN_BYPASS=1` works only under `astro de
 4. Optionally seed: `bun run db:seed:remote` (cities + seeded operators — verify all contact info before production marketing)
 5. Set secrets:
    - Email: `bunx wrangler secret put RESEND_API_KEY` and optional `ADMIN_NOTIFY_EMAIL`. From-address defaults to `leads@findadumpster.net` (`LEAD_FROM_EMAIL`) — verify that domain on Resend (or later Cloudflare Email Sending).
-   - WorkOS (operator sign-in): `WORKOS_CLIENT_ID` is a var in `wrangler.jsonc`; `bunx wrangler secret put WORKOS_API_KEY` and `bunx wrangler secret put WORKOS_COOKIE_PASSWORD` (32+ random chars)
+   - WorkOS (operator sign-in): `WORKOS_CLIENT_ID` is a var in `wrangler.jsonc`; `bunx wrangler secret put WORKOS_API_KEY` and `bunx wrangler secret put WORKOS_COOKIE_PASSWORD` (32+ random chars), and `bunx wrangler secret put WORKOS_WEBHOOK_SECRET` (from the Production webhook endpoint `https://findadumpster.net/api/workos/webhook`, event `organization.deleted`: a deleted company's listing goes back to unclaimed)
    - Stripe: `bunx wrangler secret put STRIPE_SECRET_KEY` and `bunx wrangler secret put STRIPE_WEBHOOK_SECRET`
    - Access: `bunx wrangler secret put CF_ACCESS_TEAM_DOMAIN` (e.g. `myteam.cloudflareaccess.com`) and `bunx wrangler secret put CF_ACCESS_AUD` (Access app AUD)
    - Optional: `LEAD_PRICE_CENTS` (shared, default `2500`), `LEAD_PRICE_EXCLUSIVE_CENTS` (exclusive, default `4000`)
@@ -72,6 +72,7 @@ Production needs `RESEND_API_KEY` (verified sending domain) and `ADMIN_NOTIFY_EM
 | `/admin/*` | Verification, claims, lead routing, CRUD, CSV import, city notes |
 | `/admin/leads` | Lead inbox (filters, CSV, route, notes) — see `docs/leads.md` |
 | `/api/stripe/webhook` | Stripe Checkout completion → unlock lead |
+| `/api/workos/webhook` | WorkOS `organization.deleted` → release that company's listing claim |
 | `/api/unsubscribe` | Signed operator opt-out from lead emails |
 | `/admin/autopilot` | Autopilot digest + manual run |
 
