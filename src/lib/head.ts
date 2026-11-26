@@ -18,9 +18,12 @@ export type SeoHeadInput = {
   ads?: boolean;
 };
 
+const GA_ID = 'G-1EZY6X8XCW';
+
 /**
- * Per-page <head> matching the Astro BaseLayout. Site-wide tags (charset, icons, fonts,
- * analytics) live in void.config.ts `head`. Set the canonical here only: links concatenate.
+ * Per-page <head> matching the Astro BaseLayout, including the analytics scripts (public pages
+ * only; portal and admin don't load them). Charset, icons and fonts live in void.config.ts
+ * `head`. Set the canonical here only: links concatenate.
  */
 export function seoHead(input: SeoHeadInput): HeadConfig {
   const title = input.title ?? BRAND.name;
@@ -48,6 +51,13 @@ export function seoHead(input: SeoHeadInput): HeadConfig {
     type: 'application/ld+json',
     innerHTML: safeJsonLdStringify(item),
   }));
+  script.push(
+    { src: 'https://analytics.ahrefs.com/analytics.js', 'data-key': 'iwCcxXUCA2L1/PCyM0NfZA', async: '' },
+    { src: `https://www.googletagmanager.com/gtag/js?id=${GA_ID}`, async: '' },
+    {
+      innerHTML: `window.dataLayer = window.dataLayer || [];\nfunction gtag(){dataLayer.push(arguments);}\ngtag('js', new Date());\n\ngtag('config', '${GA_ID}');`,
+    },
+  );
   if (input.ads) {
     script.push({
       src: `https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${ADSENSE_CLIENT}`,

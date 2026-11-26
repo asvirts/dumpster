@@ -29,6 +29,8 @@ export default defineConfig({
       { name: 'viewport', content: 'width=device-width, initial-scale=1' },
       { name: 'theme-color', content: '#121417' },
     ],
+    // Shared by public, portal, admin and error pages. Analytics are public-only: seoHead()
+    // in src/lib/head.ts adds them, so portal and admin don't send page views.
     link: [
       { rel: 'icon', type: 'image/svg+xml', href: '/favicon.svg' },
       { rel: 'icon', type: 'image/png', sizes: '32x32', href: '/favicon-32.png' },
@@ -43,12 +45,6 @@ export default defineConfig({
       },
     ],
     script: [
-      { src: 'https://analytics.ahrefs.com/analytics.js', 'data-key': 'iwCcxXUCA2L1/PCyM0NfZA', async: '' },
-      { src: 'https://www.googletagmanager.com/gtag/js?id=G-1EZY6X8XCW', async: '' },
-      {
-        innerHTML:
-          "window.dataLayer = window.dataLayer || [];\nfunction gtag(){dataLayer.push(arguments);}\ngtag('js', new Date());\n\ngtag('config', 'G-1EZY6X8XCW');",
-      },
       {
         // Mobile nav toggle (SiteHeader). Delegated, so it works without hydration.
         innerHTML:
