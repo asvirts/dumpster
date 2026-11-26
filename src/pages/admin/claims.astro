@@ -43,7 +43,7 @@ if (Astro.request.method === 'POST') {
           entityType: 'operator',
           entityId: id,
           actor,
-          notes: op.clerkOrgId ? `org ${op.clerkOrgId}` : null,
+          notes: op.orgId ? `org ${op.orgId}` : null,
         });
       } else {
         await db
@@ -52,7 +52,7 @@ if (Astro.request.method === 'POST') {
             claimStatus: 'rejected',
             claimMessage: notes || op.claimMessage,
             // Free the org slot so they can re-claim later if needed
-            clerkOrgId: null,
+            orgId: null,
             updatedAt: now,
           })
           .where(eq(operators.id, id));
@@ -86,7 +86,7 @@ const pendingClaims = await db
 
 <AdminLayout title="Claims">
   <p class="mb-6 text-sm text-muted">
-    Operators request ownership of a directory listing via Clerk. Approve to unlock the company portal.
+    Operators request ownership of a directory listing from their company account. Approve to unlock the company portal.
   </p>
 
   <div class="space-y-4">
@@ -109,8 +109,8 @@ const pendingClaims = await db
                   {op.claimRequestedByEmail && <> · by {op.claimRequestedByEmail}</>}
                   {op.claimRequestedByUserId && <> · user {op.claimRequestedByUserId}</>}
                 </p>
-                {op.clerkOrgId && (
-                  <p class="mt-1 font-mono text-xs text-muted">org: {op.clerkOrgId}</p>
+                {op.orgId && (
+                  <p class="mt-1 font-mono text-xs text-muted">org: {op.orgId}</p>
                 )}
                 {op.claimMessage && <p class="mt-2 text-sm">{op.claimMessage}</p>}
               </div>

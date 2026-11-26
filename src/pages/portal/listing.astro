@@ -15,7 +15,8 @@ import { sanitizeHttpUrl } from '../../lib/urls';
 
 const MATERIAL_IDS = new Set(MATERIALS.map((m) => m.id));
 
-const auth = Astro.locals.auth();
+// Middleware guarantees a signed-in user with an active company on /portal pages.
+const auth = Astro.locals.auth!;
 const orgId = auth.orgId!;
 const userId = auth.userId!;
 const db = getDb();

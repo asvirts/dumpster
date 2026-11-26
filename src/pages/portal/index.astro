@@ -5,7 +5,8 @@ import { getOperatorForOrg, getPendingClaimForOrg } from '../../lib/portal';
 import { and, eq, sql } from 'drizzle-orm';
 import { leads } from '../../lib/schema';
 
-const auth = Astro.locals.auth();
+// Middleware guarantees a signed-in user with an active company on /portal pages.
+const auth = Astro.locals.auth!;
 const orgId = auth.orgId;
 const db = getDb();
 const operator = await getOperatorForOrg(db, orgId);

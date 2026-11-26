@@ -3,6 +3,8 @@ type Runtime = import('@astrojs/cloudflare').Runtime;
 declare namespace App {
   interface Locals extends Runtime {
     adminEmail?: string;
+    /** WorkOS AuthKit session, set by middleware (null when signed out). */
+    auth: import('./lib/auth').AuthSession | null;
   }
 }
 
@@ -10,7 +12,14 @@ interface Env {
   DB: D1Database;
   PUBLIC_SITE_NAME: string;
   PUBLIC_SITE_URL: string;
-  PUBLIC_CLERK_PUBLISHABLE_KEY?: string;
+  /** WorkOS AuthKit (operator sign-in) */
+  WORKOS_API_KEY?: string;
+  WORKOS_CLIENT_ID?: string;
+  /** 32+ chars; encrypts the session cookie */
+  WORKOS_COOKIE_PASSWORD?: string;
+  /** Signing secret of the WorkOS webhook endpoint (organization.deleted). */
+  WORKOS_WEBHOOK_SECRET?: string;
+  /** Legacy: still signs unsubscribe links sent before LINK_SIGNING_SECRET was set */
   CLERK_SECRET_KEY?: string;
   RESEND_API_KEY?: string;
   ADMIN_NOTIFY_EMAIL?: string;

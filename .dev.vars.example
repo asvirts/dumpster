@@ -9,9 +9,13 @@ RESEND_API_KEY=
 # CF_ACCESS_TEAM_DOMAIN=myteam.cloudflareaccess.com
 # CF_ACCESS_AUD=<Access application AUD tag>
 
-# Clerk (optional in keyless/dev; required for production portal)
-PUBLIC_CLERK_PUBLISHABLE_KEY=
-CLERK_SECRET_KEY=
+# WorkOS AuthKit (operator sign-in for /portal and claims). Local = the "Find A Dumpster"
+# project's Staging environment; its Redirect URI is http://localhost:4321/auth/callback.
+WORKOS_API_KEY=
+WORKOS_CLIENT_ID=client_01M8CSW3X2D95WEGJB3FW5FWH4
+# 32+ random chars, encrypts the session cookie: openssl rand -base64 32
+WORKOS_COOKIE_PASSWORD=
+# WORKOS_WEBHOOK_SECRET=   # only to test /api/workos/webhook locally
 
 # Base URL for email links and Stripe Checkout return URLs (default https://findadumpster.net).
 # Set locally, or paying in test mode returns you to the production site.

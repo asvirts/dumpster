@@ -8,7 +8,7 @@ export async function getOperatorForOrg(
 ): Promise<Operator | null> {
   if (!orgId) return null;
   const op = await db.query.operators.findFirst({
-    where: and(eq(operators.clerkOrgId, orgId), eq(operators.claimStatus, 'approved')),
+    where: and(eq(operators.orgId, orgId), eq(operators.claimStatus, 'approved')),
   });
   return op ?? null;
 }
@@ -19,7 +19,7 @@ export async function getPendingClaimForOrg(
 ): Promise<Operator | null> {
   if (!orgId) return null;
   const op = await db.query.operators.findFirst({
-    where: and(eq(operators.clerkOrgId, orgId), eq(operators.claimStatus, 'pending')),
+    where: and(eq(operators.orgId, orgId), eq(operators.claimStatus, 'pending')),
   });
   return op ?? null;
 }

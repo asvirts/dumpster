@@ -1,11 +1,6 @@
 ---
 import { actions } from 'astro:actions';
-import {
-  OrganizationSwitcher,
-  Show,
-  SignInButton,
-  SignUpButton,
-} from '@clerk/astro/components';
+import { loginPath, organizationName } from '../lib/auth';
 
 interface Props {
   operatorId: string;
@@ -16,6 +11,10 @@ interface Props {
 const { operatorId, operatorName, claimStatus } = Astro.props;
 const result = Astro.getActionResult(actions.claimListing);
 const canClaim = claimStatus === 'unclaimed' || claimStatus === 'rejected';
+const auth = Astro.locals.auth;
+const here = `${Astro.url.pathname}#claim`;
+const orgName = canClaim && auth?.orgId ? await organizationName(auth.orgId) : null;
+const chooseCompany = `/portal/select-org?${new URLSearchParams({ returnTo: here })}`;
 ---
 
 <div class="card p-5" id="claim">
@@ -43,20 +42,24 @@ const canClaim = claimStatus === 'unclaimed' || claimStatus === 'rejected';
           Signing in with the listing’s email (or an email on its website domain) approves the claim
           instantly.
         </p>
-        <Show when="signed-out">
+        {!auth && (
           <div class="mt-4 flex flex-wrap gap-2">
-            <SignInButton mode="modal" />
-            <SignUpButton mode="modal" />
+            <a href={loginPath(here)} class="btn-secondary text-xs">Sign in</a>
+            <a href={loginPath(here, { signUp: true })} class="btn-secondary text-xs">Sign up</a>
           </div>
-        </Show>
-        <Show when="signed-in">
+        )}
+        {auth && !auth.orgId && (
           <div class="mt-4 space-y-3">
-            <p class="text-xs text-muted">Select or create your company organization, then submit.</p>
-            <OrganizationSwitcher
-              hidePersonal={true}
-              afterSelectOrganizationUrl={Astro.url.pathname}
-              afterCreateOrganizationUrl={Astro.url.pathname}
-            />
+            <p class="text-xs text-muted">Choose or create your company, then submit the claim.</p>
+            <a href={chooseCompany} class="btn-secondary text-xs">Choose company</a>
+          </div>
+        )}
+        {auth?.orgId && (
+          <div class="mt-4 space-y-3">
+            <p class="text-xs text-muted">
+              Claiming as <strong class="text-ink">{orgName ?? 'your company'}</strong>.{' '}
+              <a href={chooseCompany}>Change company</a>
+            </p>
             {result?.error && (
               <p class="border-2 border-red-600 bg-red-50 px-3 py-2 text-sm text-red-800">
                 {result.error.message}
@@ -85,7 +88,7 @@ const canClaim = claimStatus === 'unclaimed' || claimStatus === 'rejected';
               </form>
             )}
           </div>
-        </Show>
+        )}
       </>
     )
   }
