@@ -3,7 +3,7 @@ import { getDb } from '../../../src/lib/db';
 import { formatCurrency } from '../../../src/lib/geo';
 import { SITE_ORIGIN, seoHead } from '../../../src/lib/head';
 import { getStateDirectory } from '../../../src/lib/search';
-import { breadcrumbJsonLd, itemListJsonLd, pageTitle } from '../../../src/lib/seo';
+import { breadcrumbJsonLd, itemListJsonLd, metaDescription, pageTitle } from '../../../src/lib/seo';
 import { stateName } from '../../../src/lib/states';
 import { notFound } from '../../../src/server/not-found';
 import { withShared } from '../../../src/server/shared';
@@ -53,7 +53,7 @@ export const head = defineHead<Props>((_c, { state, cities, operators }) => {
   return seoHead({
     path: `/dumpster-rental/${state.slug}`,
     title: pageTitle(`${state.name} Dumpster Rental (${state.abbr})`),
-    description: description.length <= 160 ? description : description.slice(0, 157).trimEnd() + '…',
+    description: metaDescription(description),
     // Same bar as city pages: no verified operators means a thin page.
     noIndex: operators.length === 0,
     jsonLd: [

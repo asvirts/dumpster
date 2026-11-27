@@ -3,7 +3,7 @@ import { seoHead } from '../lib/head';
 import { pageTitle } from '../lib/seo';
 
 /**
- * Head of the Astro 404 page (prerendered at /404, so its canonical was /404).
+ * Head of the 404 page: title and noindex, no canonical.
  * Void renders `pages/_not-found.vue` with config head + middleware `headDefaults` only (error
  * boundaries have no `head()`), so loaders set this before returning a 404.
  */

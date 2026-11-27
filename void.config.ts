@@ -28,20 +28,15 @@ export default defineConfig({
       { name: 'viewport', content: 'width=device-width, initial-scale=1' },
       { name: 'theme-color', content: '#121417' },
     ],
-    // Shared by public, portal, admin and error pages. Analytics are public-only: seoHead()
-    // in src/lib/head.ts adds them, so portal and admin don't send page views.
+    // Shared by public, portal, admin and error pages. Fonts are self-hosted (src/styles/global.css).
+    // Analytics are public-only: seoHead() in src/lib/head.ts adds them, so portal and admin
+    // don't send page views.
     link: [
       { rel: 'icon', type: 'image/svg+xml', href: '/favicon.svg' },
       { rel: 'icon', type: 'image/png', sizes: '32x32', href: '/favicon-32.png' },
       { rel: 'icon', type: 'image/png', sizes: '16x16', href: '/favicon-16.png' },
       { rel: 'shortcut icon', href: '/favicon.ico' },
       { rel: 'apple-touch-icon', href: '/apple-touch-icon.png' },
-      { rel: 'preconnect', href: 'https://fonts.googleapis.com' },
-      { rel: 'preconnect', href: 'https://fonts.gstatic.com', crossorigin: '' },
-      {
-        rel: 'stylesheet',
-        href: 'https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800&family=Archivo+Black&family=IBM+Plex+Mono:wght@400;500;600;700&display=swap',
-      },
     ],
     script: [
       {

@@ -3,7 +3,7 @@ import { getDb } from '../../src/lib/db';
 import { SITE_ORIGIN, seoHead } from '../../src/lib/head';
 import { formatCurrency } from '../../src/lib/geo';
 import { getAreaPriceAverage, getOperatorBySlug, searchOperators } from '../../src/lib/search';
-import { breadcrumbJsonLd, operatorJsonLd, pageTitle } from '../../src/lib/seo';
+import { breadcrumbJsonLd, metaDescription, operatorJsonLd, pageTitle } from '../../src/lib/seo';
 import { stateName } from '../../src/lib/states';
 import { withUtm } from '../../src/lib/utm';
 import { claimFormContext, claimListing } from '../../src/server/claim';
@@ -139,9 +139,10 @@ export const head = defineHead<Props>((c, props) => {
   const head = seoHead({
     path: new URL(c.req.url).pathname,
     title: pageTitle([op.name, `Dumpster Rental${locationLabel}`]),
-    description:
-      op.description?.slice(0, 155) ||
-      `${op.name} — verified dumpster rental${op.hqCity ? ` in ${op.hqCity}, ${op.hqState}` : ''}.`,
+    description: metaDescription(
+      op.description?.trim() ||
+        `${op.name} — verified dumpster rental${op.hqCity ? ` in ${op.hqCity}, ${op.hqState}` : ''}.`,
+    ),
     jsonLd: [
       operatorJsonLd({
         name: op.name,
