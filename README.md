@@ -31,7 +31,7 @@ Local values live in one root `.env` (never committed): `ADMIN_BYPASS=1` (works 
 | `pnpm db:migrate:remote` | Apply migrations to remote D1 |
 | `pnpm db:seed:remote` | Seed remote D1 (cities + seeded operators; verify before marketing) |
 
-**Deploys happen on push.** `.github/workflows/deploy.yml` runs on every push to `main`: tests, then pending D1 migrations (`pnpm db:migrate:remote`), then `void deploy --skip-migrations`. A failed migration stops the deploy, so code never goes live ahead of its schema. It needs the `CLOUDFLARE_API_TOKEN` secret and `CLOUDFLARE_ACCOUNT_ID` variable. Migrations must stay backward compatible with the code currently live (add columns and tables; don't drop or rename in the same push).
+**Deploys happen on push.** Cloudflare Workers Builds (connected to this repo) builds every push to `main` with build command `pnpm verify` (typecheck + tests) and deploy command `pnpm release`: pending D1 migrations (`pnpm db:migrate:remote`), then `void deploy --skip-migrations`. A failed check or migration stops the deploy, so code never goes live ahead of its schema. Build settings: `NODE_VERSION=24`, non-production branch builds off (Void has no preview deploys), and the build token needs **D1: Edit** in addition to the defaults. Pull requests run `.github/workflows/ci.yml`. Migrations must stay backward compatible with the code currently live (add columns and tables; don't drop or rename in the same push).
 
 ## Cloudflare setup
 
@@ -45,7 +45,7 @@ Local values live in one root `.env` (never committed): `ADMIN_BYPASS=1` (works 
    - Stripe: `pnpm exec wrangler secret put STRIPE_SECRET_KEY` and `pnpm exec wrangler secret put STRIPE_WEBHOOK_SECRET`
    - Access: `pnpm exec wrangler secret put CF_ACCESS_TEAM_DOMAIN` (e.g. `myteam.cloudflareaccess.com`) and `pnpm exec wrangler secret put CF_ACCESS_AUD` (Access app AUD)
    - Optional: `LEAD_PRICE_CENTS` (shared, default `2500`), `LEAD_PRICE_EXCLUSIVE_CENTS` (exclusive, default `4000`)
-6. Deploy: push to `main` (or `pnpm exec void deploy --platform cloudflare --skip-migrations`)
+6. Deploy: push to `main` (or `pnpm release` with `CLOUDFLARE_API_TOKEN` set)
 7. **Cloudflare Access:** protect path `/admin*` with an Access application (email allowlist). The Worker verifies the Access JWT — do not rely on headers alone.
 8. **WorkOS:** in the "Find A Dumpster" Production environment, register Redirect URI `https://findadumpster.net/auth/callback`, Sign-out URI `https://findadumpster.net/`, and Initiate login URI `https://findadumpster.net/auth/login`
 9. **Stripe webhook:** endpoint `https://findadumpster.net/api/stripe/webhook` for `checkout.session.completed`, `checkout.session.async_payment_succeeded`, and `checkout.session.async_payment_failed`. Paid unlock also fulfills when the operator returns to `/portal/leads?session_id=…`.

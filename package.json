@@ -17,6 +17,8 @@
     "check": "vp check",
     "typecheck": "void prepare && tsc --noEmit && pnpm typecheck:vue",
     "typecheck:vue": "pnpm dlx --package=typescript@6.0.3 --package=vue-tsc@3.3.14 vue-tsc --noEmit -p .",
+    "verify": "pnpm typecheck && vp test",
+    "release": "pnpm db:migrate:remote && void deploy --platform cloudflare --skip-migrations",
     "db:migrate:local": "wrangler d1 migrations apply dumpsterlocal --local --config wrangler.d1.jsonc --persist-to .wrangler/state",
     "db:migrate:remote": "wrangler d1 migrations apply dumpsterlocal --remote --config wrangler.d1.jsonc",
     "db:seed:local": "wrangler d1 execute dumpsterlocal --local --file=./seed/seed.sql --config wrangler.d1.jsonc --persist-to .wrangler/state",
