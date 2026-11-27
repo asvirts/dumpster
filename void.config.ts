@@ -75,7 +75,8 @@ export default defineConfig({
         binding: 'DB',
         database_name: 'dumpsterlocal',
         database_id: '1c8dbaa7-18c4-4120-ae94-a47c97ac3717',
-        migrations_dir: 'migrations',
+        // No migrations_dir here: `void deploy` refuses any dir but its own db/migrations.
+        // Migrations run through wrangler.d1.jsonc (`pnpm db:migrate:remote`) before deploy.
       },
     ],
   },
