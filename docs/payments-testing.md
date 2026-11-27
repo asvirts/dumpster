@@ -2,7 +2,17 @@
 
 How lead payments were tested end to end, what passed, what has not been tested yet, and how to run it again. For how payments work, see [leads.md](leads.md) (Routing → Monetization).
 
-## Latest run: 2026-11-26 — PASSED
+## Latest run: 2026-11-26 (Void rewrite) — PASSED
+
+- **Code:** branch `rewrite/void-vue` at `88e5f99` (Void + Vue). Portal sign-in is WorkOS AuthKit (Staging).
+- **Where:** local `vp dev` on :4321 (workerd + local D1)
+- **Stripe:** test mode, events forwarded with `stripe listen`
+- **Driver:** the in-app browser, going through the real portal UI and Stripe-hosted Checkout. Webhook replays were signed with `openssl` as in step 4.
+- **Unit tests:** `vp test` 67/67 passing
+
+All 11 scenarios in the table below passed again, with the same results. The org metadata key is now `orgId`, and the declined auto-buy used `pm_card_chargeCustomerFail` attached through the API. In scenario 11, a foreign session with no `leadId` is skipped silently; one with an unknown `leadId` logs `unlock failed Lead not found` and returns 200. Email sends were skipped (`RESEND_API_KEY` unset).
+
+## Previous run: 2026-11-26 (Astro) — PASSED
 
 - **Code:** `main` at `f82f89d`, with no code changes. Portal sign-in was still Clerk then; it moved to WorkOS AuthKit in `7765f01`, and this run has not been repeated since.
 - **Where:** local `astro dev` (workerd + local D1)
@@ -48,7 +58,7 @@ How lead payments were tested end to end, what passed, what has not been tested 
 1. Put a test-mode secret key (`sk_test_…`) in `.dev.vars` as `STRIPE_SECRET_KEY`. The key saved by the Stripe CLI login expires, so use a dashboard key.
 2. Get the webhook secret with `stripe listen --api-key "$STRIPE_SECRET_KEY" --print-secret` and save it as `STRIPE_WEBHOOK_SECRET`. It stays the same per device and account.
 3. Set `PUBLIC_SITE_URL=http://localhost:4321`.
-4. Start the dev server, then the forwarder (it uses the port `astro dev` prints, default 4321):
+4. Start the dev server on port 4321 (`pnpm exec vp dev --port 4321 --strictPort`, the port the WorkOS Staging redirect URI uses), then the forwarder:
 
 ```sh
 stripe listen --api-key "$STRIPE_SECRET_KEY" \
@@ -105,7 +115,7 @@ Get `evt.json` from `GET /v1/events/<evt_id>`.
   - `operators.stripe_*` columns
   - `admin_audit` rows
   - the Checkout Session and PaymentIntent in the Stripe API
-  - `astro dev logs`
+  - the dev server logs
 
 ### 5. Clean up
 
