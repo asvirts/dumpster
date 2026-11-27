@@ -28,3 +28,11 @@ worker-configuration.d.ts
 # jetbrains setting folder
 .idea/
 .firecrawl/
+.void-wrangler.jsonc
+.cloudflare
+
+# Void generated files (types, entry, dev trigger token)
+.void/
+.cloudflare/
+test-results/
+playwright-report/

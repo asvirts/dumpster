@@ -1,4 +1,4 @@
-import { describe, expect, test } from 'bun:test';
+import { describe, expect, test } from 'vite-plus/test';
 import { emailTags, leadTagId, sanitizeTagValue } from './email-tags';
 
 describe('sanitizeTagValue', () => {

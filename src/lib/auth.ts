@@ -1,6 +1,8 @@
 import { env } from 'cloudflare:workers';
 import { WorkOS, type User } from '@workos-inc/node';
-import type { AstroCookies } from 'astro';
+import type { CookieJar } from './cookies';
+
+export { loginPath, safeReturnTo } from './auth-paths';
 
 /**
  * WorkOS AuthKit session handling.
@@ -61,15 +63,7 @@ export function redirectUri(url: URL): string {
   return `${url.origin}/auth/callback`;
 }
 
-/** Only same-site paths, so a crafted returnTo can't send users off-site. */
-export function safeReturnTo(value: string | null | undefined, fallback = '/'): string {
-  if (!value || !value.startsWith('/') || value.startsWith('//') || value.startsWith('/\\')) {
-    return fallback;
-  }
-  return value;
-}
-
-export function setSessionCookie(cookies: AstroCookies, url: URL, sealed: string): void {
+export function setSessionCookie(cookies: CookieJar, url: URL, sealed: string): void {
   cookies.set(SESSION_COOKIE, sealed, {
     path: '/',
     httpOnly: true,
@@ -80,7 +74,7 @@ export function setSessionCookie(cookies: AstroCookies, url: URL, sealed: string
   });
 }
 
-export function clearSessionCookie(cookies: AstroCookies): void {
+export function clearSessionCookie(cookies: CookieJar): void {
   cookies.delete(SESSION_COOKIE, { path: '/' });
 }
 
@@ -101,8 +95,8 @@ function toSession(r: {
  * Read the session cookie. Refreshes an expired access token and rewrites the cookie;
  * clears the cookie when the session is gone for good.
  */
-export async function loadSession(cookies: AstroCookies, url: URL): Promise<AuthSession | null> {
-  const sealed = cookies.get(SESSION_COOKIE)?.value;
+export async function loadSession(cookies: CookieJar, url: URL): Promise<AuthSession | null> {
+  const sealed = cookies.get(SESSION_COOKIE);
   if (!sealed || !authConfigured()) return null;
 
   const session = workos().userManagement.loadSealedSession({
@@ -133,11 +127,11 @@ export async function loadSession(cookies: AstroCookies, url: URL): Promise<Auth
  * user is not an active member of, so this doubles as the membership check.
  */
 export async function switchOrganization(
-  cookies: AstroCookies,
+  cookies: CookieJar,
   url: URL,
   organizationId: string,
 ): Promise<boolean> {
-  const sealed = cookies.get(SESSION_COOKIE)?.value;
+  const sealed = cookies.get(SESSION_COOKIE);
   if (!sealed) return false;
   const session = workos().userManagement.loadSealedSession({
     sessionData: sealed,
@@ -147,13 +141,6 @@ export async function switchOrganization(
   if (!refreshed.authenticated || !refreshed.sealedSession) return false;
   setSessionCookie(cookies, url, refreshed.sealedSession);
   return true;
-}
-
-/** Sign-in URL for links and redirects; `returnTo` is where the user lands afterwards. */
-export function loginPath(returnTo: string, opts: { signUp?: boolean } = {}): string {
-  const q = new URLSearchParams({ returnTo });
-  if (opts.signUp) q.set('screenHint', 'sign-up');
-  return `/auth/login?${q}`;
 }
 
 /** Name of an organization, or null if it can't be loaded. */

@@ -2,9 +2,19 @@
 
 How lead payments were tested end to end, what passed, what has not been tested yet, and how to run it again. For how payments work, see [leads.md](leads.md) (Routing → Monetization).
 
-## Latest run: 2026-11-26 — PASSED
+## Latest run: 2026-11-26 (Void rewrite) — PASSED
 
-- **Code:** `main` at `f82f89d`, with no code changes
+- **Code:** branch `rewrite/void-vue` at `88e5f99` (Void + Vue). Portal sign-in is WorkOS AuthKit (Staging).
+- **Where:** local `vp dev` on :4321 (workerd + local D1)
+- **Stripe:** test mode, events forwarded with `stripe listen`
+- **Driver:** the in-app browser, going through the real portal UI and Stripe-hosted Checkout. Webhook replays were signed with `openssl` as in step 4.
+- **Unit tests:** `vp test` 67/67 passing
+
+All 11 scenarios in the table below passed again, with the same results. The org metadata key is now `orgId`, and the declined auto-buy used `pm_card_chargeCustomerFail` attached through the API. In scenario 11, a foreign session with no `leadId` is skipped silently; one with an unknown `leadId` logs `unlock failed Lead not found` and returns 200. Email sends were skipped (`RESEND_API_KEY` unset).
+
+## Previous run: 2026-11-26 (Astro) — PASSED
+
+- **Code:** `main` at `f82f89d`, with no code changes. Portal sign-in was still Clerk then; it moved to WorkOS AuthKit in `7765f01`, and this run has not been repeated since.
 - **Where:** local `astro dev` (workerd + local D1)
 - **Stripe:** test mode, events forwarded with `stripe listen`
 - **Driver:** headless Chrome (Playwright) going through the real portal UI and Stripe-hosted Checkout
@@ -14,7 +24,7 @@ How lead payments were tested end to end, what passed, what has not been tested 
 | # | Scenario | Result |
 |---|---|---|
 | 1 | Offered lead in `/portal/leads` hides the seeker's contact details before payment | Pass |
-| 2 | "Unlock for $40.00" opens Stripe Checkout with the right amount, lead description, metadata (`leadId`, `operatorId`, `clerkOrgId`, `priceCents`) and the card-saving notice | Pass |
+| 2 | "Unlock for $40.00" opens Stripe Checkout with the right amount, lead description, metadata (`leadId`, `operatorId`, `orgId`, `priceCents`; the org key was `clerkOrgId` at the time of this run) and the card-saving notice | Pass |
 | 3 | Pay with `4242 4242 4242 4242`. The `checkout.session.completed` webhook unlocks the lead (`status=unlocked`, `unlock_method=paid`), writes audit `lead_unlock_paid` by `stripe`, and saves the card on the operator (`stripe_customer_id`, `stripe_payment_method_id`, label "Visa •••• 4242"). The PaymentIntent succeeded with `setup_future_usage=off_session`. | Pass |
 | 4 | Visiting the return URL `/portal/leads?session_id=…` after the webhook already ran is idempotent: redirects to `?ok=unlocked` and shows name, email and phone | Pass |
 | 5 | Return URL as the **only** fulfillment path (`stripe listen` stopped, `PUBLIC_SITE_URL=http://localhost:4321`): the success page unlocks the lead by itself | Pass |
@@ -38,7 +48,7 @@ How lead payments were tested end to end, what passed, what has not been tested 
 
 1. **Checkout return URLs default to production.** `siteUrl()` falls back to `https://findadumpster.net` when `PUBLIC_SITE_URL` is unset. Without it, paying locally sends the browser to the production portal with a test-mode session id. Set `PUBLIC_SITE_URL=http://localhost:4321` in `.dev.vars` (now in `.dev.vars.example`).
 2. **The Stripe test account is shared with at least one other project.** Its `checkout.session.completed` events (metadata `kind=lead_unlock`, `companyId`, `offerId`) reach our webhook. The handler returns 200 and changes nothing, but logs `console.error`. If live mode is shared the same way, production logs get the same noise. Consider ignoring sessions whose metadata has no `operatorId`.
-3. **The Clerk keys in `.dev.vars` were placeholders** (`example.clerk.accounts.dev`), so the portal could not sign in locally. Plain keyless mode fails under workerd, because the keys can't be written to disk there. See setup step 2.
+3. **Portal sign-in needs real WorkOS Staging keys locally.** During this run (still on Clerk) the `.dev.vars` keys were placeholders, so the portal could not sign in. Sign-in is now WorkOS AuthKit: set `WORKOS_API_KEY`, `WORKOS_CLIENT_ID` and `WORKOS_COOKIE_PASSWORD` as in setup step 2.
 4. **Something else on the dev machine kept stopping `stripe listen` and `astro dev`** (exit 144, nothing in the logs). If the webhook stops arriving, check that both are still running and restart them.
 
 ## Runbook
@@ -48,7 +58,7 @@ How lead payments were tested end to end, what passed, what has not been tested 
 1. Put a test-mode secret key (`sk_test_…`) in `.dev.vars` as `STRIPE_SECRET_KEY`. The key saved by the Stripe CLI login expires, so use a dashboard key.
 2. Get the webhook secret with `stripe listen --api-key "$STRIPE_SECRET_KEY" --print-secret` and save it as `STRIPE_WEBHOOK_SECRET`. It stays the same per device and account.
 3. Set `PUBLIC_SITE_URL=http://localhost:4321`.
-4. Start the dev server, then the forwarder (it uses the port `astro dev` prints, default 4321):
+4. Start the dev server on port 4321 (`pnpm exec vp dev --port 4321 --strictPort`, the port the WorkOS Staging redirect URI uses), then the forwarder:
 
 ```sh
 stripe listen --api-key "$STRIPE_SECRET_KEY" \
@@ -105,7 +115,7 @@ Get `evt.json` from `GET /v1/events/<evt_id>`.
   - `operators.stripe_*` columns
   - `admin_audit` rows
   - the Checkout Session and PaymentIntent in the Stripe API
-  - `astro dev logs`
+  - the dev server logs
 
 ### 5. Clean up
 

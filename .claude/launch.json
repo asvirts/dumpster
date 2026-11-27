@@ -1,0 +1,11 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "void-preview",
+      "runtimeExecutable": "pnpm",
+      "runtimeArgs": ["exec", "vp", "preview", "--port", "8789", "--strictPort"],
+      "port": 8789
+    }
+  ]
+}
