@@ -1,4 +1,6 @@
 import { defineMiddleware, type CloudContext } from 'void';
+import type { Href } from 'void/routes';
+import { CANONICAL_HOST, canonicalRedirect } from '../lib/canonical-url';
 
 /** Form state a public page action hands back to the re-rendered page (no-JS forms). */
 export type FormFeedback = {
@@ -32,9 +34,17 @@ declare module 'void' {
  * Use as the first argument of `defineHandler(withShared, loader)`.
  */
 export const withShared = defineMiddleware(async (c, next) => {
+  // One URL per page: https, canonical host, no trailing slash, lowercase slugs. Done here, not in
+  // routing.redirects (not applied on direct Cloudflare deploys) or global middleware (Void #808).
+  const redirectTo = canonicalRedirect(c.req.url, c.req.method);
+  if (redirectTo) return c.redirect(redirectTo as Href, 301);
+
   const url = new URL(c.req.url);
   c.set('shared', { ...c.get('shared'), path: url.pathname, search: url.search });
   await next();
+  if (url.protocol === 'https:' && url.hostname === CANONICAL_HOST) {
+    c.header('Strict-Transport-Security', 'max-age=31536000');
+  }
 });
 
 /** Set form feedback from an action; the page re-renders with it. */

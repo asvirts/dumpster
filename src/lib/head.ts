@@ -33,7 +33,8 @@ export function seoHead(input: SeoHeadInput): HeadConfig {
   const jsonLd = input.jsonLd ? (Array.isArray(input.jsonLd) ? input.jsonLd : [input.jsonLd]) : [];
 
   const meta: NonNullable<HeadConfig['meta']> = [{ name: 'description', content: description }];
-  if (input.noIndex) meta.push({ name: 'robots', content: 'noindex, nofollow' });
+  // follow: links on a noindexed page (empty city, compare, 404) still pass to real pages.
+  if (input.noIndex) meta.push({ name: 'robots', content: 'noindex, follow' });
   meta.push(
     { property: 'og:title', content: title },
     { property: 'og:description', content: description },

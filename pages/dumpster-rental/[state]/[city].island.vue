@@ -9,6 +9,7 @@ defineProps<{
     id: string;
     name: string;
     state: string;
+    stateName: string;
     slug: string;
     stateSlug: string;
     lat: number;
@@ -60,8 +61,8 @@ defineProps<{
       <nav aria-label="Breadcrumb" class="font-mono text-xs uppercase tracking-widest text-charcoal-400">
         <a href="/" class="text-charcoal-400 no-underline hover:text-brand-400">Home</a>
         <span class="mx-2 text-charcoal-600">/</span>
-        <a :href="`/search?q=${encodeURIComponent(city.state)}`" class="text-charcoal-400 no-underline hover:text-brand-400">{{
-          city.state
+        <a :href="`/dumpster-rental/${city.stateSlug}`" class="text-charcoal-400 no-underline hover:text-brand-400">{{
+          city.stateName
         }}</a>
         <span class="mx-2 text-charcoal-600">/</span>
         <span class="text-brand-400">{{ city.name }}</span>

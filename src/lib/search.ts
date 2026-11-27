@@ -407,3 +407,73 @@ function groupBy<T, K extends string, V>(
   }
   return map;
 }
+
+/**
+ * State landing data: every city in the state with its verified-operator count, plus the
+ * verified, non-broker operators serving any of them (same public bar as city pages).
+ * Null when the state has no cities.
+ */
+export async function getStateDirectory(db: AppDb, stateSlug: string) {
+  const stateCities = await db
+    .select({
+      id: cities.id,
+      name: cities.name,
+      state: cities.state,
+      slug: cities.slug,
+      stateSlug: cities.stateSlug,
+      updatedAt: cities.updatedAt,
+    })
+    .from(cities)
+    .where(eq(cities.stateSlug, stateSlug))
+    .orderBy(asc(cities.name));
+  if (stateCities.length === 0) return null;
+
+  const rows = await db
+    .select({
+      cityId: operatorServiceAreas.cityId,
+      id: operators.id,
+      name: operators.name,
+      slug: operators.slug,
+      hqCity: operators.hqCity,
+      hqState: operators.hqState,
+      pricingMin: operators.pricingMin,
+      pricingMax: operators.pricingMax,
+    })
+    .from(operatorServiceAreas)
+    .innerJoin(operators, eq(operators.id, operatorServiceAreas.operatorId))
+    .where(
+      and(
+        inArray(
+          operatorServiceAreas.cityId,
+          stateCities.map((c) => c.id),
+        ),
+        eq(operators.isPublished, true),
+        eq(operators.isDemo, false),
+        eq(operators.isBroker, false),
+        eq(operators.verificationStatus, 'verified'),
+      ),
+    );
+
+  const opsByCity = groupBy(
+    rows,
+    (r) => r.cityId as string,
+    (r) => r.id,
+  );
+  const operatorsById = new Map<string, (typeof rows)[number] & { cityNames: string[] }>();
+  const cityName = new Map(stateCities.map((c) => [c.id, c.name]));
+  for (const r of rows) {
+    const existing = operatorsById.get(r.id) ?? { ...r, cityNames: [] };
+    const name = cityName.get(r.cityId as string);
+    if (name && !existing.cityNames.includes(name)) existing.cityNames.push(name);
+    operatorsById.set(r.id, existing);
+  }
+
+  return {
+    state: stateCities[0].state,
+    stateSlug,
+    cities: stateCities.map((c) => ({ ...c, operatorCount: new Set(opsByCity.get(c.id) ?? []).size })),
+    operators: [...operatorsById.values()]
+      .sort((a, b) => b.cityNames.length - a.cityNames.length || a.name.localeCompare(b.name))
+      .map(({ cityId: _cityId, ...op }) => op),
+  };
+}

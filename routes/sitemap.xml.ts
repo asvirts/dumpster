@@ -12,6 +12,9 @@ const publishedOperator = and(
   eq(operators.isBroker, false),
 );
 
+// City and state pages list verified operators only, so they're indexable only with one.
+const listedOnCityPages = and(publishedOperator, eq(operators.verificationStatus, 'verified'));
+
 export const GET = defineHandler(async () => {
   const base = SITE_ORIGIN;
   const entries: SitemapEntry[] = [];
@@ -38,7 +41,7 @@ export const GET = defineHandler(async () => {
   const operatorLastmods: Array<string | Date | null | undefined> = [];
   const guideLastmods: Array<string | Date | null | undefined> = [];
 
-  // City landings that have at least one public listing — stays current as
+  // City landings that have at least one verified public listing — stays current as
   // operators are added. Empty cities stay out (thin pages).
   try {
     const db = getDb();
@@ -52,9 +55,25 @@ export const GET = defineHandler(async () => {
       .from(cities)
       .innerJoin(operatorServiceAreas, eq(operatorServiceAreas.cityId, cities.id))
       .innerJoin(operators, eq(operators.id, operatorServiceAreas.operatorId))
-      .where(publishedOperator)
+      .where(listedOnCityPages)
       .groupBy(cities.id, cities.slug, cities.stateSlug, cities.updatedAt)
       .orderBy(asc(cities.stateSlug), asc(cities.slug));
+
+    // State landings for every state with at least one listed city, ahead of their cities.
+    const stateLastmods = new Map<string, Array<string | null>>();
+    for (const c of cityRows) {
+      const list = stateLastmods.get(c.stateSlug) ?? [];
+      list.push(cityPageLastmod(c.updatedAt, [c.listingLastmod]));
+      stateLastmods.set(c.stateSlug, list);
+    }
+    for (const [stateSlug, lastmods] of stateLastmods) {
+      entries.push({
+        loc: absoluteUrl(base, `/dumpster-rental/${stateSlug}`),
+        lastmod: maxLastmod(...lastmods),
+        changefreq: 'weekly',
+        priority: 0.9,
+      });
+    }
 
     for (const c of cityRows) {
       const lastmod = cityPageLastmod(c.updatedAt, [c.listingLastmod]);

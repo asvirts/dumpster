@@ -7,10 +7,8 @@ export default defineConfig({
   routing: {
     typedRoutes: true,
     trailingSlash: false,
-    // /x/ → /x (sitemap and canonicals have no trailing slash).
-    redirects: {
-      '/*/': { to: '/:splat', status: 301 },
-    },
+    // routing.redirects isn't applied on direct Cloudflare deploys: /x/ → /x and the other URL
+    // fixes are done per page in withShared (src/lib/canonical-url.ts).
     // Public pages are cached for 5 minutes (ISR). Requests with cookies always bypass the cache.
     // Per-page `revalidate` exports override these patterns.
     revalidate: {
@@ -70,10 +68,14 @@ export default defineConfig({
   },
   cloudflare: {
     name: 'findadumpster',
-    // Match the live Worker's traffic settings; void deploy refuses to republish without them.
-    routes: [{ pattern: 'findadumpster.net', custom_domain: true }],
-    workers_dev: true,
-    preview_urls: true,
+    // void deploy refuses to republish unless these are declared. www only redirects to the apex
+    // (src/lib/canonical-url.ts); workers.dev and preview URLs are off so search engines see one host.
+    routes: [
+      { pattern: 'findadumpster.net', custom_domain: true },
+      { pattern: 'www.findadumpster.net', custom_domain: true },
+    ],
+    workers_dev: false,
+    preview_urls: false,
     d1_databases: [
       {
         binding: 'DB',
