@@ -441,12 +441,11 @@ export async function getStateDirectory(db: AppDb, stateSlug: string) {
     })
     .from(operatorServiceAreas)
     .innerJoin(operators, eq(operators.id, operatorServiceAreas.operatorId))
+    // Filter by state in SQL, not by a list of city ids: D1 allows at most 100 bound parameters.
+    .innerJoin(cities, eq(cities.id, operatorServiceAreas.cityId))
     .where(
       and(
-        inArray(
-          operatorServiceAreas.cityId,
-          stateCities.map((c) => c.id),
-        ),
+        eq(cities.stateSlug, stateSlug),
         eq(operators.isPublished, true),
         eq(operators.isDemo, false),
         eq(operators.isBroker, false),
