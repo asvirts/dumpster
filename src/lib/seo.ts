@@ -1,5 +1,6 @@
 import { BRAND } from './constants';
-import { withUtm } from './utm';
+import { formatCurrency } from './geo';
+import { sanitizeHttpUrl } from './urls';
 
 export function pageTitle(parts: string | string[]): string {
   const list = Array.isArray(parts) ? parts : [parts];
@@ -44,14 +45,31 @@ export function operatorJsonLd(op: {
   hqState: string | null;
   slug: string;
   siteUrl: string;
+  pricingMin?: number | null;
+  pricingMax?: number | null;
+  /** Service-area cities as "Name, ST". */
+  areaServed?: string[];
 }) {
+  const profileUrl = `${op.siteUrl}/operator/${op.slug}`;
+  // The company's own site, without our UTM tags; the profile page when it has none.
+  const website = sanitizeHttpUrl(op.website);
   return {
     '@context': 'https://schema.org',
     '@type': 'LocalBusiness',
+    '@id': `${profileUrl}#business`,
     name: op.name,
     description: op.description ?? undefined,
     telephone: op.phone ?? undefined,
-    url: withUtm(op.website) ?? `${op.siteUrl}/operator/${op.slug}`,
+    url: website ?? profileUrl,
+    sameAs: website ? [website] : undefined,
+    mainEntityOfPage: profileUrl,
+    priceRange:
+      op.pricingMin != null && op.pricingMax != null
+        ? `${formatCurrency(op.pricingMin)}–${formatCurrency(op.pricingMax)}`
+        : undefined,
+    areaServed: op.areaServed?.length
+      ? op.areaServed.map((name) => ({ '@type': 'City', name }))
+      : undefined,
     address:
       op.hqCity && op.hqState
         ? {
@@ -143,6 +161,9 @@ export function articleJsonLd(article: {
   url: string;
   siteUrl: string;
   image?: string;
+  /** ISO dates. */
+  datePublished?: string;
+  dateModified?: string;
 }) {
   return {
     '@context': 'https://schema.org',
@@ -151,6 +172,8 @@ export function articleJsonLd(article: {
     description: article.description,
     mainEntityOfPage: article.url,
     image: article.image ? [article.image] : undefined,
+    datePublished: article.datePublished ?? article.dateModified,
+    dateModified: article.dateModified ?? article.datePublished,
     author: {
       '@type': 'Organization',
       name: BRAND.name,

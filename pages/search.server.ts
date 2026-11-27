@@ -88,6 +88,8 @@ export const head = defineHead<Props>((c, props) => {
     path: new URL(c.req.url).pathname,
     title: pageTitle(city ? `${city.name} Dumpster Rental` : 'Search'),
     description: `Compare verified dumpster rental operators${city ? ` in ${city.name}, ${city.state}` : ''}.`,
+    // A tool, not a landing page: state and city pages are what should rank.
+    noIndex: true,
   });
   return {
     ...head,

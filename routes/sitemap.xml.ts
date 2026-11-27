@@ -25,17 +25,12 @@ export const GET = defineHandler(async () => {
     changefreq: 'daily',
     priority: 1.0,
   };
-  const searchHub: SitemapEntry = {
-    loc: absoluteUrl(base, '/search'),
-    changefreq: 'daily',
-    priority: 0.8,
-  };
   const guidesHub: SitemapEntry = {
     loc: absoluteUrl(base, '/guides'),
     changefreq: 'weekly',
     priority: 0.8,
   };
-  entries.push(home, searchHub, guidesHub);
+  entries.push(home, guidesHub);
 
   const cityLastmods: Array<string | Date | null | undefined> = [];
   const operatorLastmods: Array<string | Date | null | undefined> = [];
@@ -140,13 +135,13 @@ export const GET = defineHandler(async () => {
   if (guidesMax) guidesHub.lastmod = guidesMax;
 
   const directoryMax = maxLastmod(...cityLastmods, ...operatorLastmods);
-  if (directoryMax) searchHub.lastmod = directoryMax;
 
   const homeMax = maxLastmod(directoryMax, guidesMax);
   if (homeMax) home.lastmod = homeMax;
 
   // Excluded by design (not indexable / no public value as standalone URLs):
-  // /admin/*, /portal/*, /compare, /404, brokers, demos, query-param search facets
+  // /admin/*, /portal/*, /compare, /404, /search (noindex; state and city pages are the landings),
+  // brokers, demos
 
   const body = renderUrlset(entries);
 

@@ -60,7 +60,7 @@ const year = new Date().getFullYear();
         <p class="eyebrow text-brand-400">Sizes</p>
         <ul class="mt-4 space-y-2 text-sm">
           <li v-for="s in DUMPSTER_SIZES" :key="s">
-            <a :href="`/search?size=${s}`" class="text-charcoal-300 no-underline hover:text-brand-400">
+            <a href="/guides/dumpster-size-guide#quick-reference" class="text-charcoal-300 no-underline hover:text-brand-400">
               {{ s }} yard dumpster rental
             </a>
           </li>

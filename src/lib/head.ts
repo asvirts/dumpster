@@ -16,6 +16,10 @@ export type SeoHeadInput = {
   ogImage?: string;
   /** Load AdSense auto ads (informational pages only). */
   ads?: boolean;
+  /** Open Graph type; guides are articles. */
+  ogType?: 'website' | 'article';
+  /** ISO date for article:modified_time (articles only). */
+  modifiedTime?: string;
 };
 
 const GA_ID = 'G-1EZY6X8XCW';
@@ -38,7 +42,7 @@ export function seoHead(input: SeoHeadInput): HeadConfig {
   meta.push(
     { property: 'og:title', content: title },
     { property: 'og:description', content: description },
-    { property: 'og:type', content: 'website' },
+    { property: 'og:type', content: input.ogType ?? 'website' },
     { property: 'og:url', content: canonical },
     { property: 'og:image', content: ogImage },
     { property: 'og:site_name', content: BRAND.name },
@@ -47,6 +51,10 @@ export function seoHead(input: SeoHeadInput): HeadConfig {
     { name: 'twitter:description', content: description },
     { name: 'twitter:image', content: ogImage },
   );
+
+  if (input.ogType === 'article' && input.modifiedTime) {
+    meta.push({ property: 'article:modified_time', content: input.modifiedTime });
+  }
 
   const script: NonNullable<HeadConfig['script']> = jsonLd.map((item) => ({
     type: 'application/ld+json',

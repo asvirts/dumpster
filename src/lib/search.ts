@@ -477,3 +477,48 @@ export async function getStateDirectory(db: AppDb, stateSlug: string) {
       .map(({ cityId: _cityId, ...op }) => op),
   };
 }
+
+/**
+ * Other cities with at least one verified public operator, nearest first, within `maxMiles`
+ * of the given city. Feeds the "Nearby cities" links on city pages.
+ */
+export async function getNearbyListedCities(
+  db: AppDb,
+  from: { id: string; lat: number; lng: number },
+  { limit = 6, maxMiles = 300 }: { limit?: number; maxMiles?: number } = {},
+) {
+  const rows = await db
+    .selectDistinct({
+      id: cities.id,
+      name: cities.name,
+      state: cities.state,
+      slug: cities.slug,
+      stateSlug: cities.stateSlug,
+      lat: cities.lat,
+      lng: cities.lng,
+    })
+    .from(cities)
+    .innerJoin(operatorServiceAreas, eq(operatorServiceAreas.cityId, cities.id))
+    .innerJoin(operators, eq(operators.id, operatorServiceAreas.operatorId))
+    .where(
+      and(
+        eq(operators.isPublished, true),
+        eq(operators.isDemo, false),
+        eq(operators.isBroker, false),
+        eq(operators.verificationStatus, 'verified'),
+      ),
+    );
+
+  return rows
+    .filter((c) => c.id !== from.id)
+    .map((c) => ({
+      name: c.name,
+      state: c.state,
+      slug: c.slug,
+      stateSlug: c.stateSlug,
+      miles: Math.round(distanceMiles(from.lat, from.lng, c.lat, c.lng)),
+    }))
+    .filter((c) => c.miles <= maxMiles)
+    .sort((a, b) => a.miles - b.miles)
+    .slice(0, limit);
+}

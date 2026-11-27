@@ -7,7 +7,9 @@ export const guideSchema = z.object({
   description: z.string(),
   category: z.string().default('general'),
   draft: z.boolean().default(false),
-  /** Last meaningful content update — used for sitemap lastmod. */
+  /** First publication; falls back to `updated` in Article JSON-LD. */
+  published: z.coerce.date().optional(),
+  /** Last meaningful content update — used for sitemap lastmod and Article dateModified. */
   updated: z.coerce.date().optional(),
   image: z.string().optional(),
   imageAlt: z.string().optional(),

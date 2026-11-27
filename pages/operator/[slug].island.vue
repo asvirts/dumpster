@@ -35,7 +35,9 @@ const props = defineProps<{
   areaAverage: { cityName: string; state: string; companies: number; avgMin: number; avgMax: number } | null;
   sizes: number[];
   materials: string[];
-  cities: string[];
+  cities: { label: string; href: string }[];
+  primaryCity: { name: string; state: string; stateName: string; href: string; stateHref: string } | null;
+  otherOperators: { name: string; slug: string; price: string | null }[];
   websiteUrl: string | null;
   defaults: { zip: string; size: string; material: string };
   quote: {
@@ -72,8 +74,16 @@ const sizeGuide = SIZE_GUIDE as Record<number, string | undefined>;
       <nav aria-label="Breadcrumb" class="font-mono text-xs uppercase tracking-widest text-charcoal-400">
         <a href="/" class="text-charcoal-400 no-underline hover:text-brand-400">Home</a>
         <span class="mx-2 text-charcoal-600">/</span>
-        <a href="/search" class="text-charcoal-400 no-underline hover:text-brand-400">Search</a>
-        <span class="mx-2 text-charcoal-600">/</span>
+        <template v-if="primaryCity">
+          <a :href="primaryCity.stateHref" class="text-charcoal-400 no-underline hover:text-brand-400">{{
+            primaryCity.stateName
+          }}</a>
+          <span class="mx-2 text-charcoal-600">/</span>
+          <a :href="primaryCity.href" class="text-charcoal-400 no-underline hover:text-brand-400">{{
+            primaryCity.name
+          }}</a>
+          <span class="mx-2 text-charcoal-600">/</span>
+        </template>
         <span class="text-brand-400">{{ op.name }}</span>
       </nav>
       <div class="mt-5 flex flex-wrap items-start justify-between gap-6">
@@ -218,8 +228,32 @@ const sizeGuide = SIZE_GUIDE as Record<number, string | undefined>;
         <p class="eyebrow text-brand-600">Coverage</p>
         <h2 class="mt-1 font-display text-2xl uppercase tracking-tight text-ink">Service areas</h2>
         <ul class="mt-4 flex flex-wrap gap-2">
-          <li v-for="c in cities" :key="c" class="chip bg-charcoal-100 px-3 py-1.5 text-charcoal-700">{{ c }}</li>
+          <li v-for="c in cities" :key="c.href">
+            <a :href="c.href" class="chip bg-charcoal-100 px-3 py-1.5 text-charcoal-700 no-underline hover:bg-brand-100">{{
+              c.label
+            }}</a>
+          </li>
         </ul>
+      </section>
+
+      <section v-if="primaryCity && otherOperators.length > 0">
+        <p class="eyebrow text-brand-600">Compare</p>
+        <h2 class="mt-1 font-display text-2xl uppercase tracking-tight text-ink">
+          Other dumpster rentals in {{ primaryCity.name }}
+        </h2>
+        <ul class="mt-5 grid gap-4 sm:grid-cols-2">
+          <li v-for="other in otherOperators" :key="other.slug">
+            <a :href="`/operator/${other.slug}`" class="card block p-4 text-ink no-underline">
+              <span class="font-bold">{{ other.name }}</span>
+              <span class="mt-1 block font-mono text-xs uppercase tracking-widest text-brand-600">
+                {{ other.price ? `Published range ${other.price}` : 'Request quote for pricing' }}
+              </span>
+            </a>
+          </li>
+        </ul>
+        <p class="mt-4 text-sm font-medium">
+          <a :href="primaryCity.href">All dumpster rental companies in {{ primaryCity.name }}, {{ primaryCity.state }} →</a>
+        </p>
       </section>
     </div>
 
