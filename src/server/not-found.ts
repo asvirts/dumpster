@@ -8,7 +8,7 @@ import { pageTitle } from '../lib/seo';
  * boundaries have no `head()`), so loaders set this before returning a 404.
  */
 export function notFoundHead(): HeadConfig {
-  return seoHead({ path: '/404', title: pageTitle('Page not found'), noIndex: true });
+  return seoHead({ path: '/404/', title: pageTitle('Page not found'), noIndex: true });
 }
 
 /**

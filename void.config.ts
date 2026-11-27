@@ -18,6 +18,7 @@ export default defineConfig({
       '/admin/*': 0,
       '/auth/*': 0,
       '/search': 0,
+      '/api/*': 0,
       '*': 300,
     },
   },

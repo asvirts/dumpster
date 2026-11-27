@@ -15,14 +15,16 @@
     "lint": "vp lint",
     "fmt": "vp fmt",
     "check": "vp check",
-    "typecheck": "void prepare && tsc --noEmit",
+    "typecheck": "void prepare && tsc --noEmit && pnpm typecheck:vue",
+    "typecheck:vue": "pnpm dlx --package=typescript@6.0.3 --package=vue-tsc@3.3.14 vue-tsc --noEmit -p .",
     "db:migrate:local": "wrangler d1 migrations apply dumpsterlocal --local --config wrangler.d1.jsonc --persist-to .wrangler/state",
     "db:migrate:remote": "wrangler d1 migrations apply dumpsterlocal --remote --config wrangler.d1.jsonc",
     "db:seed:local": "wrangler d1 execute dumpsterlocal --local --file=./seed/seed.sql --config wrangler.d1.jsonc --persist-to .wrangler/state",
     "db:seed:remote": "wrangler d1 execute dumpsterlocal --remote --file=./seed/seed.sql --config wrangler.d1.jsonc",
     "db:setup:local": "pnpm db:migrate:local && pnpm db:seed:local",
     "stripe:listen": "stripe listen --forward-to localhost:4321/api/stripe/webhook --events checkout.session.completed,checkout.session.async_payment_succeeded,checkout.session.async_payment_failed",
-    "postinstall": "void prepare"
+    "postinstall": "void prepare",
+    "e2e": "playwright test"
   },
   "dependencies": {
     "@workos-inc/node": "12.4.0",
@@ -36,6 +38,7 @@
   },
   "devDependencies": {
     "@cloudflare/workers-types": "5.20261125.1",
+    "@playwright/test": "1.65.1",
     "@tailwindcss/vite": "^4.3.3",
     "@types/node": "^26.2.0",
     "@void/vue": "1.12.0",

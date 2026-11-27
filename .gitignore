@@ -34,3 +34,5 @@ worker-configuration.d.ts
 # Void generated files (types, entry, dev trigger token)
 .void/
 .cloudflare/
+test-results/
+playwright-report/
