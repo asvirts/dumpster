@@ -16,7 +16,8 @@ export async function getPrerenderPaths(): Promise<PageParams<'/guides/[slug]'>[
 export const loader = defineHandler(withShared, (c) => {
   const guide = getGuide(c.req.param('slug'));
   if (!guide) return notFound(c);
-  const { title, description, category, image, imageAlt, imageCredit, imageCreditUrl } = guide.data;
+  const { title, description, category, image, imageAlt, imageCredit, imageCreditUrl, published, updated } =
+    guide.data;
   return {
     guide: {
       id: guide.id,
@@ -27,6 +28,8 @@ export const loader = defineHandler(withShared, (c) => {
       imageAlt: imageAlt ?? null,
       imageCredit: imageCredit ?? null,
       imageCreditUrl: imageCreditUrl ?? null,
+      published: published?.toISOString() ?? null,
+      updated: updated?.toISOString() ?? null,
     },
     html: renderGuide(guide),
   };
@@ -42,6 +45,8 @@ export const head = defineHead<Props>((_c, { guide }) => {
     title: pageTitle(guide.title),
     description: guide.description,
     ogImage,
+    ogType: 'article',
+    modifiedTime: guide.updated ?? guide.published ?? undefined,
     ads: true,
     jsonLd: [
       articleJsonLd({
@@ -50,6 +55,8 @@ export const head = defineHead<Props>((_c, { guide }) => {
         url: guideUrl,
         siteUrl: SITE_ORIGIN,
         image: ogImage,
+        datePublished: guide.published ?? undefined,
+        dateModified: guide.updated ?? undefined,
       }),
       breadcrumbJsonLd([
         { name: 'Home', url: SITE_ORIGIN },

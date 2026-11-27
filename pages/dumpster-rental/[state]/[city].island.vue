@@ -9,6 +9,7 @@ defineProps<{
     id: string;
     name: string;
     state: string;
+    stateName: string;
     slug: string;
     stateSlug: string;
     lat: number;
@@ -37,6 +38,7 @@ defineProps<{
     materials: string[];
     distanceMiles?: number;
   }[];
+  nearby: { name: string; state: string; slug: string; stateSlug: string; miles: number }[];
   markers: { id: string; name: string; slug: string; lat: number; lng: number }[];
   faqs: { question: string; answer: string }[];
   quote: {
@@ -60,8 +62,8 @@ defineProps<{
       <nav aria-label="Breadcrumb" class="font-mono text-xs uppercase tracking-widest text-charcoal-400">
         <a href="/" class="text-charcoal-400 no-underline hover:text-brand-400">Home</a>
         <span class="mx-2 text-charcoal-600">/</span>
-        <a :href="`/search?q=${encodeURIComponent(city.state)}`" class="text-charcoal-400 no-underline hover:text-brand-400">{{
-          city.state
+        <a :href="`/dumpster-rental/${city.stateSlug}`" class="text-charcoal-400 no-underline hover:text-brand-400">{{
+          city.stateName
         }}</a>
         <span class="mx-2 text-charcoal-600">/</span>
         <span class="text-brand-400">{{ city.name }}</span>
@@ -168,6 +170,20 @@ defineProps<{
             <dd class="mt-1.5 text-sm leading-relaxed text-charcoal-700">{{ f.answer }}</dd>
           </div>
         </dl>
+      </section>
+
+      <section class="card p-6">
+        <p class="eyebrow text-brand-600">Nearby</p>
+        <h2 class="mt-1 font-display text-xl uppercase tracking-tight text-ink">Dumpster rental near {{ city.name }}</h2>
+        <ul v-if="nearby.length > 0" class="mt-4 grid gap-2.5 text-sm font-medium sm:grid-cols-2">
+          <li v-for="n in nearby" :key="`${n.stateSlug}/${n.slug}`">
+            <a :href="`/dumpster-rental/${n.stateSlug}/${n.slug}`">{{ n.name }}, {{ n.state }}</a>
+            <span class="font-mono text-xs text-muted"> · {{ n.miles }} mi</span>
+          </li>
+        </ul>
+        <p class="mt-4 text-sm font-medium">
+          <a :href="`/dumpster-rental/${city.stateSlug}`">All {{ city.stateName }} dumpster rental cities →</a>
+        </p>
       </section>
 
       <section class="card p-6">

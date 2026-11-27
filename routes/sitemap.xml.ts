@@ -12,6 +12,9 @@ const publishedOperator = and(
   eq(operators.isBroker, false),
 );
 
+// City and state pages list verified operators only, so they're indexable only with one.
+const listedOnCityPages = and(publishedOperator, eq(operators.verificationStatus, 'verified'));
+
 export const GET = defineHandler(async () => {
   const base = SITE_ORIGIN;
   const entries: SitemapEntry[] = [];
@@ -22,23 +25,18 @@ export const GET = defineHandler(async () => {
     changefreq: 'daily',
     priority: 1.0,
   };
-  const searchHub: SitemapEntry = {
-    loc: absoluteUrl(base, '/search'),
-    changefreq: 'daily',
-    priority: 0.8,
-  };
   const guidesHub: SitemapEntry = {
     loc: absoluteUrl(base, '/guides'),
     changefreq: 'weekly',
     priority: 0.8,
   };
-  entries.push(home, searchHub, guidesHub);
+  entries.push(home, guidesHub);
 
   const cityLastmods: Array<string | Date | null | undefined> = [];
   const operatorLastmods: Array<string | Date | null | undefined> = [];
   const guideLastmods: Array<string | Date | null | undefined> = [];
 
-  // City landings that have at least one public listing — stays current as
+  // City landings that have at least one verified public listing — stays current as
   // operators are added. Empty cities stay out (thin pages).
   try {
     const db = getDb();
@@ -52,9 +50,25 @@ export const GET = defineHandler(async () => {
       .from(cities)
       .innerJoin(operatorServiceAreas, eq(operatorServiceAreas.cityId, cities.id))
       .innerJoin(operators, eq(operators.id, operatorServiceAreas.operatorId))
-      .where(publishedOperator)
+      .where(listedOnCityPages)
       .groupBy(cities.id, cities.slug, cities.stateSlug, cities.updatedAt)
       .orderBy(asc(cities.stateSlug), asc(cities.slug));
+
+    // State landings for every state with at least one listed city, ahead of their cities.
+    const stateLastmods = new Map<string, Array<string | null>>();
+    for (const c of cityRows) {
+      const list = stateLastmods.get(c.stateSlug) ?? [];
+      list.push(cityPageLastmod(c.updatedAt, [c.listingLastmod]));
+      stateLastmods.set(c.stateSlug, list);
+    }
+    for (const [stateSlug, lastmods] of stateLastmods) {
+      entries.push({
+        loc: absoluteUrl(base, `/dumpster-rental/${stateSlug}`),
+        lastmod: maxLastmod(...lastmods),
+        changefreq: 'weekly',
+        priority: 0.9,
+      });
+    }
 
     for (const c of cityRows) {
       const lastmod = cityPageLastmod(c.updatedAt, [c.listingLastmod]);
@@ -121,13 +135,13 @@ export const GET = defineHandler(async () => {
   if (guidesMax) guidesHub.lastmod = guidesMax;
 
   const directoryMax = maxLastmod(...cityLastmods, ...operatorLastmods);
-  if (directoryMax) searchHub.lastmod = directoryMax;
 
   const homeMax = maxLastmod(directoryMax, guidesMax);
   if (homeMax) home.lastmod = homeMax;
 
   // Excluded by design (not indexable / no public value as standalone URLs):
-  // /admin/*, /portal/*, /compare, /404, brokers, demos, query-param search facets
+  // /admin/*, /portal/*, /compare, /404, /search (noindex; state and city pages are the landings),
+  // brokers, demos
 
   const body = renderUrlset(entries);
 

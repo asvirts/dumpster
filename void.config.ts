@@ -7,10 +7,8 @@ export default defineConfig({
   routing: {
     typedRoutes: true,
     trailingSlash: false,
-    // /x/ → /x (sitemap and canonicals have no trailing slash).
-    redirects: {
-      '/*/': { to: '/:splat', status: 301 },
-    },
+    // routing.redirects isn't applied on direct Cloudflare deploys: /x/ → /x and the other URL
+    // fixes are done per page in withShared (src/lib/canonical-url.ts).
     // Public pages are cached for 5 minutes (ISR). Requests with cookies always bypass the cache.
     // Per-page `revalidate` exports override these patterns.
     revalidate: {
@@ -30,20 +28,15 @@ export default defineConfig({
       { name: 'viewport', content: 'width=device-width, initial-scale=1' },
       { name: 'theme-color', content: '#121417' },
     ],
-    // Shared by public, portal, admin and error pages. Analytics are public-only: seoHead()
-    // in src/lib/head.ts adds them, so portal and admin don't send page views.
+    // Shared by public, portal, admin and error pages. Fonts are self-hosted (src/styles/global.css).
+    // Analytics are public-only: seoHead() in src/lib/head.ts adds them, so portal and admin
+    // don't send page views.
     link: [
       { rel: 'icon', type: 'image/svg+xml', href: '/favicon.svg' },
       { rel: 'icon', type: 'image/png', sizes: '32x32', href: '/favicon-32.png' },
       { rel: 'icon', type: 'image/png', sizes: '16x16', href: '/favicon-16.png' },
       { rel: 'shortcut icon', href: '/favicon.ico' },
       { rel: 'apple-touch-icon', href: '/apple-touch-icon.png' },
-      { rel: 'preconnect', href: 'https://fonts.googleapis.com' },
-      { rel: 'preconnect', href: 'https://fonts.gstatic.com', crossorigin: '' },
-      {
-        rel: 'stylesheet',
-        href: 'https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800&family=Archivo+Black&family=IBM+Plex+Mono:wght@400;500;600;700&display=swap',
-      },
     ],
     script: [
       {
@@ -70,10 +63,14 @@ export default defineConfig({
   },
   cloudflare: {
     name: 'findadumpster',
-    // Match the live Worker's traffic settings; void deploy refuses to republish without them.
-    routes: [{ pattern: 'findadumpster.net', custom_domain: true }],
-    workers_dev: true,
-    preview_urls: true,
+    // void deploy refuses to republish unless these are declared. www only redirects to the apex
+    // (src/lib/canonical-url.ts); workers.dev and preview URLs are off so search engines see one host.
+    routes: [
+      { pattern: 'findadumpster.net', custom_domain: true },
+      { pattern: 'www.findadumpster.net', custom_domain: true },
+    ],
+    workers_dev: false,
+    preview_urls: false,
     d1_databases: [
       {
         binding: 'DB',

@@ -1,7 +1,8 @@
 import { defineHandler, defineHead, type InferProps } from 'void';
 import { getDb } from '../../../src/lib/db';
 import { SITE_ORIGIN, seoHead } from '../../../src/lib/head';
-import { getCityWithOperators } from '../../../src/lib/search';
+import { getCityWithOperators, getNearbyListedCities } from '../../../src/lib/search';
+import { stateName } from '../../../src/lib/states';
 import {
   breadcrumbJsonLd,
   cityPageDescription,
@@ -20,9 +21,11 @@ export const loader = defineHandler(withShared, async (c) => {
   const citySlug = c.req.param('city');
   if (!state || !citySlug) return c.redirect('/search');
 
-  const data = await getCityWithOperators(getDb(), state.toLowerCase(), citySlug.toLowerCase());
+  const db = getDb();
+  const data = await getCityWithOperators(db, state.toLowerCase(), citySlug.toLowerCase());
   if (!data) return notFound(c);
   const { city, operators: ops } = data;
+  const nearby = await getNearbyListedCities(db, city);
 
   const faqs = [
     {
@@ -65,6 +68,7 @@ export const loader = defineHandler(withShared, async (c) => {
       id: city.id,
       name: city.name,
       state: city.state,
+      stateName: stateName(city.state),
       slug: city.slug,
       stateSlug: city.stateSlug,
       lat: city.lat,
@@ -74,6 +78,7 @@ export const loader = defineHandler(withShared, async (c) => {
       specialRules: city.specialRules,
     },
     operators: ops,
+    nearby,
     markers,
     faqs,
     quote,
@@ -96,6 +101,8 @@ export const head = defineHead<Props>((c, props) => {
       state: city.state,
       pricingNotes: city.typicalPricingNotes,
     }),
+    // No verified operators yet: thin page, kept out of the index (and the sitemap) until it has some.
+    noIndex: ops.length === 0,
     jsonLd: [
       itemListJsonLd(
         ops.map((o) => ({ name: o.name, url: `${SITE_ORIGIN}/operator/${o.slug}` })),
@@ -103,7 +110,7 @@ export const head = defineHead<Props>((c, props) => {
       ),
       breadcrumbJsonLd([
         { name: 'Home', url: SITE_ORIGIN },
-        { name: city.state, url: `${SITE_ORIGIN}/search?q=${encodeURIComponent(city.state)}` },
+        { name: city.stateName, url: `${SITE_ORIGIN}/dumpster-rental/${city.stateSlug}` },
         { name: city.name, url: `${SITE_ORIGIN}/dumpster-rental/${city.stateSlug}/${city.slug}` },
       ]),
       faqJsonLd(faqs),

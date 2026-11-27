@@ -3,7 +3,7 @@ import { SITE_ORIGIN } from '../src/lib/head';
 
 /**
  * robots.txt — allow public crawl surface, block private surfaces, point to sitemap.
- * Keep in sync with noIndex routes (compare, 404, admin layout, portal layout).
+ * Keep in sync with noIndex routes (compare, search, 404, admin layout, portal layout).
  */
 export const GET = defineHandler(() => {
   const base = SITE_ORIGIN;
@@ -20,7 +20,7 @@ Disallow: /portal/
 Disallow: /compare
 Disallow: /compare?
 
-# Faceted search URLs are thin duplicates of /search — crawl the hub only
+# Faceted search URLs are thin duplicates; /search itself is noindex, follow
 Disallow: /search?
 
 Sitemap: ${base}/sitemap.xml

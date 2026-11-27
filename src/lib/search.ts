@@ -407,3 +407,117 @@ function groupBy<T, K extends string, V>(
   }
   return map;
 }
+
+/**
+ * State landing data: every city in the state with its verified-operator count, plus the
+ * verified, non-broker operators serving any of them (same public bar as city pages).
+ * Null when the state has no cities.
+ */
+export async function getStateDirectory(db: AppDb, stateSlug: string) {
+  const stateCities = await db
+    .select({
+      id: cities.id,
+      name: cities.name,
+      state: cities.state,
+      slug: cities.slug,
+      stateSlug: cities.stateSlug,
+      updatedAt: cities.updatedAt,
+    })
+    .from(cities)
+    .where(eq(cities.stateSlug, stateSlug))
+    .orderBy(asc(cities.name));
+  if (stateCities.length === 0) return null;
+
+  const rows = await db
+    .select({
+      cityId: operatorServiceAreas.cityId,
+      id: operators.id,
+      name: operators.name,
+      slug: operators.slug,
+      hqCity: operators.hqCity,
+      hqState: operators.hqState,
+      pricingMin: operators.pricingMin,
+      pricingMax: operators.pricingMax,
+    })
+    .from(operatorServiceAreas)
+    .innerJoin(operators, eq(operators.id, operatorServiceAreas.operatorId))
+    // Filter by state in SQL, not by a list of city ids: D1 allows at most 100 bound parameters.
+    .innerJoin(cities, eq(cities.id, operatorServiceAreas.cityId))
+    .where(
+      and(
+        eq(cities.stateSlug, stateSlug),
+        eq(operators.isPublished, true),
+        eq(operators.isDemo, false),
+        eq(operators.isBroker, false),
+        eq(operators.verificationStatus, 'verified'),
+      ),
+    );
+
+  const opsByCity = groupBy(
+    rows,
+    (r) => r.cityId as string,
+    (r) => r.id,
+  );
+  const operatorsById = new Map<string, (typeof rows)[number] & { cityNames: string[] }>();
+  const cityName = new Map(stateCities.map((c) => [c.id, c.name]));
+  for (const r of rows) {
+    const existing = operatorsById.get(r.id) ?? { ...r, cityNames: [] };
+    const name = cityName.get(r.cityId as string);
+    if (name && !existing.cityNames.includes(name)) existing.cityNames.push(name);
+    operatorsById.set(r.id, existing);
+  }
+
+  return {
+    state: stateCities[0].state,
+    stateSlug,
+    cities: stateCities.map((c) => ({ ...c, operatorCount: new Set(opsByCity.get(c.id) ?? []).size })),
+    operators: [...operatorsById.values()]
+      .sort((a, b) => b.cityNames.length - a.cityNames.length || a.name.localeCompare(b.name))
+      .map(({ cityId: _cityId, ...op }) => op),
+  };
+}
+
+/**
+ * Other cities with at least one verified public operator, nearest first, within `maxMiles`
+ * of the given city. Feeds the "Nearby cities" links on city pages.
+ */
+export async function getNearbyListedCities(
+  db: AppDb,
+  from: { id: string; lat: number; lng: number },
+  { limit = 6, maxMiles = 300 }: { limit?: number; maxMiles?: number } = {},
+) {
+  const rows = await db
+    .selectDistinct({
+      id: cities.id,
+      name: cities.name,
+      state: cities.state,
+      slug: cities.slug,
+      stateSlug: cities.stateSlug,
+      lat: cities.lat,
+      lng: cities.lng,
+    })
+    .from(cities)
+    .innerJoin(operatorServiceAreas, eq(operatorServiceAreas.cityId, cities.id))
+    .innerJoin(operators, eq(operators.id, operatorServiceAreas.operatorId))
+    .where(
+      and(
+        eq(operators.isPublished, true),
+        eq(operators.isDemo, false),
+        eq(operators.isBroker, false),
+        eq(operators.verificationStatus, 'verified'),
+      ),
+    );
+
+  return rows
+    .filter((c) => c.id !== from.id)
+    .map((c) => ({
+      name: c.name,
+      state: c.state,
+      slug: c.slug,
+      stateSlug: c.stateSlug,
+      miles: Math.round(distanceMiles(from.lat, from.lng, c.lat, c.lng)),
+    }))
+    .filter((c) => c.miles <= maxMiles)
+    .sort((a, b) => a.miles - b.miles)
+    .slice(0, limit);
+}

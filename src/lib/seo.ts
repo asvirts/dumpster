@@ -1,9 +1,24 @@
 import { BRAND } from './constants';
-import { withUtm } from './utm';
+import { formatCurrency } from './geo';
+import { sanitizeHttpUrl } from './urls';
 
 export function pageTitle(parts: string | string[]): string {
   const list = Array.isArray(parts) ? parts : [parts];
   return [...list, BRAND.name].join(' | ');
+}
+
+/**
+ * Meta description capped at `max` characters, cut at a word boundary with an ellipsis rather
+ * than mid-word. Whitespace is collapsed.
+ */
+export function metaDescription(text: string, max = 160): string {
+  const clean = text.replace(/\s+/g, ' ').trim();
+  if (clean.length <= max) return clean;
+  const cut = clean.slice(0, max - 1);
+  // The cut already ends on a whole word when the next character is a space.
+  const lastSpace = clean[max - 1] === ' ' ? cut.length : cut.lastIndexOf(' ');
+  const base = lastSpace > max * 0.6 ? cut.slice(0, lastSpace) : cut;
+  return base.replace(/[\s,;:.\-–—]+$/, '') + '…';
 }
 
 /** SERP title for city landings — keyword front-loaded, state for disambiguation. */
@@ -23,7 +38,7 @@ export function cityPageDescription(opts: {
   const { cityName, state } = opts;
   const priceClause = priceClauseFromNotes(opts.pricingNotes);
   const core = `Compare dumpster rentals in ${cityName}, ${state}. Local operators${priceClause}, permit notes & driveway options. Free quotes — 10–40 yard.`;
-  return core.length <= 160 ? core : core.slice(0, 157).trimEnd() + '…';
+  return metaDescription(core);
 }
 
 /** Pull a short pricing hint (e.g. "$350–$650") from freeform city notes. */
@@ -44,14 +59,31 @@ export function operatorJsonLd(op: {
   hqState: string | null;
   slug: string;
   siteUrl: string;
+  pricingMin?: number | null;
+  pricingMax?: number | null;
+  /** Service-area cities as "Name, ST". */
+  areaServed?: string[];
 }) {
+  const profileUrl = `${op.siteUrl}/operator/${op.slug}`;
+  // The company's own site, without our UTM tags; the profile page when it has none.
+  const website = sanitizeHttpUrl(op.website);
   return {
     '@context': 'https://schema.org',
     '@type': 'LocalBusiness',
+    '@id': `${profileUrl}#business`,
     name: op.name,
     description: op.description ?? undefined,
     telephone: op.phone ?? undefined,
-    url: withUtm(op.website) ?? `${op.siteUrl}/operator/${op.slug}`,
+    url: website ?? profileUrl,
+    sameAs: website ? [website] : undefined,
+    mainEntityOfPage: profileUrl,
+    priceRange:
+      op.pricingMin != null && op.pricingMax != null
+        ? `${formatCurrency(op.pricingMin)}–${formatCurrency(op.pricingMax)}`
+        : undefined,
+    areaServed: op.areaServed?.length
+      ? op.areaServed.map((name) => ({ '@type': 'City', name }))
+      : undefined,
     address:
       op.hqCity && op.hqState
         ? {
@@ -143,6 +175,9 @@ export function articleJsonLd(article: {
   url: string;
   siteUrl: string;
   image?: string;
+  /** ISO dates. */
+  datePublished?: string;
+  dateModified?: string;
 }) {
   return {
     '@context': 'https://schema.org',
@@ -151,6 +186,8 @@ export function articleJsonLd(article: {
     description: article.description,
     mainEntityOfPage: article.url,
     image: article.image ? [article.image] : undefined,
+    datePublished: article.datePublished ?? article.dateModified,
+    dateModified: article.dateModified ?? article.datePublished,
     author: {
       '@type': 'Organization',
       name: BRAND.name,

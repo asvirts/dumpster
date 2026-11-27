@@ -16,6 +16,10 @@ export type SeoHeadInput = {
   ogImage?: string;
   /** Load AdSense auto ads (informational pages only). */
   ads?: boolean;
+  /** Open Graph type; guides are articles. */
+  ogType?: 'website' | 'article';
+  /** ISO date for article:modified_time (articles only). */
+  modifiedTime?: string;
 };
 
 const GA_ID = 'G-1EZY6X8XCW';
@@ -28,17 +32,21 @@ const GA_ID = 'G-1EZY6X8XCW';
 export function seoHead(input: SeoHeadInput): HeadConfig {
   const title = input.title ?? BRAND.name;
   const description = input.description ?? BRAND.description;
-  const canonical = input.canonical ?? new URL(input.path, SITE_ORIGIN).toString();
+  // A noindex page gets no canonical (and no og:url) unless one is passed: pointing a page that
+  // shouldn't be indexed at a URL sends mixed signals, and the 404's path is not a real URL.
+  const canonical =
+    input.canonical ?? (input.noIndex ? null : new URL(input.path, SITE_ORIGIN).toString());
   const ogImage = input.ogImage ?? new URL('/og-image.png', SITE_ORIGIN).toString();
   const jsonLd = input.jsonLd ? (Array.isArray(input.jsonLd) ? input.jsonLd : [input.jsonLd]) : [];
 
   const meta: NonNullable<HeadConfig['meta']> = [{ name: 'description', content: description }];
-  if (input.noIndex) meta.push({ name: 'robots', content: 'noindex, nofollow' });
+  // follow: links on a noindexed page (empty city, compare, 404) still pass to real pages.
+  if (input.noIndex) meta.push({ name: 'robots', content: 'noindex, follow' });
   meta.push(
     { property: 'og:title', content: title },
     { property: 'og:description', content: description },
-    { property: 'og:type', content: 'website' },
-    { property: 'og:url', content: canonical },
+    { property: 'og:type', content: input.ogType ?? 'website' },
+    ...(canonical ? [{ property: 'og:url', content: canonical }] : []),
     { property: 'og:image', content: ogImage },
     { property: 'og:site_name', content: BRAND.name },
     { name: 'twitter:card', content: 'summary_large_image' },
@@ -46,6 +54,10 @@ export function seoHead(input: SeoHeadInput): HeadConfig {
     { name: 'twitter:description', content: description },
     { name: 'twitter:image', content: ogImage },
   );
+
+  if (input.ogType === 'article' && input.modifiedTime) {
+    meta.push({ property: 'article:modified_time', content: input.modifiedTime });
+  }
 
   const script: NonNullable<HeadConfig['script']> = jsonLd.map((item) => ({
     type: 'application/ld+json',
@@ -66,5 +78,5 @@ export function seoHead(input: SeoHeadInput): HeadConfig {
     });
   }
 
-  return { title, titleTemplate: '', meta, link: [{ rel: 'canonical', href: canonical }], script };
+  return { title, titleTemplate: '', meta, link: canonical ? [{ rel: 'canonical', href: canonical }] : [], script };
 }
