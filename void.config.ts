@@ -70,6 +70,10 @@ export default defineConfig({
   },
   cloudflare: {
     name: 'findadumpster',
+    // Match the live Worker's traffic settings; void deploy refuses to republish without them.
+    routes: [{ pattern: 'findadumpster.net', custom_domain: true }],
+    workers_dev: true,
+    preview_urls: true,
     d1_databases: [
       {
         binding: 'DB',
